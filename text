@@ -1,0 +1,13 @@
+ติดตั้งเครื่องมือ (NuGet Packages)
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+
+คำสั่งส่งโครงสร้างไปสร้างตารางจริงบน Supabase:
+dotnet ef database update
+
+
+ตรวจสอบการติดตั้ง NuGet Package ซ้ำอีกรอบ
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+
+สร้าง Migration
+dotnet ef migrations add InitialCreate

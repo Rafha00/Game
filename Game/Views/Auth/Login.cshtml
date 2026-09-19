@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "เข้าสู่ระบบ";
+    Layout = null;
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+}
+
+<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #070a12; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; box-sizing: border-box;">
+
+    <!-- Main Card Container -->
+    <div style="width: 100%; max-width: 850px; height: 480px; background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); display: flex;">
+
+        <!-- Left Panel: Branding -->
+        <div style="width: 50%; height: 100%; background: linear-gradient(135deg, #2e1065, #1c2140, #083344); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem;">
+            <div style="width: 6rem; height: 6rem; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                <span style="font-size: 1.5rem;"><i class="fa-brands fa-playstation fa-3x"></i></span>
+            </div>
+            <h1 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 0.5rem; letter-spacing: -0.025em;">
+                GAME<span style="color: #8b5cf6;">WORLD</span>
+            </h1>
+            <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.5; max-width: 220px;">
+                เข้าสู่โลกแห่งเกมไร้ขีดจำกัด เพลิดเพลินกับการซื้อ จัดการ และสะสมเกมโปรดของคุณได้ง่ายๆ ที่นี่
+            </p>
+        </div>
+
+        <!-- Right Panel: Login Form -->
+        <div style="width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+            <div style="width: 100%; max-width: 300px;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: #ffffff; letter-spacing: -0.025em; text-align: center; margin-top: -20px; margin-bottom: 1.5rem; ">WELCOME BACK</h2>
+                <p style="margin-top: 0.25rem; font-size: 0.9rem; color: #94a3b8;">กรอกข้อมูลบัญชีของคุณเพื่อเข้าสู่ระบบ</p>
+
+                <form asp-action="Login" method="post" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.9rem; font-weight: 500; color: #cbd5e1; margin-bottom: 0.25rem;">Email</label>
+                        <input type="email" name="email" required placeholder="example@email.com"
+                               style="width: 100%; height: 2.3rem; padding: 0 0.75rem; border-radius: 0.75rem; background-color: #0b0f18; border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff; font-size: 0.75rem; outline: none;" />
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.9rem; font-weight: 500; color: #cbd5e1; margin-bottom: 0.25rem;">Password</label>
+                        <input type="password" name="password" required placeholder="••••••••"
+                               style="width: 100%; height: 2.3rem; padding: 0 0.75rem; border-radius: 0.75rem; background-color: #0b0f18; border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff; font-size: 0.75rem; outline: none;" />
+                    </div>
+
+                    <button type="submit"
+                            style="width: 100%; height: 2.3rem; border-radius: 0.75rem; background: linear-gradient(to right, #7c3aed, #9333ea); color: #ffffff; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; margin-top: 0.25rem;">
+                        เข้าสู่ระบบ
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.7rem; color: #94a3b8;">
+                    ยังไม่มีบัญชีใช่ไหม?
+                    <a asp-action="Register" style="margin-left: 0.25rem; color: #a78bfa; font-weight: 600; text-decoration: none;">
+                        สมัครสมาชิกฟรี!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

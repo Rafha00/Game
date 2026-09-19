@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Game</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Game.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/output.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #0b0f19; margin: 0; color: #ffffff;">
+    
+                    <nav style="position: fixed; top: 0; left: 0; width: 100%; z-index: 50; padding: 1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #050505, #0D0D0D, #171717); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); box-sizing: border-box;">
+    
+    <!-- Left: Logo & Brand -->
+    <div style="display: flex; align-items: center; cursor: pointer;">
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0.5rem;">
+            <div style="width: 2.2rem; height: 2.2rem; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 1.2rem;"><i class="fa-brands fa-playstation"></i></span>
+            </div>
+            <span style="font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.025em;">
+                GAME<span style="color: #8b5cf6;">WORLD</span>
+            </span>
+        </a>
+    </div>
+
+    <!-- Center: Menu Links (แสดงเฉพาะตอน Login แล้ว) -->
+    @if (User?.Identity?.IsAuthenticated == true)
+    {
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <a href="/" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: color 0.2s;">Home</a>
+            <a asp-controller="/Product" asp-action="Index" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: color 0.2s;">Buy</a>
+            <a href="/Home/About" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: color 0.2s;">About</a>
+        </div>
+    }
+
+    <!-- Right: Conditional Rendering based on Login Status -->
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        @if (User?.Identity?.IsAuthenticated == true)
+        {
+            <!-- Cart Icon -->
+            <a asp-controller="Cart" asp-action="Index" style="color: #cbd5e1; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" title="ตะกร้าสินค้า">
+                <i class="fa-solid fa-cart-shopping"></i>
+            </a>
+
+            <!-- Profile Dropdown Container -->
+            <div id="profileContainer" style="position: relative; display: inline-block;">
+                <!-- Profile Icon Button -->
+                <div id="profileBtn" style="width: 2.2rem; height: 2.2rem; background: linear-gradient(135deg, #7c3aed, #9333ea); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; cursor: pointer; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); user-select: none;" title="โปรไฟล์ของฉัน">
+                    <i class="fa-regular fa-circle-user"></i>
+                </div>
+
+                <!-- Dropdown Menu Content -->
+                <div id="profileDropdown" style="display: none; position: absolute; right: 0; top: 2.8rem; width: 220px; background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); overflow: hidden; z-index: 100; padding: 0.5rem 0;">
+                    
+                    <!-- แสดง Email ของผู้ใช้ -->
+                    <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+                        <p style="font-size: 0.65rem; color: #94a3b8; margin: 0;">เข้าสู่ระบบด้วย</p>
+                        <p style="font-size: 0.75rem; font-weight: 600; color: #ffffff; margin: 0.15rem 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            @User.Identity.Name
+                        </p>
+                    </div>
+
+                    <!-- เมนูโปรไฟล์ -->
+                    <a asp-controller="Account" asp-action="Profile" style="display: block; padding: 0.6rem 1rem; color: #cbd5e1; font-size: 0.8rem; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                        ⚙️ ตั้งค่าโปรไฟล์
+                    </a>
+
+                    <!-- ปุ่ม Logout -->
+                    <form asp-controller="Auth" asp-action="Logout" method="post" style="margin: 0; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.25rem;">
+                        <button type="submit" style="width: 100%; text-align: left; background: none; border: none; padding: 0.6rem 1rem; color: #f87171; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
+                            🚪 ออกจากระบบ
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- JavaScript ควบคุมการคลิกแบบสมบูรณ์ -->
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    const profileBtn = document.getElementById("profileBtn");
+                    const profileDropdown = document.getElementById("profileDropdown");
+                    const profileContainer = document.getElementById("profileContainer");
+
+                    if (profileBtn && profileDropdown && profileContainer) {
+                        profileBtn.addEventListener("click", function (event) {
+                            event.stopPropagation();
+                            if (profileDropdown.style.display === "block") {
+                                profileDropdown.style.display = "none";
+                            } else {
+                                profileDropdown.style.display = "block";
+                            }
+                        });
+
+                        profileDropdown.addEventListener("click", function (event) {
+                            event.stopPropagation();
+                        });
+
+                        window.addEventListener("click", function () {
+                            if (profileDropdown.style.display === "block") {
+                                profileDropdown.style.display = "none";
+                            }
+                        });
+                    }
+                });
+            </script>
+        } @* <-- ปิดปีกกาของ @if (User?.Identity?.IsAuthenticated == true) ตรงนี้ครับ *@
+        else
+        {
+            <!-- ถ้ายังไม่ Login: แสดงปุ่มเข้าสู่ระบบ -->
+            <a asp-controller="Auth" asp-action="Login" style="background: linear-gradient(to right, #7c3aed, #9333ea); color: #ffffff; font-size: 0.85rem; font-weight: 600; text-decoration: none; padding: 0.5rem 1.25rem; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+                เข้าสู่ระบบ
+            </a>
+        } @* <-- ปิดปีกกาของ @else ตรงนี้ครับ *@
+    </div>
+
+</nav>
+  
+    <div class="container-fluid px-0">
+    <main role="main" class="pb-3" style="padding-top: 70px;">
+        @RenderBody()
+    </main>
+</div>
+
+
+ <!-- Footer Section -->
+<footer style="background-color: #0b0f19; border-top: 1px solid rgba(255, 255, 255, 0.08); color: #94a3b8; padding: 4rem 2.5rem 2rem 2.5rem; margin-top: 5rem; font-family: sans-serif;">
+    <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; margin-bottom: 3rem;">
+        
+        <!-- Column 1: Brand & About -->
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="width: 2.2rem; height: 2.2rem; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 1.2rem;"><i class="fa-brands fa-playstation"></i></span>
+                </div>
+                <span style="font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.025em;">
+                    GAME<span style="color: #8b5cf6;">WORLD</span>
+                </span>
+            </div>
+            <p style="font-size: 0.85rem; line-height: 1.6; color: #94a3b8; margin-bottom: 1.5rem;">
+                แพลตฟอร์มรวมเกมชั้นนำระดับโลก โดดเด่นด้วยดีไซน์เกมมิ่งธีมสุดล้ำ กราฟิกสุดอลังการ และบริการที่รวดเร็วทันใจสำหรับเกมเมอร์ตัวจริง
+            </p>
+            <div style="display: flex; gap: 1rem;">
+                <a href="#" style="width: 2rem; height: 2rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #cbd5e1; text-decoration: none; transition: 0.2s;" onmouseover="this.style.background='#7c3aed'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">🌐</a>
+                <a href="#" style="width: 2rem; height: 2rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #cbd5e1; text-decoration: none; transition: 0.2s;" onmouseover="this.style.background='#7c3aed'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">💬</a>
+                <a href="#" style="width: 2rem; height: 2frem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #cbd5e1; text-decoration: none; transition: 0.2s;" onmouseover="this.style.background='#7c3aed'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1';">📺</a>
+            </div>
+        </div>
+
+        <!-- Column 2: Quick Links -->
+        <div>
+            <h4 style="color: #ffffff; font-size: 0.95rem; font-weight: 700; margin-bottom: 1.25rem; letter-spacing: 0.05em;">เมนูด่วน</h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                <li><a href="/" style="color: #94a3b8; font-size: 0.85rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='#94a3b8'">หน้าแรก (Home)</a></li>
+                <li><a asp-controller="Store" asp-action="Index" style="color: #94a3b8; font-size: 0.85rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='#94a3b8'">เลือกซื้อเกม (Store)</a></li>
+                <li><a href="/Home/About" style="color: #94a3b8; font-size: 0.85rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='#94a3b8'">เกี่ยวกับเรา (About)</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 3: Categories / Top Games -->
+        <div>
+            <h4 style="color: #ffffff; font-size: 0.95rem; font-weight: 700; margin-bottom: 1.25rem; letter-spacing: 0.05em;">เกมยอดฮิต</h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                <li><span style="color: #94a3b8; font-size: 0.85rem;">Cyber Legends: 2077</span></li>
+                <li><span style="color: #94a3b8; font-size: 0.85rem;">Elden Realm</span></li>
+                <li><span style="color: #94a3b8; font-size: 0.85rem;">Speed Horizon Ultimate</span></li>
+                <li><span style="color: #94a3b8; font-size: 0.85rem;">Tactical Ops: Zero</span></li>
+            </ul>
+        </div>
+
+        <!-- Column 4: Support & Contact -->
+        <div>
+            <h4 style="color: #ffffff; font-size: 0.95rem; font-weight: 700; margin-bottom: 1.25rem; letter-spacing: 0.05em;">ช่วยเหลือ</h4>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem;">มีคำถามหรือพบปัญหาในการใช้งาน?</p>
+            <a href="mailto:support@gameworld.com" style="color: #8b5cf6; font-size: 0.85rem; text-decoration: none; font-weight: 600;">support@gameworld.com</a>
+        </div>
+
+    </div>
+
+    <!-- Bottom Copyright -->
+    <div style="max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+        <p style="font-size: 0.75rem; color: #64748b; margin: 0;">
+            &copy; 2026 GAMEWORLD. All rights reserved. Designed for Gamers.
+        </p>
+        <div style="display: flex; gap: 1.5rem; font-size: 0.75rem;">
+            <a href="#" style="color: #64748b; text-decoration: none;">นโยบายความเป็นส่วนตัว</a>
+            <a href="#" style="color: #64748b; text-decoration: none;">เงื่อนไขการบริการ</a>
+        </div>
+    </div>
+</footer>
+  
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

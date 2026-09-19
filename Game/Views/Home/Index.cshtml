@@ -1,0 +1,104 @@
+﻿@{
+    ViewData["Title"] = "หน้าแรก - GameWorld";
+}
+
+<div style="width: 100%; min-height: 100vh; background-color: #070a12; color: #ffffff; font-family: sans-serif; box-sizing: border-box; padding-bottom: 4rem;">
+
+    <!-- ================= HERO SECTION (สไตล์ YouPlay Gaming) ================= -->
+    <div style="position: relative; width: 100%; height: 500px; background: linear-gradient(90deg, #070a12 35%, rgba(7, 10, 18, 0.7) 60%, rgba(7, 10, 18, 0.2) 100%), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat; display: flex; align-items: center; padding: 0 5%; border-bottom: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden;">
+        
+        <!-- Hero Content (จัดชิดซ้าย) -->
+        <div style="position: relative; z-index: 10; max-width: 650px; margin-left: 200px; ">
+            <h1 style="font-size: 2.8rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 1rem; line-height: 1.1; text-transform: uppercase; color: #ffffff;">
+                GAMEWORLD - <span style="color: #ef4444;">GAMING THEME</span>
+            </h1>
+            <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 2rem; max-width: 550px;">
+                คุณไม่ได้ถูกจำกัดอยู่แค่ฟีเจอร์เดิมๆ เหมาะสำหรับเว็บไซต์เกมและโปรเจกต์ธุรกิจทุกรูปแบบ เดโมสำเร็จรูปจะช่วยให้คุณรันเว็บไซต์สร้างสรรค์ใหม่ได้อย่างรวดเร็ว
+            </p>
+            
+            <!-- Buttons Group -->
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                
+                
+                <!-- ปุ่มขอบขาวโปร่งใส -->
+                <a href="/Product" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.75rem; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 600; text-decoration: none; backdrop-filter: blur(4px);">
+                    <span><i class="fa-solid fa-cart-shopping"></i></span> Purchase
+                </a>
+              
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FEATURED GAMES SECTION ================= -->
+    <div id="games-section" style="max-width: 1200px; margin: 3rem auto 0 auto; padding: 0 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem;">
+            <div>
+                <h2 style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.25rem;"><i class="fa-brands fa-playstation"></i> เกมยอดฮิตแนะนำ</h2>
+                <p style="font-size: 0.8rem; color: #94a3b8;">เกมที่ได้รับความนิยมสูงสุดในขณะนี้</p>
+            </div>
+            <span style="font-size: 0.8rem; color: #ef4444; cursor: pointer; font-weight: 600;">ดูทั้งหมด &rarr;</span>
+        </div>
+
+        <!-- Game Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+
+            <!-- Card 1 -->
+<a href="/Product/Category/Fps" style="text-decoration: none; color: inherit;">
+    <div style="background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+        <div style="height: 150px; background: linear-gradient(45deg, #1e1b4b, #312e81); display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative;">
+            <i class="fa-solid fa-gun"></i>
+            <span style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; color: #38bdf8; border: 1px solid rgba(255,255,255,0.1);">Action / RPG</span>
+        </div>
+        <div style="padding: 1.25rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem;">Cyber Legends: 2077</h3>
+            <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 1rem;">ผจญภัยในโลกอนาคตไซเบอร์พังก์ ดื่มด่ำกับกราฟิกสุดล้ำและเนื้อเรื่องสุดเข้มข้น</p>
+        </div>
+    </div>
+</a>
+
+<!-- Card 2 -->
+<a href="/Product/Category/Rpg" style="text-decoration: none; color: inherit;">
+    <div style="background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+        <div style="height: 150px; background: linear-gradient(45deg, #064e3b, #022c22); display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative;">
+            <i class="fa-solid fa-globe"></i>
+            <span style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; color: #34d399; border: 1px solid rgba(255,255,255,0.1);">Open World</span>
+        </div>
+        <div style="padding: 1.25rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem;">Elden Realm</h3>
+            <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 1rem;">ท่องดินแดนแฟนตาซีไร้ขอบเขต ปราบมอนสเตอร์ระดับตำนานและค้นหาความลับ</p>
+        </div>
+    </div>
+</a>
+
+<!-- Card 3 -->
+<a href="/" style="text-decoration: none; color: inherit;">
+    <div style="background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+        <div style="height: 150px; background: linear-gradient(45deg, #831843, #500724); display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative;">
+            <i class="fa-solid fa-car-tunnel"></i>
+            <span style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; color: #f472b6; border: 1px solid rgba(255,255,255,0.1);">Racing</span>
+        </div>
+        <div style="padding: 1.25rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem;">Speed Horizon Ultimate</h3>
+            <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 1rem;">เกมแข่งรถซูเปอร์คาร์ภาพสมจริง ท้าทายความเร็วบนสนามแข่งระดับโลก</p>
+        </div>
+    </div>
+</a>
+
+<!-- Card 4 -->
+<a href="/" style="text-decoration: none; color: inherit;">
+    <div style="background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+        <div style="height: 150px; background: linear-gradient(45deg, #14532d, #052e16); display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative;">
+            <i class="fa-solid fa-star"></i>
+            <span style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; color: #4ade80; border: 1px solid rgba(255,255,255,0.1);">FPS / Tactical</span>
+        </div>
+        <div style="padding: 1.25rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem;">Tactical Ops: Zero</h3>
+            <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 1rem;">เกมยิงเชิงกลยุทธ์ทีมเวิร์ดสูง วัดความแม่นยำและไหวพริบในสถานการณ์คับขัน</p>
+        </div>
+    </div>
+</a>
+
+        </div>
+    </div>
+
+</div>

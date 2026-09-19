@@ -1,0 +1,7 @@
+node_modules/
+appsettings.Development.json
+appsettings.json
+
+[Bb]in/
+[Oo]bj/
+.vs/

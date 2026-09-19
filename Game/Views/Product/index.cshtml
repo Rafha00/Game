@@ -1,0 +1,129 @@
+@model IEnumerable<Game.Models.Product>
+
+@{
+    var title = ViewBag.CategoryName as string ?? "All Games";
+    ViewData["Title"] = title;
+    var total = Model.Count();
+}
+
+<style>
+    .gw-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 24px 56px; color: #fff; }
+
+    .gw-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px;
+               padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .gw-head h1 { font-size: 24px; font-weight: 800; margin: 0; }
+    .gw-head span { font-size: 13px; color: #9ca3af; }
+    .gw-head b { color: #c4b5fd; }
+
+    .gw-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .gw-row { display: flex; align-items: stretch; height: 80px; overflow: hidden;
+              color: inherit; text-decoration: none;
+              background: linear-gradient(to right, rgba(49,46,129,.55), rgba(17,24,39,.85));
+              border: 1px solid rgba(255,255,255,.08); border-radius: 6px;
+              transition: border-color .2s, background .2s, transform .15s; }
+    .gw-row:hover { border-color: rgba(139,92,246,.7); transform: translateX(2px);
+                    background: linear-gradient(to right, rgba(76,29,149,.65), rgba(30,27,75,.9)); }
+
+    .gw-thumb { width: 200px; flex-shrink: 0; background: #0b1220; }
+    .gw-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gw-noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+
+    .gw-info { flex: 1; min-width: 0; padding: 8px 16px; display: flex; flex-direction: column;
+               justify-content: center; gap: 3px; }
+    .gw-name { margin: 0; font-size: 16px; font-weight: 600; color: #fff;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gw-cat  { margin: 0; font-size: 12px; color: #a5b4fc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gw-desc { margin: 0; font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .gw-side { display: flex; align-items: center; gap: 14px; padding-right: 12px; flex-shrink: 0; }
+    .gw-stock { font-size: 11px; color: #9ca3af; text-align: right; line-height: 1.3; }
+    .gw-stock small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
+    .gw-stock.low { color: #fbbf24; }
+    .gw-stock.out { color: #f87171; }
+
+    .gw-price { padding: 6px 12px; border-radius: 4px; background: rgba(0,0,0,.45);
+                font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+    .gw-row.soldout .gw-thumb img { filter: grayscale(1); opacity: .55; }
+    .gw-row.soldout .gw-price { color: #9ca3af; }
+
+    .gw-empty { text-align: center; padding: 64px 16px; border: 1px solid rgba(255,255,255,.1);
+                border-radius: 8px; background: rgba(255,255,255,.04); color: #9ca3af; }
+    .gw-empty a { display: inline-block; margin-top: 16px; padding: 8px 20px; border-radius: 8px;
+                  background: #7c3aed; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; }
+
+    @@media (max-width: 640px) {
+        .gw-thumb { width: 120px; }
+        .gw-stock { display: none; }
+        .gw-name { font-size: 14px; }
+    }
+</style>
+
+<section class="gw-wrap">
+
+    <!-- HEADER -->
+    <div class="gw-head">
+        <h1>@title</h1>
+        <span>พบทั้งหมด <b>@total</b> เกม</span>
+    </div>
+
+    @if (total > 0)
+    {
+        <!-- GAME LIST -->
+        <div class="gw-list">
+            @foreach (var game in Model)
+            {
+                var outOfStock = game.Stock <= 0;
+                var lowStock = game.Stock > 0 && game.Stock <= 5;
+
+                <a asp-controller="Product"
+                   asp-action="Detail"
+                   asp-route-id="@game.Id"
+                   class="gw-row @(outOfStock ? "soldout" : "")">
+
+                    <!-- IMAGE -->
+                    <div class="gw-thumb">
+                        @if (!string.IsNullOrEmpty(game.ImageUrl))
+                        {
+                            <img src="@game.ImageUrl" alt="@game.Name" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="gw-noimg">🎮</div>
+                        }
+                    </div>
+
+                    <!-- INFO -->
+                    <div class="gw-info">
+                        <h2 class="gw-name">@game.Name</h2>
+                        <p class="gw-cat">@(string.IsNullOrEmpty(game.Category) ? "Game" : game.Category)</p>
+                        @if (!string.IsNullOrWhiteSpace(game.Description))
+                        {
+                            <p class="gw-desc">@game.Description</p>
+                        }
+                    </div>
+
+                    <!-- STOCK + PRICE -->
+                    <div class="gw-side">
+                        <div class="text-xs text-gray-400 flex items-center gap-2@(outOfStock ? "out" : lowStock ? "low" : "")">
+                           <small>Stock</small>
+                            @(outOfStock ? "หมด" : $"{game.Stock} ชิ้น")  
+                           
+                        </div>
+                        <div class="gw-price">฿@game.Price.ToString("N2")</div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="gw-empty">
+            <div style="font-size:40px;margin-bottom:8px">🎮</div>
+            <p style="margin:0">ไม่พบรายการเกมในหมวดหมู่นี้</p>
+            <a href="/">กลับสู่หน้าแรก</a>
+        </div>
+    }
+
+</section>
