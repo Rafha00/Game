@@ -29,6 +29,7 @@
                 <p style="margin-top: 0.25rem; font-size: 0.9rem; color: #94a3b8;">กรอกข้อมูลบัญชีของคุณเพื่อเข้าสู่ระบบ</p>
 
                 <form asp-action="Login" method="post" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" /> 
                     <div>
                         <label style="display: block; font-size: 0.9rem; font-weight: 500; color: #cbd5e1; margin-bottom: 0.25rem;">Email</label>
                         <input type="email" name="email" required placeholder="example@email.com"
@@ -45,6 +46,7 @@
                             style="width: 100%; height: 2.3rem; border-radius: 0.75rem; background: linear-gradient(to right, #7c3aed, #9333ea); color: #ffffff; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; margin-top: 0.25rem;">
                         เข้าสู่ระบบ
                     </button>
+                   
                 </form>
 
                 <div style="text-align: center; margin-top: 1rem; font-size: 0.7rem; color: #94a3b8;">

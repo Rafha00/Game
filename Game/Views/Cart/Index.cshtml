@@ -1,0 +1,209 @@
+@model Game.Models.CartViewModel
+@{
+    ViewData["Title"] = "ตะกร้าสินค้า";
+}
+
+<style>
+    .ct-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem; }
+    .ct-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; align-items: start; }
+    @@media (max-width: 900px) { .ct-grid { grid-template-columns: 1fr; } }
+
+    .ct-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .ct-sub { color: #94a3b8; font-size: .85rem; margin: .15rem 0 1.25rem; }
+
+    .ct-item { display: flex; align-items: center; gap: 1rem; background: #111827; border: 1px solid rgba(255,255,255,.07);
+               border-radius: .9rem; padding: .8rem 1rem; margin-bottom: .9rem; }
+    .ct-img { width: 64px; height: 64px; border-radius: .6rem; overflow: hidden; background: #0b0f19;
+              display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+    .ct-img img { width: 100%; height: 100%; object-fit: cover; }
+    .ct-info { flex: 1; min-width: 0; }
+    .ct-name { color: #fff; font-weight: 600; text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ct-cat { color: #94a3b8; font-size: .78rem; }
+
+    .ct-qty { display: flex; align-items: center; gap: .5rem; }
+    .ct-qty button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15);
+                     background: rgba(255,255,255,.05); color: #fff; cursor: pointer; line-height: 1; }
+    .ct-qty button:hover { background: #7c3aed; }
+    .ct-qty span { min-width: 1.5rem; text-align: center; font-weight: 700; }
+
+    .ct-price { width: 90px; text-align: right; font-weight: 600; }
+    .ct-del { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: .4rem; }
+    .ct-del:hover { color: #f87171; }
+
+    .ct-alert { border-radius: .6rem; padding: .6rem .9rem; font-size: .85rem; margin-bottom: .9rem; }
+    .ct-alert.err { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+    .ct-alert.ok  { background: rgba(34,197,94,.12); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+
+    .ct-panel { background: linear-gradient(160deg, #5b3fd1, #3b2a8f); border-radius: 1.1rem; padding: 1.5rem; color: #fff;
+                position: sticky; top: 90px; }
+    .ct-panel h3 { font-size: 1.1rem; font-weight: 700; margin: 0 0 1.1rem; }
+    .ct-label { font-size: .8rem; opacity: .85; margin-bottom: .35rem; display: block; }
+    .ct-coupon { display: flex; gap: .5rem; }
+    .ct-coupon input { flex: 1; min-width: 0; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2);
+                       border-radius: .6rem; padding: .6rem .8rem; color: #fff; text-transform: uppercase; outline: none; }
+    .ct-coupon input::placeholder { color: rgba(255,255,255,.55); text-transform: none; }
+    .ct-coupon button { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.3); color: #fff;
+                        border-radius: .6rem; padding: 0 1rem; cursor: pointer; font-weight: 600; }
+    .ct-coupon button:hover { background: rgba(255,255,255,.3); }
+
+    .ct-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+    .ct-chip { background: rgba(255,255,255,.12); border: 1px dashed rgba(255,255,255,.4); color: #fff; border-radius: 9999px;
+               padding: .2rem .7rem; font-size: .75rem; cursor: pointer; }
+    .ct-chip:hover { background: rgba(255,255,255,.25); }
+
+    .ct-applied { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.14);
+                  border-radius: .6rem; padding: .55rem .8rem; margin-top: .8rem; font-size: .85rem; }
+    .ct-applied button { background: none; border: none; color: #fecaca; cursor: pointer; font-size: .8rem; }
+
+    .ct-sum { border-top: 1px solid rgba(255,255,255,.2); margin-top: 1.2rem; padding-top: 1rem; }
+    .ct-row { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: .5rem; }
+    .ct-row.disc { color: #bbf7d0; }
+    .ct-row.total { font-weight: 700; font-size: 1.05rem; margin-top: .6rem; }
+
+    .ct-checkout { width: 100%; margin-top: 1.1rem; display: flex; justify-content: space-between; align-items: center;
+                   background: #4de1c4; color: #063b33; border: none; border-radius: .8rem; padding: .9rem 1.1rem;
+                   font-weight: 700; cursor: pointer; }
+    .ct-checkout:hover { background: #6ff0d5; }
+
+    .ct-empty { text-align: center; padding: 4rem 1rem; color: #94a3b8; }
+    .ct-empty a { display: inline-block; margin-top: 1rem; background: #7c3aed; color: #fff; padding: .6rem 1.4rem;
+                  border-radius: .7rem; text-decoration: none; font-weight: 600; }
+</style>
+
+<div class="ct-page">
+    <h1 class="ct-title">ตะกร้าสินค้า</h1>
+    <p class="ct-sub">คุณมี @Model.Items.Sum(i => i.Quantity) ชิ้นในตะกร้า</p>
+
+    @if (TempData["CartError"] != null)
+    {
+        <div class="ct-alert err">@TempData["CartError"]</div>
+    }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="ct-empty">
+            <div style="font-size:3rem;">🛒</div>
+            <p>ตะกร้าของคุณยังว่างอยู่</p>
+            <a asp-controller="Product" asp-action="Index">ไปเลือกซื้อเกม</a>
+        </div>
+    }
+    else
+    {
+        <div class="ct-grid">
+
+            <!-- LEFT: รายการสินค้า -->
+            <div>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="ct-item">
+                        <div class="ct-img">
+                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" alt="@item.Name" />
+                            }
+                            else
+                            {
+                                <span>🎮</span>
+                            }
+                        </div>
+
+                        <div class="ct-info">
+                            <a class="ct-name" asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId">@item.Name</a>
+                            <span class="ct-cat">@item.Category · ฿@item.Price.ToString("N2")</span>
+                        </div>
+
+                        <div class="ct-qty">
+                            <form asp-action="UpdateQty" method="post" style="margin:0">
+                                <input type="hidden" name="id" value="@item.CartItemId" />
+                                <input type="hidden" name="delta" value="-1" />
+                                <button type="submit" title="ลดจำนวน">−</button>
+                            </form>
+                            <span>@item.Quantity</span>
+                            <form asp-action="UpdateQty" method="post" style="margin:0">
+                                <input type="hidden" name="id" value="@item.CartItemId" />
+                                <input type="hidden" name="delta" value="1" />
+                                <button type="submit" title="เพิ่มจำนวน">+</button>
+                            </form>
+                        </div>
+
+                        <div class="ct-price">฿@item.LineTotal.ToString("N2")</div>
+
+                        <form asp-action="Remove" method="post" style="margin:0">
+                            <input type="hidden" name="id" value="@item.CartItemId" />
+                            <button type="submit" class="ct-del" title="ลบออกจากตะกร้า"><i class="fa-regular fa-trash-can"></i></button>
+                        </form>
+                    </div>
+                }
+            </div>
+
+            <!-- RIGHT: สรุปยอด + โค้ดส่วนลด -->
+            <aside class="ct-panel">
+                <h3>สรุปคำสั่งซื้อ</h3>
+
+                <label class="ct-label" for="couponInput">โค้ดส่วนลด</label>
+                <form asp-action="ApplyCoupon" method="post" class="ct-coupon">
+                    <input id="couponInput" name="code" type="text" placeholder="กรอกโค้ดส่วนลด" autocomplete="off" />
+                    <button type="submit">ใช้โค้ด</button>
+                </form>
+
+                @if (TempData["CouponError"] != null)
+                {
+                    <div class="ct-alert err" style="margin:.7rem 0 0">@TempData["CouponError"]</div>
+                }
+                @if (TempData["CouponOk"] != null)
+                {
+                    <div class="ct-alert ok" style="margin:.7rem 0 0">@TempData["CouponOk"]</div>
+                }
+
+                @if (Model.CouponCode != null)
+                {
+                    <div class="ct-applied">
+                        <span>🏷️ @Model.CouponCode</span>
+                        <form asp-action="RemoveCoupon" method="post" style="margin:0">
+                            <button type="submit">ยกเลิกโค้ด</button>
+                        </form>
+                    </div>
+                }
+                else if (Model.AvailableCodes.Any())
+                {
+                    <div class="ct-chips">
+                        @foreach (var c in Model.AvailableCodes)
+                        {
+                            <button type="button" class="ct-chip" data-code="@c.Code" title="@c.Description">@c.Code</button>
+                        }
+                    </div>
+                }
+
+                <div class="ct-sum">
+                    <div class="ct-row"><span>ราคาเต็ม</span><span>฿@Model.Subtotal.ToString("N2")</span></div>
+                    @if (Model.Discount > 0)
+                    {
+                        <div class="ct-row disc"><span>ส่วนลด (@Model.CouponCode)</span><span>−฿@Model.Discount.ToString("N2")</span></div>
+                    }
+                    <div class="ct-row total"><span>ยอดสุทธิ</span><span>฿@Model.Total.ToString("N2")</span></div>
+                </div>
+
+                <!-- TODO: เชื่อมกับระบบ Order/ชำระเงินในขั้นต่อไป -->
+                <button type="button" class="ct-checkout" id="checkoutBtn">
+                    <span>฿@Model.Total.ToString("N2")</span>
+                    <span>ชำระเงิน <i class="fa-solid fa-arrow-right"></i></span>
+                </button>
+            </aside>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    // กดชิปโค้ด → ใส่ในช่องกรอกโค้ดให้อัตโนมัติ
+    document.querySelectorAll('.ct-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            document.getElementById('couponInput').value = chip.dataset.code;
+        });
+    });
+
+    document.getElementById('checkoutBtn')?.addEventListener('click', function () {
+        alert('ระบบชำระเงินยังไม่เปิดใช้งาน');
+    });
+</script>
+}

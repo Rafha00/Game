@@ -9,6 +9,8 @@ namespace Game.Data
 
                  public DbSet<ProfileModel> Profiles { get; set; }
                    public DbSet<Product> Products { get; set; }
+                   public DbSet<CartItem> CartItems { get; set; }
+                   public DbSet<DiscountCode> DiscountCodes { get; set; }
                    
 
 

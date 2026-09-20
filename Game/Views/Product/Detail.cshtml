@@ -166,16 +166,81 @@
 
                 <div class="gd-cart">
                     <div class="gd-price">฿@Model.Price.ToString("N2")</div>
-                    @if (outOfStock)
+                     @if (outOfStock)
                     {
                         <button type="button" class="gd-add" disabled>สินค้าหมด</button>
                     }
                     else
                     {
-                        <button type="button" class="gd-add">หยิบใส่ตะกร้า</button>
+                        <button type="button" class="gd-add" id="addToCartBtn" data-id="@Model.Id">หยิบใส่ตะกร้า</button>
                     }
                 </div>
+                
             </div>
+                                <!-- POPUP -->
+                    <div id="gdModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+                        <div style="background:#1b2838;border:1px solid #2a475e;border-radius:12px;padding:28px;max-width:380px;width:90%;text-align:center;color:#fff;">
+                            <div id="gdModalIcon" style="font-size:42px;margin-bottom:8px;">🔒</div>
+                            <h3 id="gdModalTitle" style="font-size:20px;font-weight:600;margin-bottom:6px;"></h3>
+                            <p id="gdModalMsg" style="color:#9fb3c8;margin-bottom:20px;"></p>
+                            <div style="display:flex;gap:10px;justify-content:center;">
+                                <a id="gdModalLogin" href="/Auth/Login" style="display:none;background:#7c3aed;color:#fff;padding:8px 18px;border-radius:8px;text-decoration:none;">เข้าสู่ระบบ</a>
+                                <a id="gdModalCart" href="/Cart" style="display:none;background:#5c7e10;color:#fff;padding:8px 18px;border-radius:8px;text-decoration:none;">ไปที่ตะกร้า</a>
+                                <button type="button" id="gdModalClose" style="background:#2a475e;color:#fff;padding:8px 18px;border-radius:8px;border:none;">ปิด</button>
+                            </div>
+                        </div>
+                    </div>
+
+                        @section Scripts {
+                        <script>
+                        (function () {
+                            const modal = document.getElementById('gdModal');
+                            const show = (icon, title, msg, mode) => {
+                                document.getElementById('gdModalIcon').textContent = icon;
+                                document.getElementById('gdModalTitle').textContent = title;
+                                document.getElementById('gdModalMsg').textContent = msg;
+                                document.getElementById('gdModalLogin').style.display = mode === 'login' ? 'inline-block' : 'none';
+                                document.getElementById('gdModalCart').style.display  = mode === 'cart'  ? 'inline-block' : 'none';
+                                modal.style.display = 'flex';
+                            };
+                            document.getElementById('gdModalClose').onclick = () => modal.style.display = 'none';
+                            modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+                            const btn = document.getElementById('addToCartBtn');
+                            if (!btn) return;
+
+                            btn.addEventListener('click', async () => {
+                                btn.disabled = true;
+                                try {
+                                    const res = await fetch('/Cart/Add', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                        body: 'productId=' + encodeURIComponent(btn.dataset.id) + '&qty=1'
+                                    });
+
+                                    if (res.status === 401) {
+                                        document.getElementById('gdModalLogin').href =
+                                            '/Auth/Login?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+                                        show('🔒', 'กรุณาเข้าสู่ระบบ', 'คุณต้องเข้าสู่ระบบก่อนจึงจะหยิบสินค้าใส่ตะกร้าได้', 'login');
+                                        return;
+                                    }
+
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        window.updateCartBadge && window.updateCartBadge(data.count);
+                                        show('✅', 'เพิ่มลงตะกร้าแล้ว', 'สินค้าถูกเพิ่มในตะกร้าของคุณเรียบร้อย', 'cart');
+                                    } else {
+                                        show('⚠️', 'ไม่สามารถเพิ่มได้', data.message, null);
+                                    }
+                                } catch (e) {
+                                    show('⚠️', 'เกิดข้อผิดพลาด', 'กรุณาลองใหม่อีกครั้ง', null);
+                                } finally {
+                                    btn.disabled = false;
+                                }
+                            });
+                        })();
+                        </script>
+                        }
 
             <div class="gd-info">
                 <h3>สถานะสินค้า</h3>

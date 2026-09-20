@@ -84,6 +84,7 @@ namespace Game.Controllers
                 // 1. สร้าง Claims ระบุตัวตนผู้ใช้งาน
                 var claims = new List<Claim>
                 {
+                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), 
                     new Claim(ClaimTypes.Name, user.Email),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Role, user.Role ?? "customer")
@@ -101,5 +102,13 @@ namespace Game.Controllers
             ModelState.AddModelError("", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
             return View();
         }
+
+        [HttpPost]
+            public async Task<IActionResult> Logout()
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                HttpContext.Session.Clear();   // ล้างโค้ดส่วนลดที่ค้างใน session ด้วย
+                return RedirectToAction("Index", "Home");
+            }
     }
 }

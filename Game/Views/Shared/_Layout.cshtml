@@ -41,10 +41,12 @@
     <div style="display: flex; align-items: center; gap: 1rem;">
         @if (User?.Identity?.IsAuthenticated == true)
         {
-            <!-- Cart Icon -->
-            <a asp-controller="Cart" asp-action="Index" style="color: #cbd5e1; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" title="ตะกร้าสินค้า">
-                <i class="fa-solid fa-cart-shopping"></i>
-            </a>
+            
+           <!-- Cart Icon -->
+                <a asp-controller="Cart" asp-action="Index" style="position: relative; color: #cbd5e1; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" title="ตะกร้าสินค้า">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span id="cartBadge" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 700; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9999px; text-align: center; padding: 0 4px;">0</span>
+                </a>
 
             <!-- Profile Dropdown Container -->
             <div id="profileContainer" style="position: relative; display: inline-block;">
@@ -107,6 +109,18 @@
                     }
                 });
             </script>
+                            <script>
+                    window.updateCartBadge = function (n) {
+                        const b = document.getElementById('cartBadge');
+                        if (!b) return;
+                        b.textContent = n > 99 ? '99+' : n;
+                        b.style.display = n > 0 ? 'block' : 'none';
+                    };
+                    fetch('/Cart/Count')
+                        .then(r => r.json())
+                        .then(d => window.updateCartBadge(d.count))
+                        .catch(() => {});
+                </script>
         } @* <-- ปิดปีกกาของ @if (User?.Identity?.IsAuthenticated == true) ตรงนี้ครับ *@
         else
         {
