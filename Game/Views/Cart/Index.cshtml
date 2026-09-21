@@ -82,7 +82,7 @@
     @if (!Model.Items.Any())
     {
         <div class="ct-empty">
-            <div style="font-size:3rem;">🛒</div>
+            <div style="font-size:3rem;"><i class="fa-solid fa-cart-arrow-down"></i></div>
             <p>ตะกร้าของคุณยังว่างอยู่</p>
             <a asp-controller="Product" asp-action="Index">ไปเลือกซื้อเกม</a>
         </div>
@@ -103,7 +103,7 @@
                             }
                             else
                             {
-                                <span>🎮</span>
+                                <span><i class="fa-brands fa-playstation"></i></span>
                             }
                         </div>
 
@@ -183,11 +183,12 @@
                     <div class="ct-row total"><span>ยอดสุทธิ</span><span>฿@Model.Total.ToString("N2")</span></div>
                 </div>
 
-                <!-- TODO: เชื่อมกับระบบ Order/ชำระเงินในขั้นต่อไป -->
-                <button type="button" class="ct-checkout" id="checkoutBtn">
-                    <span>฿@Model.Total.ToString("N2")</span>
-                    <span>ชำระเงิน <i class="fa-solid fa-arrow-right"></i></span>
-                </button>
+                <form asp-action="Checkout" method="post" style="margin:0">
+                        <button type="submit" class="ct-checkout">
+                                <span>฿@Model.Total.ToString("N2")</span>
+                                 <span>ชำระเงิน  <i class="fa-solid fa-arrow-right"></i></span>
+                        </button>
+                </form>
             </aside>
         </div>
     }
@@ -202,8 +203,6 @@
         });
     });
 
-    document.getElementById('checkoutBtn')?.addEventListener('click', function () {
-        alert('ระบบชำระเงินยังไม่เปิดใช้งาน');
-    });
+    
 </script>
 }

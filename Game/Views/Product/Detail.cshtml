@@ -1,10 +1,12 @@
 @model Game.Models.Product
 
+
 @{
     ViewData["Title"] = Model.Name;
     var outOfStock = Model.Stock <= 0;
     var lowStock = Model.Stock > 0 && Model.Stock <= 5;
     var category = string.IsNullOrEmpty(Model.Category) ? "Game" : Model.Category;
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 }
 
 <style>
@@ -88,7 +90,7 @@
         <!-- TOP: title + back -->
         <div class="gd-top">
             <h1 class="gd-title">@Model.Name</h1>
-            <a class="gd-btn" href="javascript:history.back()">← กลับ</a>
+            <a class="gd-btn" href="javascript:history.back()"><i class="fa-solid fa-arrow-left-long"></i> กลับ</a>
         </div>
 
         <!-- HERO -->
@@ -103,7 +105,7 @@
                     }
                     else
                     {
-                        <div class="gd-noimg">🎮</div>
+                        <div class="gd-noimg"><i class="fa-brands fa-playstation"></i></div>
                     }
                 </div>
 
@@ -180,7 +182,7 @@
                                 <!-- POPUP -->
                     <div id="gdModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
                         <div style="background:#1b2838;border:1px solid #2a475e;border-radius:12px;padding:28px;max-width:380px;width:90%;text-align:center;color:#fff;">
-                            <div id="gdModalIcon" style="font-size:42px;margin-bottom:8px;">🔒</div>
+                            <div id="gdModalIcon" style="font-size:42px;margin-bottom:8px;"><i class="fa-solid fa-lock"></i></div>
                             <h3 id="gdModalTitle" style="font-size:20px;font-weight:600;margin-bottom:6px;"></h3>
                             <p id="gdModalMsg" style="color:#9fb3c8;margin-bottom:20px;"></p>
                             <div style="display:flex;gap:10px;justify-content:center;">
@@ -196,7 +198,7 @@
                         (function () {
                             const modal = document.getElementById('gdModal');
                             const show = (icon, title, msg, mode) => {
-                                document.getElementById('gdModalIcon').textContent = icon;
+                                document.getElementById('gdModalIcon').innerHTML = icon;
                                 document.getElementById('gdModalTitle').textContent = title;
                                 document.getElementById('gdModalMsg').textContent = msg;
                                 document.getElementById('gdModalLogin').style.display = mode === 'login' ? 'inline-block' : 'none';
@@ -221,19 +223,19 @@
                                     if (res.status === 401) {
                                         document.getElementById('gdModalLogin').href =
                                             '/Auth/Login?returnUrl=' + encodeURIComponent(location.pathname + location.search);
-                                        show('🔒', 'กรุณาเข้าสู่ระบบ', 'คุณต้องเข้าสู่ระบบก่อนจึงจะหยิบสินค้าใส่ตะกร้าได้', 'login');
+                                        show('<i class="fa-solid fa-lock"></i>', 'กรุณาเข้าสู่ระบบ', 'คุณต้องเข้าสู่ระบบก่อนจึงจะหยิบสินค้าใส่ตะกร้าได้', 'login');
                                         return;
                                     }
 
                                     const data = await res.json();
                                     if (data.success) {
                                         window.updateCartBadge && window.updateCartBadge(data.count);
-                                        show('✅', 'เพิ่มลงตะกร้าแล้ว', 'สินค้าถูกเพิ่มในตะกร้าของคุณเรียบร้อย', 'cart');
+                                        show('<i class="fa-regular fa-circle-check" style="color: rgb(99, 230, 190);"></i>', 'เพิ่มลงตะกร้าแล้ว', 'สินค้าถูกเพิ่มในตะกร้าของคุณเรียบร้อย', 'cart');
                                     } else {
-                                        show('⚠️', 'ไม่สามารถเพิ่มได้', data.message, null);
+                                        show('<i class="fa-solid fa-exclamation" style="color: rgb(218, 32, 36);"></i>', 'ไม่สามารถเพิ่มได้', data.message, null);
                                     }
                                 } catch (e) {
-                                    show('⚠️', 'เกิดข้อผิดพลาด', 'กรุณาลองใหม่อีกครั้ง', null);
+                                    show('<i class="fa-solid fa-triangle-exclamation" style="color: rgb(218, 32, 36);"></i>', 'เกิดข้อผิดพลาด', 'กรุณาลองใหม่อีกครั้ง', null);
                                 } finally {
                                     btn.disabled = false;
                                 }

@@ -12,6 +12,8 @@ namespace Game.Data
                    public DbSet<CartItem> CartItems { get; set; }
                    public DbSet<DiscountCode> DiscountCodes { get; set; }
                    
+                    public DbSet<Order> Orders {get; set;}
+                    public DbSet<OrderItem> OrderItems {get; set;}
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

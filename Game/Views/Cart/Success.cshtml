@@ -1,0 +1,59 @@
+@model Game.Models.Order
+@{
+    ViewData["Title"] = "สั่งซื้อสำเร็จ";
+    var orderNo = Model.Id.ToString().Substring(0, 8).ToUpper();
+}
+
+<style>
+    .os-page { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem; }
+    .os-card { background: #111827; border: 1px solid rgba(255,255,255,.07); border-radius: 1rem; padding: 1.5rem; }
+    .os-head { text-align: center; margin-bottom: 1.5rem; }
+    .os-head .ico { font-size: 3rem; }
+    .os-badge { display: inline-block; background: rgba(250,204,21,.15); color: #fde047; border-radius: 9999px;
+                padding: .2rem .8rem; font-size: .8rem; margin-top: .4rem; }
+    .os-badge.paid { background: rgba(34,197,94,.15); color: #86efac; }
+    .os-item { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .os-item small { color: #94a3b8; }
+    .os-row { display: flex; justify-content: space-between; margin-top: .5rem; color: #cbd5e1; }
+    .os-row.disc { color: #86efac; }
+    .os-row.total { color: #fff; font-weight: 700; font-size: 1.1rem; margin-top: .8rem; }
+    .os-actions { display: flex; gap: .7rem; justify-content: center; margin-top: 1.5rem; }
+    .os-actions a { background: #7c3aed; color: #fff; padding: .6rem 1.4rem; border-radius: .7rem; text-decoration: none; font-weight: 600; }
+    .os-actions a.ghost { background: rgba(255,255,255,.08); }
+</style>
+
+<div class="os-page">
+    <div class="os-card">
+        <div class="os-head">
+            <div class="ico">✅</div>
+            <h1 style="font-size:1.4rem;font-weight:700;margin:.3rem 0 0;">สร้างคำสั่งซื้อเรียบร้อย</h1>
+            <p style="color:#94a3b8;margin:.3rem 0 0;">เลขที่คำสั่งซื้อ #@orderNo</p>
+            <span class="os-badge @(Model.Status == "paid" ? "paid" : "")">
+                @(Model.Status == "paid" ? "ชำระเงินแล้ว" : "รอชำระเงิน")
+            </span>
+        </div>
+
+        @foreach (var item in Model.Items)
+        {
+            <div class="os-item">
+                <div>
+                    <div>@(item.Product?.Name ?? "สินค้า")</div>
+                    <small>฿@item.Price.ToString("N2") × @item.Quantity</small>
+                </div>
+                <div>฿@((item.Price * item.Quantity).ToString("N2"))</div>
+            </div>
+        }
+
+        <div class="os-row"><span>ราคาเต็ม</span><span>฿@Model.Subtotal.ToString("N2")</span></div>
+        @if (Model.DiscountAmount > 0)
+        {
+            <div class="os-row disc"><span>ส่วนลด (@Model.CouponCode)</span><span>−฿@Model.DiscountAmount.ToString("N2")</span></div>
+        }
+        <div class="os-row total"><span>ยอดสุทธิ</span><span>฿@Model.TotalPrice.ToString("N2")</span></div>
+
+        <div class="os-actions">
+            <a asp-controller="Product" asp-action="Index">เลือกซื้อเกมต่อ</a>
+            <a class="ghost" asp-controller="Home" asp-action="Index">กลับหน้าแรก</a>
+        </div>
+    </div>
+</div>
