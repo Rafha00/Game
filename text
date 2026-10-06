@@ -1,13 +1,27 @@
-ติดตั้งเครื่องมือ (NuGet Packages)
-dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+ติดตั้งเครื่องมือ (NuGet Packages) 
+
+dotnet add package Pomelo.EntityFrameworkCore.MySql
 dotnet add package Microsoft.EntityFrameworkCore.Tools
 
-คำสั่งส่งโครงสร้างไปสร้างตารางจริงบน Supabase:
-dotnet ef database update
 
 
 ตรวจสอบการติดตั้ง NuGet Package ซ้ำอีกรอบ
+
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 
-สร้าง Migration
-dotnet ef migrations add InitialCreate
+สร้าง Migration ใหม่สำหรับ MySQL
+
+dotnet ef migrations add InitialMySql
+
+
+คือคำสั่งใน .NET CLI ที่ใช้สำหรับ ดาวน์โหลดและติดตั้ง Dependencies
+
+dotnet restore
+
+รันคำสั่งตรวจดู Error
+
+dotnet build
+
+คำสั่งส่งโครงสร้างไปสร้างตารางจริงบน mysql:
+
+dotnet ef database update

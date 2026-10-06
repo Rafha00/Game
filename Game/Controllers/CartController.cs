@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Game.Data;
 using Game.Models;
 
+
 namespace Game.Controllers
 {
     public class CartController : Controller
@@ -213,45 +214,35 @@ private async Task<CartViewModel> BuildCartAsync(Guid userId)
 }
 
     [HttpPost]
+public async Task<IActionResult> Checkout()
+{
+    var userId = GetUserId();
+    if (userId == null)
+        return RedirectToAction("Login", "Auth", new { returnUrl = "/Cart" });
 
-    public async Task<IActionResult> Checkout()
-        {
-            var userId = GetUserId();
-            if (userId == null)
-            return RedirectToAction("Login","Auth", new{ returnUrl = "/Cart"});
-        // // คำนวณราคา/ส่วนลดใหม่จาก DB ทั้งหมด 
-        var cart = await BuildCartAsync(userId.Value);
-        if (!cart.Items.Any())
-            {
-                TempData["CartError"] = "ตะกร้าของคุณว่าง";
-                return RedirectToAction(nameof(Index));
-            }
-                 // ทุกอย่างสำเร็จพร้อมกัน หรือไม่ก็ยกเลิกทั้งหมด
-            await using var tx = await _db.Database.BeginTransactionAsync();
-    
-         // ตัดสต็อกแบบ atomic: อัปเดตได้ก็ต่อเมื่อสต็อกยังพอ กันคนสองคนซื้อชิ้นสุดท้ายพร้อมกัน
+    var cart = await BuildCartAsync(userId.Value);
+    if (!cart.Items.Any())
+    {
+        TempData["CartError"] = "ตะกร้าของคุณว่างเปล่า";
+        return RedirectToAction(nameof(Index));
+    }
 
-            foreach (var line in cart.Items)
-            {
-                var qty = line.Quantity;
-                var affected = await _db.Products
-                   .Where(p => p.Id == line.ProductId && p.Stock >= qty)
-                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p =>p.Stock - qty));
-                if (affected == 0 )
-                {
-                    TempData["CartError"] = $"ขออภัยสินค้า \"{line.Name}\" มี Stock ไม่พอ กรุณาปรับจำนวน";
-                    return RedirectToAction(nameof(Index));
-                }
-            }
+    // เช็คสต็อกคร่าว ๆ ก่อนสร้างออเดอร์ (ตัดจริงตอนกดยืนยันจ่ายเงิน)
+    var outOfStock = cart.Items.FirstOrDefault(i => i.Quantity > i.Stock);
+    if (outOfStock != null)
+    {
+        TempData["CartError"] = $"ขออภัย สินค้า \"{outOfStock.Name}\" มีสต็อกไม่พอ กรุณาปรับจำนวน";
+        return RedirectToAction(nameof(Index));
+    }
 
-           var order = new Order
+    var order = new Order
     {
         UserId = userId.Value,
         Subtotal = cart.Subtotal,
         DiscountAmount = cart.Discount,
         CouponCode = cart.CouponCode,
         TotalPrice = cart.Total,
-        Status = "pending",   // รอชำระเงิน (ยังไม่ได้ต่อระบบจ่ายเงินจริง)
+        Status = "pending",
         Items = cart.Items.Select(l => new OrderItem
         {
             ProductId = l.ProductId,
@@ -259,16 +250,14 @@ private async Task<CartViewModel> BuildCartAsync(Guid userId)
             Quantity = l.Quantity
         }).ToList()
     };
+    _db.Orders.Add(order);
+    await _db.SaveChangesAsync();
 
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
-        await _db.CartItems.Where(c => c.UserId == userId).ExecuteDeleteAsync();
-        await tx.CommitAsync();
+    await _db.CartItems.Where(c => c.UserId == userId).ExecuteDeleteAsync();
+    HttpContext.Session.Remove(CouponKey);
 
-        HttpContext.Session.Remove(CouponKey);
-        return RedirectToAction(nameof(Success), new{id = order.Id});
-        
-     }
+    return RedirectToAction(nameof(Success), new { id = order.Id });
+}
 
      [HttpGet]
      public async Task<IActionResult> Success(Guid id)
@@ -287,6 +276,66 @@ private async Task<CartViewModel> BuildCartAsync(Guid userId)
        
         }
 
+
+        [HttpGet]
+        
+        public async Task<IActionResult> MyOrders()
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return RedirectToAction("Login", "Auth", new {returnUrl = "/Cart/MyOrders"});
+
+                var email = await _db.Profiles.Where(p => p.Id == userId).Select(p => p.Email).FirstOrDefaultAsync();
+
+                    var orders = await _db.Orders
+                    .Where(o => o.UserId == userId )
+                    .Include(o => o.Items).ThenInclude(i => i.Product)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .ToListAsync();
+
+                    ViewBag.UserEmail = email ?? "_";
+                    return View(orders);
+        
+        }
+
+       [HttpPost]
+public async Task<IActionResult> Pay(Guid id, string method)
+{
+    var userId = GetUserId();
+    if (userId == null)
+        return RedirectToAction("Login", "Auth", new { returnUrl = "/Cart/MyOrders" });
+
+    var order = await _db.Orders.Include(o => o.Items)
+        .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+    if (order == null || order.Status != "pending")
+        return RedirectToAction(nameof(MyOrders));
+
+    await using var tx = await _db.Database.BeginTransactionAsync();
+
+    // ตัดสต็อกแบบ atomic ทีละชิ้น ถ้าชิ้นไหนสต็อกไม่พอ ย้อนกลับทั้งหมด
+    foreach (var item in order.Items)
+    {
+        var qty = item.Quantity;
+        var affected = await _db.Products
+            .Where(p => p.Id == item.ProductId && p.Stock >= qty)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock - qty));
+
+        if (affected == 0)
+        {
+            TempData["PayError"] = "ขออภัย มีสินค้าบางรายการในคำสั่งซื้อนี้สต็อกไม่พอแล้ว";
+            return RedirectToAction(nameof(MyOrders));
+        }
+    }
+
+    order.Status = "paid";
+    await _db.SaveChangesAsync();
+    await tx.CommitAsync();
+
+    var methodLabel = method == "visa" ? "บัตร Visa" : "PromptPay QR";
+    TempData["PayOk"] = $"ชำระเงินคำสั่งซื้อ #{order.Id.ToString().Substring(0, 8).ToUpper()} ด้วย{methodLabel} สำเร็จ";
+    return RedirectToAction(nameof(MyOrders));
+}
 
 
 

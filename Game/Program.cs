@@ -1,16 +1,23 @@
 using Game.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.Cookies; // <-- ต้องมี using นี้ด้านบนสุด
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// === ดึง Connection String จาก appsettings.json ===
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// === 1. ต้องมีบล็อกนี้เพื่อลงทะเบียน Cookie Authentication ===
+// === เปลี่ยนมาใช้ MySQL ด้วย Pomelo.EntityFrameworkCore.MySql ===
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString) // ตรวจสอบเวอร์ชันของ MySQL อัตโนมัติ
+    ));
+
+// === 1. บล็อกสำหรับลงทะเบียน Cookie Authentication ===
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -18,7 +25,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     });
 
-// บริการ Session (ที่คุณมีอยู่แล้ว)
+// บริการ Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -42,7 +49,7 @@ app.UseRouting();
 
 app.UseSession();
 
-// === 2. สำคัญมาก! ต้องเรียกใช้งาน UseAuthentication() ก่อน UseAuthorization() ===
+// === 2. เรียกใช้งาน Authentication ก่อน Authorization ===
 app.UseAuthentication(); 
 app.UseAuthorization();
 

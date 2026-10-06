@@ -71,6 +71,10 @@
                         ⚙️ ตั้งค่าโปรไฟล์
                     </a>
 
+                    <a asp-controller="Cart" asp-action="MyOrders" style="display: block; padding: 0.6rem 1rem; color: #cbd5e1; font-size:0.8rem; text-decoration: none; transition: background 0.2s;"  onmouseover="this.style.background='rgba(255,255,255,0.05)' " onmouseout="this.style.background='transparent'">
+                            ประวัติการสั่งซื้อ
+                    </a>
+
                     <!-- ปุ่ม Logout -->
                     <form asp-controller="Auth" asp-action="Logout" method="post" style="margin: 0; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.25rem;">
                         <button type="submit" style="width: 100%; text-align: left; background: none; border: none; padding: 0.6rem 1rem; color: #f87171; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
