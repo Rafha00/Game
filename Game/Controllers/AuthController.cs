@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Game.Controllers
 {
@@ -30,28 +31,29 @@ namespace Game.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 1. ตรวจสอบว่ามีอีเมลนี้ในระบบหรือยัง
-                var existingUser = await _context.Profiles.FirstOrDefaultAsync(p => p.Email == model.Email);
+                // 1. ตรวจสอบว่ามีอีเมลนี้ในระบบหรือยัง (เปลี่ยนมาใช้ _context.Users ตามตาราง users)
+                var existingUser = await _context.Users.FirstOrDefaultAsync(p => p.Email == model.Email);
                 if (existingUser != null)
                 {
                     ModelState.AddModelError("", "อีเมลนี้ถูกใช้งานแล้ว");
                     return View(model);
                 }
 
-                // 2. สร้าง ID ใหม่
+                // 2. สร้าง ID ใหม่ (เนื่องจากตารางใช้ uuid() เป็นค่าเริ่มต้นได้ สามารถปล่อยให้ Database สร้าง หรือใส่ Guid เพิ่มได้)
                 Guid newId = Guid.NewGuid();
 
-                // 3. บันทึกลงตาราง profiles ผ่าน AppDbContext
-                var profile = new ProfileModel
+                // 3. บันทึกลงตาราง users ผ่าน AppDbContext
+                var user = new User
                 {
                     Id = newId,
                     Email = model.Email,
-                    Role = string.IsNullOrEmpty(model.Role) ? "customer" : model.Role
+                    Password = model.Password, // บันทึกรหัสผ่านลงตาราง
+                    Role = string.IsNullOrEmpty(model.Role) ? "user" : model.Role
                 };
 
                 try
                 {
-                    _context.Profiles.Add(profile);
+                    _context.Users.Add(user);
                     await _context.SaveChangesAsync();
                 }
                 catch (Exception ex)
@@ -76,23 +78,23 @@ namespace Game.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password)
         {
-            // ค้นหาจากอีเมลในฐานข้อมูล
-            var user = await _context.Profiles.FirstOrDefaultAsync(p => p.Email == email);
+            // ค้นหาจากอีเมลและรหัสผ่านในตาราง users
+            var user = await _context.Users.FirstOrDefaultAsync(p => p.Email == email && p.Password == password);
             
             if (user != null)
             {
                 // 1. สร้าง Claims ระบุตัวตนผู้ใช้งาน
                 var claims = new List<Claim>
                 {
-                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), 
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), 
                     new Claim(ClaimTypes.Name, user.Email),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role ?? "customer")
+                    new Claim(ClaimTypes.Role, user.Role ?? "user")
                 };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                // 2. สั่งสร้างและบันทึกคุกกี้ล็อกอิน (ทำให้ User.Identity.IsAuthenticated เป็น true)
+                // 2. สั่งสร้างและบันทึกคุกกี้ล็อกอิน
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
                 // 3. ล็อกอินสำเร็จ เปลี่ยนเส้นทางไปหน้าแรก
@@ -103,12 +105,32 @@ namespace Game.Controllers
             return View();
         }
 
+        // --- ระบบ Logout ---
         [HttpPost]
-            public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index", "Home");
+        }
+
+        // --- หน้า Profile ---
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            // ดึง Email ของคนที่กำลังล็อกอินอยู่จาก Claim
+            var email = User.FindFirstValue(ClaimTypes.Email);
+
+            // ค้นหาข้อมูลจากตาราง users
+            var userProfile = await _context.Users.FirstOrDefaultAsync(p => p.Email == email);
+
+            if (userProfile == null)
             {
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                HttpContext.Session.Clear();   // ล้างโค้ดส่วนลดที่ค้างใน session ด้วย
-                return RedirectToAction("Index", "Home");
+                return NotFound();
             }
+
+            return View(userProfile);
+        }
     }
 }

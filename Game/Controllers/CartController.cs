@@ -285,7 +285,7 @@ public async Task<IActionResult> Checkout()
             if (userId == null)
                 return RedirectToAction("Login", "Auth", new {returnUrl = "/Cart/MyOrders"});
 
-                var email = await _db.Profiles.Where(p => p.Id == userId).Select(p => p.Email).FirstOrDefaultAsync();
+                var email = await _db.Users.Where(p => p.Id == userId).Select(p => p.Email).FirstOrDefaultAsync();
 
                     var orders = await _db.Orders
                     .Where(o => o.UserId == userId )

@@ -106,11 +106,7 @@
 
                     <!-- STOCK + PRICE -->
                     <div class="gw-side">
-                        <div class="text-xs text-gray-400 flex items-center gap-2@(outOfStock ? "out" : lowStock ? "low" : "")">
-                           <small>Stock</small>
-                            @(outOfStock ? "หมด" : $"{game.Stock} ชิ้น")  
-                           
-                        </div>
+                       
                         <div class="gw-price">฿@game.Price.ToString("N2")</div>
                     </div>
                 </a>

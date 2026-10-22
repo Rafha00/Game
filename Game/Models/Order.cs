@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Game.Models
 {
-    [Table("Orders")]
+    [Table("orders")]
     public class Order
     {
         [Key]
@@ -34,7 +34,7 @@ namespace Game.Models
         public List<OrderItem> Items { get; set; } = new();
     }
 
-    [Table("OrderItems")]
+    [Table("order_items")]
     public class OrderItem
     {
         [Key]

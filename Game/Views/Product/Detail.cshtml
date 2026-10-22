@@ -139,19 +139,16 @@
                         <span class="l">หมวดหมู่:</span>
                         <span class="v blue">@category</span>
                     </div>
-                    <div class="gd-row">
-                        <span class="l">สถานะสต็อก:</span>
-                        <span class="v @(outOfStock ? "out" : lowStock ? "low" : "ok")">
-                            @(outOfStock ? "สินค้าหมด" : $"{Model.Stock} ชิ้น")
-                        </span>
-                    </div>
+                    
                 </div>
 
                 <div class="gd-tags">
                     <p>แท็กของสินค้านี้:</p>
                     <span class="gd-tag">@category</span>
                     <span class="gd-tag">Digital</span>
+                    
                 </div>
+                
             </div>
         </div>
 
@@ -244,23 +241,7 @@
                         </script>
                         }
 
-            <div class="gd-info">
-                <h3>สถานะสินค้า</h3>
-                <p>
-                    @if (outOfStock)
-                    {
-                        <text>ขณะนี้สินค้าหมดชั่วคราว กรุณากลับมาเช็กอีกครั้งภายหลัง</text>
-                    }
-                    else if (lowStock)
-                    {
-                        <text>เหลือเพียง @Model.Stock ชิ้นสุดท้าย รีบสั่งซื้อก่อนหมด</text>
-                    }
-                    else
-                    {
-                        <text>มีสินค้าพร้อมจำหน่าย @Model.Stock ชิ้น จัดส่งทันทีผ่านระบบดิจิทัล</text>
-                    }
-                </p>
-            </div>
+            
         </div>
 
     </div>

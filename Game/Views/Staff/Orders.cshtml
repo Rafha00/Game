@@ -1,0 +1,87 @@
+
+@model IEnumerable<Game.Models.Order>
+@{
+    ViewData["Title"] = "จัดการออเดอร์";
+    Layout = null;
+    var selected = ViewBag.SelectedStatus as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orders | GAMEWORLD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="bg-[#090c18] text-slate-100">
+<div class="flex min-h-screen">
+    <partial name="_Sidebar" />
+    <main class="min-w-0 flex-1 p-5 md:p-8">
+        <header class="mb-7">
+            <p class="text-xs font-bold tracking-widest text-purple-400">ORDER MANAGEMENT</p>
+            <h1 class="mt-2 text-3xl font-black">จัดการออเดอร์</h1>
+            <p class="mt-2 text-sm text-slate-400">ตรวจสอบรายการและสถานะการชำระเงิน</p>
+        </header>
+
+        <form method="get" class="mb-5 flex flex-wrap gap-3">
+            <select name="status" class="rounded-xl border border-white/10 bg-[#121729] px-4 py-3 text-sm">
+                <option value="">ทุกสถานะ</option>
+                <option value="pending" selected="@(selected == "pending")">รอชำระเงิน</option>
+                <option value="paid" selected="@(selected == "paid")">ชำระเงินแล้ว</option>
+            </select>
+            <button class="rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold hover:bg-purple-500">
+                <i class="fa-solid fa-filter mr-2"></i>กรองรายการ
+            </button>
+        </form>
+
+        <div class="overflow-x-auto rounded-2xl border border-white/10 bg-[#121729]">
+            <table class="w-full min-w-[700px] text-left text-sm">
+                <thead class="bg-white/5 text-xs uppercase text-slate-400">
+                    <tr>
+                        <th class="p-4">ออเดอร์</th>
+                        <th class="p-4">วันที่</th>
+                        <th class="p-4">สินค้า</th>
+                        <th class="p-4">ยอดสุทธิ</th>
+                        <th class="p-4">สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                @foreach (var order in Model)
+                {
+                    <tr class="hover:bg-purple-500/5">
+                        <td class="p-4 font-bold">#@order.Id</td>
+                        <td class="p-4 text-slate-400">
+                            @order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                        <td class="max-w-xs p-4">
+                            @if (order.Items != null && order.Items.Any())
+                            {
+                                foreach (var item in order.Items)
+                                {
+                                    <div class="mb-1">
+                                        @(item.Product?.Name ?? "สินค้า")
+                                        <span class="text-slate-500">× @item.Quantity</span>
+                                    </div>
+                                }
+                            }
+                        </td>
+                        <td class="p-4 font-bold">฿@order.TotalPrice.ToString("N2")</td>
+                        <td class="p-4">
+                            <span class="rounded-full px-3 py-1 text-xs font-bold @(order.Status == "paid" ? "bg-green-500/10 text-green-300" : "bg-yellow-500/10 text-yellow-300")">
+                                @(order.Status == "paid" ? "ชำระแล้ว" : order.Status == "pending" ? "รอชำระเงิน" : order.Status)
+                            </span>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="p-10 text-center text-slate-500">ไม่พบรายการออเดอร์</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Game.Models
 {
-    [Table("Products")]
+    [Table("products")]
     public class Product
     {
         [Key]
@@ -17,10 +17,14 @@ namespace Game.Models
         public string Description { get; set; } = "";
 
         [Column("price")]
-        public decimal Price { get; set; }
+        public long Price { get; set; }
 
-        [Column("image_url")] // ตรงกับในภาพที่เป็น image_url[cite: 9]
-        public string? ImageUrl { get; set; } = "";
+        [Column("image_url")]
+            public string? ImageUrl { get; set; } = string.Empty;
+
+            // สำหรับรับไฟล์จากฟอร์ม (ไม่ต้อง map ลงฐานข้อมูล)
+            [NotMapped]
+            public IFormFile? ImageFile { get; set; }
 
         [Column("category")]
         public string Category { get; set; } = "";

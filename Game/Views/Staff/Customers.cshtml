@@ -1,0 +1,76 @@
+
+@model IEnumerable<Game.Models.User>
+@{
+    ViewData["Title"] = "ข้อมูลลูกค้า";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Customers | GAMEWORLD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="bg-[#090c18] text-slate-100">
+<div class="flex min-h-screen">
+    <partial name="_Sidebar" />
+    <main class="min-w-0 flex-1 p-5 md:p-8">
+        <header class="mb-7">
+            <p class="text-xs font-bold tracking-widest text-purple-400">CUSTOMER DIRECTORY</p>
+            <h1 class="mt-2 text-3xl font-black">ข้อมูลลูกค้า</h1>
+            <p class="mt-2 text-sm text-slate-400">รายชื่อบัญชีลูกค้าใน GAMEWORLD</p>
+        </header>
+
+        <div class="mb-5 rounded-2xl border border-purple-500/20 bg-[#121729] p-5">
+            <p class="text-sm text-slate-400">จำนวนลูกค้าที่ตรงกับการค้นหา</p>
+            <p class="mt-2 text-3xl font-black text-purple-300">@Model.Count()</p>
+        </div>
+
+        <form method="get" class="mb-5 flex flex-wrap gap-3">
+            <input name="search" value="@ViewBag.Search" placeholder="ค้นหาอีเมลลูกค้า..."
+                   class="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#121729] px-4 py-3 text-sm outline-none focus:border-purple-500" />
+            <button class="rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold hover:bg-purple-500">
+                <i class="fa-solid fa-magnifying-glass mr-2"></i>ค้นหา
+            </button>
+        </form>
+
+        <div class="overflow-x-auto rounded-2xl border border-white/10 bg-[#121729]">
+            <table class="w-full min-w-[500px] text-left text-sm">
+                <thead class="bg-white/5 text-xs text-slate-400">
+                    <tr>
+                        <th class="p-4">บัญชีลูกค้า</th>
+                        <th class="p-4">Role</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                @foreach (var customer in Model)
+                {
+                    <tr class="hover:bg-purple-500/5">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/15 font-bold text-purple-300">
+                                    @(string.IsNullOrEmpty(customer.Email) ? "?" : customer.Email.Substring(0, 1).ToUpper())
+                                </div>
+                                <span class="font-medium">@customer.Email</span>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <span class="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
+                                @customer.Role
+                            </span>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="2" class="p-10 text-center text-slate-500">ไม่พบข้อมูลลูกค้า</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

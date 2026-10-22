@@ -13,132 +13,660 @@
 </head>
 <body style="background-color: #0b0f19; margin: 0; color: #ffffff;">
     
-                    <nav style="position: fixed; top: 0; left: 0; width: 100%; z-index: 50; padding: 1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #050505, #0D0D0D, #171717); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); box-sizing: border-box;">
-    
-    <!-- Left: Logo & Brand -->
-    <div style="display: flex; align-items: center; cursor: pointer;">
-        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0.5rem;">
-            <div style="width: 2.2rem; height: 2.2rem; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 1.2rem;"><i class="fa-brands fa-playstation"></i></span>
-            </div>
-            <span style="font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.025em;">
-                GAME<span style="color: #8b5cf6;">WORLD</span>
-            </span>
-        </a>
-    </div>
-
-    <!-- Center: Menu Links (แสดงเฉพาะตอน Login แล้ว) -->
-    @if (User?.Identity?.IsAuthenticated == true)
-    {
-        <div style="display: flex; align-items: center; gap: 2rem;">
-            <a href="/" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: color 0.2s;">Home</a>
-            <a asp-controller="/Product" asp-action="Index" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: color 0.2s;">Buy</a>
-            <a href="/Home/About" style="color: #cbd5e1; font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: color 0.2s;">About</a>
-        </div>
+                  
+<style>
+    .gw-navbar,
+    .gw-navbar * {
+        box-sizing: border-box;
     }
 
-    <!-- Right: Conditional Rendering based on Login Status -->
-    <div style="display: flex; align-items: center; gap: 1rem;">
+    .gw-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        min-height: 76px;
+        z-index: 1000;
+        padding: 0 4%;
+        background: rgba(5, 9, 20, .96);
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        box-shadow: 0 8px 30px rgba(0,0,0,.25);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        color: #fff;
+    }
+
+    .gw-navbar-inner {
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 25px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    /* LOGO */
+    .gw-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        flex-shrink: 0;
+    }
+
+    .gw-brand-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ff244b;
+        font-size: 23px;
+        background: rgba(255,23,68,.10);
+        border: 1px solid rgba(255,23,68,.28);
+        box-shadow: 0 0 18px rgba(255,23,68,.08);
+    }
+
+    .gw-brand-text {
+        color: #fff;
+        font-size: 25px;
+        font-weight: 900;
+        letter-spacing: -1px;
+        white-space: nowrap;
+        font-style: italic;
+    }
+
+    .gw-brand-text span {
+        color: #ff244b;
+    }
+
+    /* MENU */
+    .gw-menu {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+    }
+
+    .gw-menu a {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 28px 0;
+        color: #aab7ca;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color .2s;
+        white-space: nowrap;
+    }
+
+    .gw-menu a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 17px;
+        height: 2px;
+        background: #ff244b;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .25s;
+    }
+
+    .gw-menu a:hover,
+    .gw-menu a.active {
+        color: #fff;
+    }
+
+    .gw-menu a:hover::after,
+    .gw-menu a.active::after {
+        transform: scaleX(1);
+    }
+
+    /* RIGHT SIDE */
+    .gw-nav-right {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 14px;
+        flex-shrink: 0;
+    }
+
+    .gw-cart-link {
+        position: relative;
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        border: 1px solid rgba(255,255,255,.09);
+        background: rgba(255,255,255,.035);
+        color: #dbe5f5;
+        font-size: 17px;
+        text-decoration: none;
+        transition: .25s;
+    }
+
+    .gw-cart-link:hover {
+        color: #ff244b;
+        background: rgba(255,23,68,.08);
+        border-color: rgba(255,23,68,.4);
+    }
+
+    #cartBadge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        background: #ff1744;
+        color: white;
+        border: 2px solid #080d19;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    /* PROFILE */
+    .gw-profile {
+        position: relative;
+    }
+
+    .gw-profile-btn {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#ff1744,#a9002c);
+        border: 1px solid rgba(255,255,255,.18);
+        color: white;
+        font-size: 21px;
+        cursor: pointer;
+        transition: .25s;
+    }
+
+    .gw-profile-btn:hover {
+        box-shadow: 0 0 20px rgba(255,23,68,.35);
+        transform: translateY(-1px);
+    }
+
+    .gw-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 14px);
+        right: 0;
+        width: 245px;
+        padding: 7px;
+        border-radius: 14px;
+        background: #0b1221;
+        border: 1px solid #24334b;
+        box-shadow: 0 18px 45px rgba(0,0,0,.55);
+        animation: gwDropdownIn .18s ease-out;
+    }
+
+    .gw-dropdown.show {
+        display: block;
+    }
+
+    @@keyframes gwDropdownIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .gw-dropdown-user {
+        padding: 13px 12px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        margin-bottom: 5px;
+    }
+
+    .gw-dropdown-label {
+        color: #8190a8;
+        font-size: 11px;
+        margin: 0 0 5px;
+    }
+
+    .gw-dropdown-email {
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        margin: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .gw-dropdown a {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px 12px;
+        color: #bdc9da;
+        border-radius: 8px;
+        font-size: 13px;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+    .gw-dropdown a:hover {
+        background: rgba(255,255,255,.06);
+        color: #fff;
+    }
+
+    .gw-dropdown a i {
+        width: 17px;
+        text-align: center;
+        color: #ff536f;
+    }
+
+    .gw-dropdown form {
+        margin: 5px 0 0;
+        padding-top: 5px;
+        border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .gw-logout {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        width: 100%;
+        padding: 11px 12px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: #ff7187;
+        font-size: 13px;
+        text-align: left;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .gw-logout:hover {
+        background: rgba(255,23,68,.10);
+        color: #ff244b;
+    }
+
+    /* LOGIN BUTTON */
+    .gw-login-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 42px;
+        padding: 0 20px;
+        border-radius: 10px;
+        color: white;
+        background: linear-gradient(110deg,#ff1744,#d50936);
+        border: 1px solid rgba(255,255,255,.08);
+        box-shadow: 0 5px 20px rgba(255,23,68,.18);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+        transition: .25s;
+        white-space: nowrap;
+    }
+
+    .gw-login-btn:hover {
+        color: white;
+        background: #e50935;
+        box-shadow: 0 7px 25px rgba(255,23,68,.35);
+        transform: translateY(-1px);
+    }
+
+    /* MOBILE */
+    .gw-mobile-toggle {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 9px;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.12);
+        color: white;
+        font-size: 19px;
+        cursor: pointer;
+    }
+
+    @@media (max-width: 1000px) {
+        .gw-navbar {
+            padding: 0 3%;
+        }
+
+        .gw-navbar-inner {
+            gap: 15px;
+        }
+
+        .gw-menu {
+            gap: 17px;
+        }
+
+        .gw-menu a {
+            font-size: 13px;
+        }
+
+        .gw-brand-text {
+            font-size: 22px;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .gw-navbar-inner {
+            min-height: 68px;
+            flex-wrap: wrap;
+            padding: 12px 0;
+        }
+
+        .gw-navbar {
+            min-height: 68px;
+        }
+
+        .gw-brand-icon {
+            width: 37px;
+            height: 37px;
+            font-size: 20px;
+        }
+
+        .gw-brand-text {
+            font-size: 21px;
+        }
+
+        .gw-nav-right {
+            gap: 9px;
+        }
+
+        .gw-cart-link,
+        .gw-profile-btn {
+            width: 38px;
+            height: 38px;
+        }
+
+        .gw-mobile-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gw-menu {
+            display: none;
+            order: 3;
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            padding: 7px 0;
+            border-top: 1px solid rgba(255,255,255,.08);
+        }
+
+        .gw-menu.mobile-open {
+            display: flex;
+        }
+
+        .gw-menu a {
+            padding: 13px 10px;
+            border-radius: 7px;
+        }
+
+        .gw-menu a:hover,
+        .gw-menu a.active {
+            background: rgba(255,255,255,.04);
+        }
+
+        .gw-menu a::after {
+            display: none;
+        }
+
+        .gw-dropdown {
+            right: -5px;
+            width: min(245px, calc(100vw - 30px));
+        }
+
+        .gw-login-btn {
+            min-height: 38px;
+            padding: 0 13px;
+            font-size: 12px;
+        }
+    }
+
+    @@media (max-width: 380px) {
+        .gw-brand-text {
+            font-size: 18px;
+        }
+
+        .gw-brand {
+            gap: 6px;
+        }
+
+        .gw-nav-right {
+            gap: 6px;
+        }
+
+        .gw-brand-icon {
+            width: 33px;
+            height: 33px;
+        }
+    }
+
+    /* ป้องกันเนื้อหาถูก Navbar fixed บัง */
+    body {
+        padding-top: 76px;
+    }
+
+    @@media (max-width: 760px) {
+        body {
+            padding-top: 68px;
+        }
+    }
+</style>
+
+<nav class="gw-navbar">
+    <div class="gw-navbar-inner">
+
+        <!-- LOGO -->
+        <a href="/" class="gw-brand">
+            <div class="gw-brand-icon">
+                <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <span class="gw-brand-text">
+                GAME<span>WORLD</span>
+            </span>
+        </a>
+
+        <!-- MENU: LOGIN ONLY -->
         @if (User?.Identity?.IsAuthenticated == true)
         {
-            
-           <!-- Cart Icon -->
-                <a asp-controller="Cart" asp-action="Index" style="position: relative; color: #cbd5e1; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);" title="ตะกร้าสินค้า">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span id="cartBadge" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 700; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9999px; text-align: center; padding: 0 4px;">0</span>
+            <div class="gw-menu" id="gwMenu">
+                <a href="/">
+                    <i class="fa-solid fa-house"></i> หน้าหลัก
                 </a>
 
-            <!-- Profile Dropdown Container -->
-            <div id="profileContainer" style="position: relative; display: inline-block;">
-                <!-- Profile Icon Button -->
-                <div id="profileBtn" style="width: 2.2rem; height: 2.2rem; background: linear-gradient(135deg, #7c3aed, #9333ea); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; cursor: pointer; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); user-select: none;" title="โปรไฟล์ของฉัน">
-                    <i class="fa-regular fa-circle-user"></i>
-                </div>
+                <a asp-controller="Product" asp-action="Index">
+                    <i class="fa-solid fa-gamepad"></i> เกมทั้งหมด
+                </a>
 
-                <!-- Dropdown Menu Content -->
-                <div id="profileDropdown" style="display: none; position: absolute; right: 0; top: 2.8rem; width: 220px; background-color: #111522; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); overflow: hidden; z-index: 100; padding: 0.5rem 0;">
-                    
-                    <!-- แสดง Email ของผู้ใช้ -->
-                    <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                        <p style="font-size: 0.65rem; color: #94a3b8; margin: 0;">เข้าสู่ระบบด้วย</p>
-                        <p style="font-size: 0.75rem; font-weight: 600; color: #ffffff; margin: 0.15rem 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @User.Identity.Name
-                        </p>
-                    </div>
-
-                    <!-- เมนูโปรไฟล์ -->
-                    <a asp-controller="Account" asp-action="Profile" style="display: block; padding: 0.6rem 1rem; color: #cbd5e1; font-size: 0.8rem; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                        ⚙️ ตั้งค่าโปรไฟล์
-                    </a>
-
-                    <a asp-controller="Cart" asp-action="MyOrders" style="display: block; padding: 0.6rem 1rem; color: #cbd5e1; font-size:0.8rem; text-decoration: none; transition: background 0.2s;"  onmouseover="this.style.background='rgba(255,255,255,0.05)' " onmouseout="this.style.background='transparent'">
-                            ประวัติการสั่งซื้อ
-                    </a>
-
-                    <!-- ปุ่ม Logout -->
-                    <form asp-controller="Auth" asp-action="Logout" method="post" style="margin: 0; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.25rem;">
-                        <button type="submit" style="width: 100%; text-align: left; background: none; border: none; padding: 0.6rem 1rem; color: #f87171; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
-                            🚪 ออกจากระบบ
-                        </button>
-                    </form>
-                </div>
+                <a href="/Home/About">
+                    <i class="fa-solid fa-circle-info"></i> เกี่ยวกับเรา
+                </a>
             </div>
+        }
 
-            <!-- JavaScript ควบคุมการคลิกแบบสมบูรณ์ -->
-            <script>
-                document.addEventListener("DOMContentLoaded", function () {
-                    const profileBtn = document.getElementById("profileBtn");
-                    const profileDropdown = document.getElementById("profileDropdown");
-                    const profileContainer = document.getElementById("profileContainer");
+        <!-- RIGHT SIDE -->
+        <div class="gw-nav-right">
 
-                    if (profileBtn && profileDropdown && profileContainer) {
-                        profileBtn.addEventListener("click", function (event) {
-                            event.stopPropagation();
-                            if (profileDropdown.style.display === "block") {
-                                profileDropdown.style.display = "none";
-                            } else {
-                                profileDropdown.style.display = "block";
-                            }
-                        });
+            @if (User?.Identity?.IsAuthenticated == true)
+            {
+                <!-- CART -->
+                <a asp-controller="Cart"
+                   asp-action="Index"
+                   class="gw-cart-link"
+                   title="ตะกร้าสินค้า"
+                   aria-label="ตะกร้าสินค้า">
 
-                        profileDropdown.addEventListener("click", function (event) {
-                            event.stopPropagation();
-                        });
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span id="cartBadge">0</span>
+                </a>
 
-                        window.addEventListener("click", function () {
-                            if (profileDropdown.style.display === "block") {
-                                profileDropdown.style.display = "none";
-                            }
-                        });
-                    }
-                });
-            </script>
-                            <script>
-                    window.updateCartBadge = function (n) {
-                        const b = document.getElementById('cartBadge');
-                        if (!b) return;
-                        b.textContent = n > 99 ? '99+' : n;
-                        b.style.display = n > 0 ? 'block' : 'none';
-                    };
-                    fetch('/Cart/Count')
-                        .then(r => r.json())
-                        .then(d => window.updateCartBadge(d.count))
-                        .catch(() => {});
-                </script>
-        } @* <-- ปิดปีกกาของ @if (User?.Identity?.IsAuthenticated == true) ตรงนี้ครับ *@
-        else
-        {
-            <!-- ถ้ายังไม่ Login: แสดงปุ่มเข้าสู่ระบบ -->
-            <a asp-controller="Auth" asp-action="Login" style="background: linear-gradient(to right, #7c3aed, #9333ea); color: #ffffff; font-size: 0.85rem; font-weight: 600; text-decoration: none; padding: 0.5rem 1.25rem; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
-                เข้าสู่ระบบ
-            </a>
-        } @* <-- ปิดปีกกาของ @else ตรงนี้ครับ *@
+                <!-- PROFILE -->
+                <div class="gw-profile" id="profileContainer">
+
+                    <button type="button"
+                            class="gw-profile-btn"
+                            id="profileBtn"
+                            aria-label="เปิดเมนูโปรไฟล์"
+                            aria-expanded="false"
+                            aria-controls="profileDropdown">
+                        <i class="fa-regular fa-circle-user"></i>
+                    </button>
+
+                    <div class="gw-dropdown"
+                         id="profileDropdown">
+
+                        <div class="gw-dropdown-user">
+                            <p class="gw-dropdown-label">เข้าสู่ระบบด้วย</p>
+                            <p class="gw-dropdown-email">
+                                @User.Identity.Name
+                            </p>
+                        </div>
+
+                        <a asp-controller="Auth" asp-action="Profile">
+                            <i class="fa-solid fa-gear"></i>
+                            ตั้งค่าโปรไฟล์
+                        </a>
+
+                        <a asp-controller="Cart" asp-action="MyOrders">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            ประวัติการสั่งซื้อ
+                        </a>
+
+                        <form asp-controller="Auth"
+                              asp-action="Logout"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="gw-logout">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                ออกจากระบบ
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+
+                <button type="button"
+                        class="gw-mobile-toggle"
+                        id="gwMobileToggle"
+                        aria-label="เปิดเมนู"
+                        aria-expanded="false">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            }
+            else
+            {
+                <a asp-controller="Auth"
+                   asp-action="Login"
+                   class="gw-login-btn">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    เข้าสู่ระบบ
+                </a>
+            }
+
+        </div>
     </div>
-
 </nav>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const profileBtn = document.getElementById("profileBtn");
+        const profileDropdown = document.getElementById("profileDropdown");
+        const profileContainer = document.getElementById("profileContainer");
+
+        // PROFILE DROPDOWN
+        if (profileBtn && profileDropdown && profileContainer) {
+            profileBtn.addEventListener("click", function (event) {
+                event.stopPropagation();
+
+                const isOpen = profileDropdown.classList.toggle("show");
+                profileBtn.setAttribute("aria-expanded", String(isOpen));
+            });
+
+            profileDropdown.addEventListener("click", function (event) {
+                event.stopPropagation();
+            });
+
+            document.addEventListener("click", function () {
+                profileDropdown.classList.remove("show");
+                profileBtn.setAttribute("aria-expanded", "false");
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    profileDropdown.classList.remove("show");
+                    profileBtn.setAttribute("aria-expanded", "false");
+                }
+            });
+        }
+
+        // MOBILE MENU
+        const mobileToggle = document.getElementById("gwMobileToggle");
+        const menu = document.getElementById("gwMenu");
+
+        if (mobileToggle && menu) {
+            mobileToggle.addEventListener("click", function () {
+                const isOpen = menu.classList.toggle("mobile-open");
+
+                mobileToggle.setAttribute("aria-expanded", String(isOpen));
+                mobileToggle.innerHTML = isOpen
+                    ? '<i class="fa-solid fa-xmark"></i>'
+                    : '<i class="fa-solid fa-bars"></i>';
+            });
+        }
+
+        // CART BADGE
+        window.updateCartBadge = function (count) {
+            const badge = document.getElementById("cartBadge");
+            if (!badge) return;
+
+            const n = Math.max(0, Number(count) || 0);
+
+            badge.textContent = n > 99 ? "99+" : String(n);
+            badge.style.display = n > 0 ? "flex" : "none";
+        };
+
+        fetch("/Cart/Count")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Unable to load cart count");
+                }
+                return response.json();
+            })
+            .then(data => {
+                window.updateCartBadge(data.count);
+            })
+            .catch(() => {
+                // หากยังดึงจำนวนสินค้าไม่ได้ จะซ่อน Badge ไว้
+            });
+    });
+</script>
+
   
-    <div class="container-fluid px-0">
-    <main role="main" class="pb-3" style="padding-top: 70px;">
+   <div style=" width: 100%; box-sizing: border-box;">
+    <main role="main">
         @RenderBody()
     </main>
 </div>

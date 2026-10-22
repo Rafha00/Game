@@ -1,0 +1,257 @@
+@model Game.Models.Product
+
+@{
+    ViewData["Title"] = "เพิ่มสินค้าใหม่";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>เพิ่มสินค้า | GAMEWORLD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Kanit', sans-serif;
+            color: #f8fafc;
+            background:
+                radial-gradient(ellipse at top left, rgba(124,58,237,.17), transparent 40%),
+                #080a12;
+            min-height: 100vh;
+        }
+
+        .panel {
+            background: rgba(17,21,36,.95);
+            border: 1px solid rgba(148,163,184,.15);
+            box-shadow: 0 25px 70px rgba(0,0,0,.25);
+        }
+
+        .field {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px 15px;
+            border-radius: 12px;
+            border: 1px solid #30364b;
+            color: #f8fafc;
+            background: #0b0f1c;
+            outline: none;
+            transition: .2s;
+        }
+
+        .field:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(139,92,246,.13);
+        }
+
+        .field::placeholder {
+            color: #64748b;
+        }
+
+        .field-label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        textarea.field {
+            min-height: 130px;
+            resize: vertical;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg,#8b5cf6,#6d28d9);
+            transition: .2s;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124,58,237,.3);
+        }
+
+        .validation-summary-errors,
+        .field-validation-error {
+            color: #fda4af;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-semibold">เพิ่มสินค้าใหม่</h1>
+            <p class="text-slate-400 text-sm mt-2">
+                กรอกข้อมูลเกม รูปภาพ ราคา หมวดหมู่ และจำนวนสต็อก
+            </p>
+        </div>
+
+        <!-- Form Section -->
+        <section class="panel rounded-3xl overflow-hidden">
+            <div class="h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-teal-400"></div>
+
+            <form asp-controller="Staff"
+                  asp-action="CreateProduct"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="p-5 sm:p-8">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="mb-5"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <!-- Name -->
+                    <div class="md:col-span-2">
+                        <label asp-for="Name" class="field-label">
+                            ชื่อสินค้า <span class="text-rose-400">*</span>
+                        </label>
+                        <input asp-for="Name"
+                               class="field"
+                               placeholder="เช่น Elden Ring"
+                               required />
+                        <span asp-validation-for="Name"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="md:col-span-2">
+                        <label asp-for="Description" class="field-label">
+                            รายละเอียดสินค้า
+                        </label>
+                        <textarea asp-for="Description"
+                                  class="field"
+                                  placeholder="รายละเอียดเกม เนื้อหา แพลตฟอร์ม หรือข้อมูลเพิ่มเติม"></textarea>
+                        <span asp-validation-for="Description"></span>
+                    </div>
+
+                    <!-- Price -->
+                    <div>
+                        <label asp-for="Price" class="field-label">
+                            ราคา (บาท) <span class="text-rose-400">*</span>
+                        </label>
+                        <input asp-for="Price"
+                               type="number"
+                               min="0"
+                               step="0.01"
+                               class="field"
+                               placeholder="0.00"
+                               required />
+                        <span asp-validation-for="Price"></span>
+                    </div>
+
+                    <!-- Stock -->
+                    <div>
+                        <label asp-for="Stock" class="field-label">
+                            จำนวนสต็อก <span class="text-rose-400">*</span>
+                        </label>
+                        <input asp-for="Stock"
+                               type="number"
+                               min="0"
+                               step="1"
+                               class="field"
+                               placeholder="0"
+                               required />
+                        <span asp-validation-for="Stock"></span>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="md:col-span-2">
+                        <label asp-for="Category" class="field-label">
+                            หมวดหมู่สินค้า
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-layer-group absolute left-4 top-1/2 -translate-y-1/2 text-violet-300"></i>
+                            <input asp-for="Category"
+                                   class="field pl-11"
+                                   placeholder="เช่น Action, RPG, FPS, Racing" />
+                        </div>
+                        <span asp-validation-for="Category"></span>
+                    </div>
+
+                    <!-- Image File Upload -->
+                    <div class="md:col-span-2">
+                        <label class="field-label">อัปโหลดรูปภาพสินค้า</label>
+                        <div class="relative">
+                            <input asp-for="ImageFile"
+                                   type="file"
+                                   id="imageFile"
+                                   accept="image/*"
+                                   class="field file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-violet-600 file:text-white hover:file:bg-violet-700 cursor-pointer" />
+                        </div>
+                        <span asp-validation-for="ImageFile"></span>
+
+                        <!-- Image preview -->
+                        <div id="previewContainer"
+                             class="hidden mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+                            <p class="text-xs text-slate-400 mb-3">ตัวอย่างรูปภาพ</p>
+                            <img id="imagePreview"
+                                 src=""
+                                 alt="ตัวอย่างรูปสินค้า"
+                                 class="w-full max-h-64 object-contain rounded-xl" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer / Actions inside form -->
+                <div class="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <p class="text-xs text-slate-500 flex items-center">
+                        <i class="fa-solid fa-shield-halved text-violet-400 mr-1.5"></i>
+                        ตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึกสินค้า
+                    </p>
+
+                    <div class="flex flex-row gap-3 w-full sm:w-auto justify-end">
+                        <a asp-controller="Staff"
+                           asp-action="Products"
+                           class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+                                  bg-slate-800 hover:bg-slate-700 border border-white/10
+                                  text-slate-300 text-sm transition">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            กลับหน้าสินค้า
+                        </a>
+
+                        <button type="submit"
+                                class="save-btn flex items-center justify-center gap-2 px-6 py-2.5
+                                       rounded-xl text-white font-medium text-sm">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            บันทึกสินค้า
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const imageFile = document.getElementById('imageFile');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+
+        imageFile.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.classList.add('hidden');
+                imagePreview.src = '';
+            }
+        });
+    </script>
+</body>
+</html>

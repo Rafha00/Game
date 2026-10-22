@@ -1,0 +1,818 @@
+
+@using System.Security.Claims
+
+@{
+    var isAuth = User.Identity?.IsAuthenticated == true;
+
+    var role = (User.FindFirst(ClaimTypes.Role)?.Value ?? "")
+        .Trim()
+        .ToLowerInvariant();
+
+    var email = User.FindFirst(ClaimTypes.Email)?.Value
+                ?? User.Identity?.Name
+                ?? "";
+
+    var isAdmin = role == "admin";
+    var isManager = role == "manager" || isAdmin;
+    var isStaff = role == "staff" || isManager;
+
+    var ctrl = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "")
+        .ToLowerInvariant();
+
+    var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? "")
+        .ToLowerInvariant();
+
+    var roleLabel = role switch
+    {
+        "admin" => "ผู้ดูแลระบบ",
+        "manager" => "ผู้จัดการ",
+        "staff" => "พนักงาน",
+        "customer" => "ลูกค้า",
+        _ => "สมาชิก"
+    };
+
+    var initial = !string.IsNullOrWhiteSpace(email)
+        ? email.Substring(0, 1).ToUpperInvariant()
+        : "G";
+
+    bool IsActive(string controller, string actionName = "")
+    {
+        return ctrl == controller.ToLowerInvariant()
+            && (string.IsNullOrEmpty(actionName)
+                || action == actionName.ToLowerInvariant());
+    }
+
+    string MenuClass(string controller, string actionName = "")
+    {
+        return IsActive(controller, actionName)
+            ? "gw-menu gw-menu-active"
+            : "gw-menu";
+    }
+}
+
+@if (isAuth)
+{
+    <aside class="gw-sidebar">
+
+        <!-- BRAND -->
+        <a asp-controller="Home"
+           asp-action="Index"
+           class="gw-brand">
+
+            <span class="gw-brand-icon">
+                <i class="fa-solid fa-gamepad"></i>
+            </span>
+
+            <span class="gw-brand-text">
+                GAME<span>WORLD</span>
+            </span>
+        </a>
+
+        <!-- USER PROFILE -->
+        <div class="gw-user">
+            <div class="gw-avatar">
+                @initial
+                <span class="gw-avatar-dot"></span>
+            </div>
+
+            <div class="gw-user-info">
+                <div class="gw-user-name" title="@email">
+                    @email
+                </div>
+
+                <div class="gw-user-status">
+                    <span class="gw-online-dot"></span>
+                    บัญชีของคุณ
+                </div>
+
+                <span class="gw-role">
+                    @roleLabel
+                </span>
+            </div>
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="gw-nav">
+
+            <div class="gw-section-label">เมนูหลัก</div>
+
+            <a asp-controller="Auth"
+               asp-action="Profile"
+               class="@MenuClass("Auth", "Profile")">
+
+                <span class="gw-menu-icon">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </span>
+
+                <span class="gw-menu-text">โปรไฟล์ของฉัน</span>
+
+                @if (IsActive("Auth", "Profile"))
+                {
+                    <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                }
+            </a>
+
+            <a asp-controller="Home"
+               asp-action="Index"
+               class="@MenuClass("Home", "Index")">
+
+                <span class="gw-menu-icon">
+                    <i class="fa-solid fa-store"></i>
+                </span>
+
+                <span class="gw-menu-text">หน้าร้าน</span>
+
+                @if (IsActive("Home", "Index"))
+                {
+                    <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                }
+            </a>
+
+            <a asp-controller="Cart"
+               asp-action="Index"
+               class="@MenuClass("Cart", "Index")">
+
+                <span class="gw-menu-icon">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </span>
+
+                <span class="gw-menu-text">ตะกร้าสินค้า</span>
+
+                @if (IsActive("Cart", "Index"))
+                {
+                    <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                }
+            </a>
+
+            <a asp-controller="Cart"
+               asp-action="MyOrders"
+               class="@MenuClass("Cart", "MyOrders")">
+
+                <span class="gw-menu-icon">
+                    <i class="fa-solid fa-receipt"></i>
+                </span>
+
+                <span class="gw-menu-text">ประวัติการสั่งซื้อ</span>
+
+                @if (IsActive("Cart", "MyOrders"))
+                {
+                    <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                }
+            </a>
+
+            @if (isStaff)
+            {
+                <div class="gw-section-label gw-section-spaced">
+                    จัดการร้านค้า
+                </div>
+
+                <a asp-controller="Staff"
+                   asp-action="Index"
+                   class="@MenuClass("Staff", "Index")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </span>
+
+                    <span class="gw-menu-text">แดชบอร์ดพนักงาน</span>
+
+                    @if (IsActive("Staff", "Index"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Staff"
+                   asp-action="Orders"
+                   class="@MenuClass("Staff", "Orders")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-box-open"></i>
+                    </span>
+
+                    <span class="gw-menu-text">สถานะสินค้า</span>
+
+                    @if (IsActive("Staff", "Orders"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Staff" asp-action="CreateProduct" class="@MenuClass("Staff", "CreateProduct")">
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-plus-circle"></i>
+                    </span>
+                    <span class="gw-menu-text">เพิ่มสินค้า</span>
+                </a>
+
+                <a asp-controller="Staff"
+                   asp-action="Products"
+                   class="@MenuClass("Staff", "Products")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </span>
+
+                    <span class="gw-menu-text">สินค้า / สต็อก</span>
+
+                    @if (IsActive("Staff", "Products"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Staff"
+                   asp-action="Customers"
+                   class="@MenuClass("Staff", "Customers")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </span>
+
+                    <span class="gw-menu-text">ข้อมูลลูกค้า</span>
+
+                    @if (IsActive("Staff", "Customers"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+            }
+
+            @if (isManager)
+            {
+                <div class="gw-section-label gw-section-spaced">
+                    จัดการธุรกิจ
+                </div>
+
+                <a asp-controller="Manager"
+                   asp-action="Index"
+                   class="@MenuClass("Manager", "Index")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </span>
+
+                    <span class="gw-menu-text">ภาพรวมยอดขาย</span>
+
+                    @if (IsActive("Manager", "Index"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Manager"
+                   asp-action="Reports"
+                   class="@MenuClass("Manager", "Reports")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </span>
+
+                    <span class="gw-menu-text">รายงาน</span>
+
+                    @if (IsActive("Manager", "Reports"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Manager"
+                   asp-action="Staff"
+                   class="@MenuClass("Manager", "Staff")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </span>
+
+                    <span class="gw-menu-text">จัดการพนักงาน</span>
+
+                    @if (IsActive("Manager", "Staff"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Manager"
+                   asp-action="Discounts"
+                   class="@MenuClass("Manager", "Discounts")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-tags"></i>
+                    </span>
+
+                    <span class="gw-menu-text">โค้ดส่วนลด</span>
+
+                    @if (IsActive("Manager", "Discounts"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+            }
+
+            @if (isAdmin)
+            {
+                <div class="gw-section-label gw-section-spaced">
+                    ระบบผู้ดูแล
+                </div>
+
+                <a asp-controller="Admin"
+                   asp-action="Index"
+                   class="@MenuClass("Admin", "Index")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </span>
+
+                    <span class="gw-menu-text">แผงควบคุมแอดมิน</span>
+
+                    @if (IsActive("Admin", "Index"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="Users"
+                   class="@MenuClass("Admin", "Users")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </span>
+
+                    <span class="gw-menu-text">จัดการผู้ใช้ / Role</span>
+
+                    @if (IsActive("Admin", "Users"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="Products"
+                   class="@MenuClass("Admin", "Products")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </span>
+
+                    <span class="gw-menu-text">จัดการสินค้าทั้งหมด</span>
+
+                    @if (IsActive("Admin", "Products"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="Settings"
+                   class="@MenuClass("Admin", "Settings")">
+
+                    <span class="gw-menu-icon">
+                        <i class="fa-solid fa-gear"></i>
+                    </span>
+
+                    <span class="gw-menu-text">ตั้งค่าระบบ</span>
+
+                    @if (IsActive("Admin", "Settings"))
+                    {
+                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
+                    }
+                </a>
+            }
+
+        </nav>
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="gw-sidebar-footer">
+
+            <div class="gw-footer-line"></div>
+
+            <div class="gw-footer-user">
+                <div class="gw-footer-avatar">@initial</div>
+
+                <div class="gw-footer-info">
+                    <div class="gw-footer-title">GAMEWORLD</div>
+                    <div class="gw-footer-subtitle">Gaming Community</div>
+                </div>
+            </div>
+
+            <form asp-controller="Auth"
+                  asp-action="Logout"
+                  method="post"
+                  class="gw-logout-form">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="gw-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ออกจากระบบ</span>
+                </button>
+            </form>
+
+        </div>
+    </aside>
+}
+
+<style>
+    .gw-sidebar,
+    .gw-sidebar * {
+        box-sizing: border-box;
+    }
+
+    .gw-sidebar {
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        width: 260px;
+        height: 100vh;
+        min-height: 560px;
+        flex: 0 0 260px;
+        overflow: hidden;
+        border-right: 1px solid rgba(139, 92, 246, .2);
+        background:
+            radial-gradient(
+                ellipse at top left,
+                rgba(124, 58, 237, .13),
+                transparent 48%
+            ),
+            #090c18;
+        color: #e2e8f0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        z-index: 50;
+    }
+
+    .gw-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-height: 78px;
+        padding: 0 21px;
+        border-bottom: 1px solid rgba(139, 92, 246, .17);
+        color: #f8fafc;
+        text-decoration: none;
+    }
+
+    .gw-brand-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 39px;
+        height: 39px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #a855f7, #6d28d9);
+        box-shadow: 0 5px 20px rgba(124, 58, 237, .25);
+        color: white;
+        font-size: 19px;
+    }
+
+    .gw-brand-text {
+        white-space: nowrap;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: .5px;
+    }
+
+    .gw-brand-text span {
+        color: #a78bfa;
+    }
+
+    .gw-user {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 23px 17px 21px;
+        border-bottom: 1px solid rgba(139, 92, 246, .13);
+    }
+
+    .gw-avatar {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 47px;
+        height: 47px;
+        flex-shrink: 0;
+        border: 1px solid rgba(216, 180, 254, .65);
+        border-radius: 50%;
+        background: linear-gradient(135deg, #a855f7, #5b21b6);
+        box-shadow: 0 0 22px rgba(124, 58, 237, .18);
+        color: white;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .gw-avatar-dot {
+        position: absolute;
+        right: 0;
+        bottom: 1px;
+        width: 11px;
+        height: 11px;
+        border: 2px solid #090c18;
+        border-radius: 50%;
+        background: #4ade80;
+    }
+
+    .gw-user-info {
+        min-width: 0;
+        flex: 1;
+        padding-top: 2px;
+    }
+
+    .gw-user-name {
+        overflow: hidden;
+        color: #f8fafc;
+        font-size: 12px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .gw-user-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        color: #94a3b8;
+        font-size: 11px;
+    }
+
+    .gw-online-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4ade80;
+    }
+
+    .gw-role {
+        display: inline-block;
+        margin-top: 9px;
+        padding: 4px 9px;
+        border: 1px solid rgba(167, 139, 250, .18);
+        border-radius: 999px;
+        background: rgba(124, 58, 237, .17);
+        color: #c4b5fd;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .gw-nav {
+        flex: 1;
+        min-height: 0;
+        padding: 15px 11px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .gw-section-label {
+        padding: 8px 11px 9px;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.1px;
+    }
+
+    .gw-section-spaced {
+        margin-top: 17px;
+        padding-top: 19px;
+        border-top: 1px solid rgba(148, 163, 184, .12);
+    }
+
+    .gw-menu {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-height: 43px;
+        margin-bottom: 5px;
+        padding: 10px 11px;
+        overflow: hidden;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        color: #aab5cb;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition:
+            background .18s ease,
+            color .18s ease,
+            border-color .18s ease;
+    }
+
+    .gw-menu:hover {
+        border-color: rgba(139, 92, 246, .13);
+        background: rgba(124, 58, 237, .09);
+        color: white;
+    }
+
+    .gw-menu-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 23px;
+        flex-shrink: 0;
+        color: #8795b4;
+        font-size: 15px;
+        transition: color .18s ease;
+    }
+
+    .gw-menu-text {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .gw-menu-active {
+        border-color: rgba(196, 181, 253, .16);
+        background: linear-gradient(
+            100deg,
+            rgba(124, 58, 237, .35),
+            rgba(109, 40, 217, .14)
+        );
+        color: #fff;
+        box-shadow: inset 3px 0 #a78bfa;
+    }
+
+    .gw-menu-active .gw-menu-icon {
+        color: #c4b5fd;
+    }
+
+    .gw-menu-arrow {
+        color: #c4b5fd;
+        font-size: 10px;
+    }
+
+    .gw-sidebar-footer {
+        flex-shrink: 0;
+        padding: 13px 13px 17px;
+        background: linear-gradient(
+            180deg,
+            rgba(9, 12, 24, .2),
+            #090c18 25%
+        );
+    }
+
+    .gw-footer-line {
+        height: 1px;
+        margin-bottom: 14px;
+        background: rgba(139, 92, 246, .17);
+    }
+
+    .gw-footer-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 3px 5px 14px;
+    }
+
+    .gw-footer-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 33px;
+        height: 33px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background: #21153c;
+        color: #c4b5fd;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .gw-footer-info {
+        min-width: 0;
+    }
+
+    .gw-footer-title {
+        color: #e2e8f0;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .4px;
+    }
+
+    .gw-footer-subtitle {
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 10px;
+    }
+
+    .gw-logout-form {
+        margin: 0;
+    }
+
+    .gw-logout {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 41px;
+        padding: 10px 12px;
+        border: 1px solid rgba(248, 113, 113, .16);
+        border-radius: 10px;
+        background: rgba(239, 68, 68, .07);
+        color: #fca5a5;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .18s ease, border-color .18s ease;
+    }
+
+    .gw-logout:hover {
+        border-color: rgba(248, 113, 113, .35);
+        background: rgba(239, 68, 68, .14);
+        color: #fecaca;
+    }
+
+    .gw-nav::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .gw-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .gw-nav::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: #30234a;
+    }
+
+    @@media (max-width: 760px) {
+        .gw-sidebar {
+            position: relative;
+            top: auto;
+            width: 100%;
+            height: auto;
+            min-height: 0;
+            flex: 0 0 auto;
+            overflow: visible;
+            border-right: 0;
+            border-bottom: 1px solid rgba(139, 92, 246, .2);
+        }
+
+        .gw-brand {
+            min-height: 65px;
+            padding: 0 17px;
+        }
+
+        .gw-user {
+            padding: 14px 17px;
+        }
+
+        .gw-avatar {
+            width: 42px;
+            height: 42px;
+        }
+
+        .gw-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px;
+            overflow: visible;
+        }
+
+        .gw-section-label {
+            width: 100%;
+            padding: 7px 6px;
+        }
+
+        .gw-section-spaced {
+            margin-top: 5px;
+            padding-top: 12px;
+        }
+
+        .gw-menu {
+            flex: 1 1 145px;
+            min-width: 0;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .gw-menu-arrow {
+            display: none;
+        }
+
+        .gw-sidebar-footer {
+            padding: 10px 13px 13px;
+        }
+
+        .gw-footer-line,
+        .gw-footer-user {
+            display: none;
+        }
+
+        .gw-logout {
+            min-height: 39px;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .gw-menu,
+        .gw-menu-icon,
+        .gw-logout {
+            transition: none;
+        }
+    }
+</style>

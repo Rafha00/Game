@@ -1,12 +1,22 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Game.Models
 {
+    [Table("users")]
     public class User
     {
-        public Guid Id {get; set;}
-        public string Email {get; set;}  = string.Empty;
-        public string Password {get; set;} = string.Empty;
+        [Key]
+        [Column("id")]
+        public Guid Id { get; set; } = Guid.Empty;
 
-        public  string Role {get; set;} = "Customer";
+        [Column("email")]
+        public string Email { get; set; } = string.Empty;
 
+        [Column("password")] // เพิ่มส่วนรองรับรหัสผ่านให้ตรงกับฐานข้อมูล
+        public string Password { get; set; } = string.Empty;
+
+        [Column("role")]
+        public string Role { get; set; } = "customer";
     }
 }

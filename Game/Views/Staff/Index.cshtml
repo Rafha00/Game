@@ -1,0 +1,179 @@
+
+@using Game.Models
+@{
+    ViewData["Title"] = "Staff Dashboard";
+    Layout = null;
+
+    var recentOrders = ViewBag.RecentOrders as IEnumerable<Order>
+        ?? Enumerable.Empty<Order>();
+
+    var lowStockProducts = ViewBag.LowStockProducts as IEnumerable<Product>
+        ?? Enumerable.Empty<Product>();
+}
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Staff Dashboard | GAMEWORLD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="bg-[#090c18] text-slate-100">
+<div class="flex min-h-screen">
+    <partial name="_Sidebar" />
+
+    <main class="min-w-0 flex-1 p-5 md:p-8">
+        <header class="mb-8">
+            <p class="text-xs font-bold uppercase tracking-[.25em] text-purple-400">
+                GAMEWORLD / MANAGEMENT
+            </p>
+            <h1 class="mt-2 text-3xl font-black">Staff Dashboard</h1>
+            <p class="mt-2 text-sm text-slate-400">
+                ภาพรวมการทำงานของร้านค้า
+            </p>
+        </header>
+
+        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="rounded-2xl border border-purple-500/20 bg-[#121729] p-5">
+                <div class="flex justify-between">
+                    <span class="text-sm text-slate-400">ออเดอร์ทั้งหมด</span>
+                    <i class="fa-solid fa-receipt text-purple-400"></i>
+                </div>
+                <p class="mt-4 text-3xl font-black">@ViewBag.TotalOrders</p>
+                <p class="mt-2 text-xs text-slate-500">รายการสั่งซื้อทั้งหมด</p>
+            </div>
+
+            <div class="rounded-2xl border border-yellow-500/20 bg-[#121729] p-5">
+                <div class="flex justify-between">
+                    <span class="text-sm text-slate-400">รอชำระเงิน</span>
+                    <i class="fa-solid fa-clock text-yellow-400"></i>
+                </div>
+                <p class="mt-4 text-3xl font-black text-yellow-300">
+                    @ViewBag.PendingOrders
+                </p>
+                <p class="mt-2 text-xs text-slate-500">รายการที่ยังรอชำระ</p>
+            </div>
+
+            @* <div class="rounded-2xl border border-green-500/20 bg-[#121729] p-5">
+                <div class="flex justify-between">
+                    <span class="text-sm text-slate-400">ยอดขายที่ชำระแล้ว</span>
+                    <i class="fa-solid fa-coins text-green-400"></i>
+                </div>
+                <p class="mt-4 text-2xl font-black text-green-300">
+                    ฿@(((decimal)ViewBag.TotalSales).ToString("N2"))
+                </p>
+                <p class="mt-2 text-xs text-slate-500">ยอดสะสมทุกออเดอร์สถานะ paid</p>
+            </div> *@
+
+            <div class="rounded-2xl border border-blue-500/20 bg-[#121729] p-5">
+                <div class="flex justify-between">
+                    <span class="text-sm text-slate-400">สินค้าทั้งหมด</span>
+                    <i class="fa-solid fa-gamepad text-blue-400"></i>
+                </div>
+                <p class="mt-4 text-3xl font-black">@ViewBag.TotalProducts</p>
+                <a asp-action="Products"
+                   class="mt-3 inline-block text-xs text-blue-300 hover:text-white">
+                    ดูรายการสินค้า →
+                </a>
+            </div>
+
+            <div class="rounded-2xl border border-red-500/20 bg-[#121729] p-5">
+                <div class="flex justify-between">
+                    <span class="text-sm text-slate-400">สินค้าใกล้หมด</span>
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                </div>
+                <p class="mt-4 text-3xl font-black text-red-300">@ViewBag.LowStock</p>
+                <p class="mt-2 text-xs text-slate-500">สินค้าเหลือไม่เกิน 5 ชิ้น</p>
+            </div>
+
+            <div class="rounded-2xl border border-cyan-500/20 bg-[#121729] p-5">
+                <div class="flex justify-between">
+                    <span class="text-sm text-slate-400">ชำระเงินสำเร็จ</span>
+                    <i class="fa-solid fa-circle-check text-cyan-400"></i>
+                </div>
+                <p class="mt-4 text-3xl font-black">@ViewBag.PaidOrders</p>
+                <p class="mt-2 text-xs text-slate-500">ออเดอร์ที่ชำระแล้ว</p>
+            </div>
+        </section>
+
+        <section class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#121729]">
+                <div class="flex items-center justify-between border-b border-white/10 p-5">
+                    <h2 class="font-bold">
+                        <i class="fa-solid fa-clock-rotate-left mr-2 text-purple-400"></i>
+                        ออเดอร์ล่าสุด
+                    </h2>
+                    <a asp-action="Orders" class="text-xs text-purple-300 hover:text-white">
+                        ดูทั้งหมด →
+                    </a>
+                </div>
+
+                <div class="divide-y divide-white/5">
+                    @foreach (var order in recentOrders)
+                    {
+                        <div class="flex items-center justify-between gap-3 p-4">
+                            <div>
+                                <p class="text-sm font-bold">
+                                    #@order.Id.ToString()[..Math.Min(8, order.Id.ToString().Length)]
+                                </p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    @order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold">
+                                    ฿@order.TotalPrice.ToString("N2")
+                                </p>
+                                <span class="text-xs @(order.Status == "paid" ? "text-green-400" : "text-yellow-300")">
+                                    @order.Status
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    @if (!recentOrders.Any())
+                    {
+                        <p class="p-6 text-center text-sm text-slate-500">
+                            ยังไม่มีรายการออเดอร์
+                        </p>
+                    }
+                </div>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#121729]">
+                <div class="border-b border-white/10 p-5">
+                    <h2 class="font-bold">
+                        <i class="fa-solid fa-box-open mr-2 text-red-400"></i>
+                        สินค้าใกล้หมด
+                    </h2>
+                </div>
+                <div class="divide-y divide-white/5">
+                    @foreach (var product in lowStockProducts)
+                    {
+                        <div class="flex items-center justify-between gap-3 p-4">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold">@product.Name</p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    ฿@product.Price.ToString("N2")
+                                </p>
+                            </div>
+                            <span class="shrink-0 rounded-lg bg-red-500/10 px-3 py-2 text-sm font-bold text-red-300">
+                                เหลือ @product.Stock
+                            </span>
+                        </div>
+                    }
+                    @if (!lowStockProducts.Any())
+                    {
+                        <p class="p-6 text-center text-sm text-slate-500">
+                            ไม่มีสินค้าใกล้หมด
+                        </p>
+                    }
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

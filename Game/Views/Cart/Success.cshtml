@@ -6,7 +6,7 @@
 
 <style>
     .os-page { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem; }
-    .os-card { background: #111827; border: 1px solid rgba(255,255,255,.07); border-radius: 1rem; padding: 1.5rem; }
+    .os-card { background: #111827; border: 1px solid rgba(255,255,255,.07); border-radius: 1rem; padding: 1.5rem; color: #fff; }
     .os-head { text-align: center; margin-bottom: 1.5rem; }
     .os-head .ico { font-size: 3rem; }
     .os-badge { display: inline-block; background: rgba(250,204,21,.15); color: #fde047; border-radius: 9999px;
@@ -18,8 +18,39 @@
     .os-row.disc { color: #86efac; }
     .os-row.total { color: #fff; font-weight: 700; font-size: 1.1rem; margin-top: .8rem; }
     .os-actions { display: flex; gap: .7rem; justify-content: center; margin-top: 1.5rem; }
-    .os-actions a { background: #7c3aed; color: #fff; padding: .6rem 1.4rem; border-radius: .7rem; text-decoration: none; font-weight: 600; }
+    .os-actions a, .os-actions button { background: #7c3aed; color: #fff; padding: .6rem 1.4rem; border-radius: .7rem; text-decoration: none; font-weight: 600; border: none; cursor: pointer; font-size: 0.95rem; }
     .os-actions a.ghost { background: rgba(255,255,255,.08); }
+    .os-actions button.pay-btn { background: #4de1c4; color: #063b33; font-weight: 700; }
+    .os-actions button.pay-btn:hover { background: #6ff0d5; }
+
+    /* Payment Modal Styles */
+    .pm-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.7);
+                  align-items:center; justify-content:center; padding:1rem; }
+    .pm-box { background:#111827; border:1px solid rgba(255,255,255,.1); border-radius:1rem;
+              padding:1.6rem; max-width:400px; width:100%; color:#fff; }
+    .pm-box h3 { margin:0 0 .3rem; font-size:1.1rem; font-weight:700; }
+    .pm-sub { color:#94a3b8; font-size:.82rem; margin:0 0 1.1rem; }
+
+    .pm-options { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+    .pm-opt { background:#0f1320; border:1.5px solid rgba(255,255,255,.1); border-radius:.8rem;
+              padding:1rem .6rem; color:#cbd5e1; cursor:pointer; display:flex; flex-direction:column;
+              align-items:center; gap:.5rem; font-size:.8rem; }
+    .pm-opt i { font-size:1.6rem; }
+    .pm-opt:hover { border-color:rgba(255,255,255,.3); }
+    .pm-opt.selected { border-color:#7c3aed; background:rgba(124,58,237,.12); color:#fff; }
+
+    .pm-detail { margin-top:1rem; background:#0f1320; border-radius:.7rem; padding:.9rem; font-size:.82rem; color:#cbd5e1; }
+    .pm-detail input { width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15);
+                       border-radius:.5rem; padding:.5rem .6rem; color:#fff; outline:none; box-sizing:border-box; }
+    .pm-qr { text-align:center; }
+    .pm-qr-box { font-size:3rem; background:#fff; color:#111; width:120px; height:120px; margin:0 auto .6rem;
+                 border-radius:.6rem; display:flex; align-items:center; justify-content:center; }
+
+    .pm-actions { display:flex; gap:.7rem; margin-top:1.3rem; }
+    .pm-cancel, .pm-continue { flex:1; border:none; border-radius:.6rem; padding:.65rem; font-weight:700; cursor:pointer; }
+    .pm-cancel { background:rgba(255,255,255,.08); color:#fff; }
+    .pm-continue { background:#4de1c4; color:#063b33; }
+    .pm-continue:disabled { opacity:.4; cursor:not-allowed; }
 </style>
 
 <div class="os-page">
@@ -52,8 +83,98 @@
         <div class="os-row total"><span>ยอดสุทธิ</span><span>฿@Model.TotalPrice.ToString("N2")</span></div>
 
         <div class="os-actions">
-            <a asp-controller="Product" asp-action="Index">เลือกซื้อเกมต่อ</a>
+            @if (Model.Status == "pending")
+            {
+                <button type="button" class="pay-btn" onclick="openPayModal('@Model.Id')">💳 ชำระเงิน</button>
+            }
+            else
+            {
+                <a asp-controller="Product" asp-action="Index">เลือกซื้อเกมต่อ</a>
+            }
             <a class="ghost" asp-controller="Home" asp-action="Index">กลับหน้าแรก</a>
         </div>
     </div>
 </div>
+
+<!-- PAYMENT MODAL -->
+<div id="payModal" class="pm-overlay">
+    <div class="pm-box">
+        <h3>เลือกวิธีชำระเงิน</h3>
+        <p class="pm-sub">กรุณาเลือกช่องทางชำระเงินก่อนดำเนินการต่อ</p>
+
+        <div class="pm-options">
+            <button type="button" class="pm-opt" data-method="visa">
+                <i class="fa-brands fa-cc-visa"></i>
+                <span>บัตร Visa</span>
+            </button>
+            <button type="button" class="pm-opt" data-method="promptpay">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>PromptPay QR</span>
+            </button>
+        </div>
+
+        <div id="pmDetail" class="pm-detail" style="display:none;"></div>
+
+        <div class="pm-actions">
+            <button type="button" class="pm-cancel" id="pmCancel">ยกเลิก</button>
+            <button type="button" class="pm-continue" id="pmContinue" disabled>ดำเนินการต่อ</button>
+        </div>
+    </div>
+</div>
+
+<form id="payForm" asp-action="Pay" method="post" style="display:none">
+    <input type="hidden" name="id" id="payFormId" />
+    <input type="hidden" name="method" id="payFormMethod" />
+</form>
+
+<script>
+    let selectedMethod = null;
+
+    window.openPayModal = function (orderId) {
+        document.getElementById('payFormId').value = orderId;
+        selectedMethod = null;
+        document.querySelectorAll('.pm-opt').forEach(o => o.classList.remove('selected'));
+        document.getElementById('pmDetail').style.display = 'none';
+        document.getElementById('pmContinue').disabled = true;
+        document.getElementById('payModal').style.display = 'flex';
+    };
+
+    (function () {
+        document.querySelectorAll('.pm-opt').forEach(function (opt) {
+            opt.addEventListener('click', function () {
+                document.querySelectorAll('.pm-opt').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedMethod = opt.dataset.method;
+                document.getElementById('pmContinue').disabled = false;
+
+                const detail = document.getElementById('pmDetail');
+                if (selectedMethod === 'visa') {
+                    detail.innerHTML =
+                        '<input placeholder="หมายเลขบัตร (จำลอง) 4242 4242 4242 4242" maxlength="19" />' +
+                        '<div style="display:flex;gap:.5rem;margin-top:.5rem">' +
+                        '<input placeholder="MM/YY" style="width:50%" />' +
+                        '<input placeholder="CVV" style="width:50%" /></div>';
+                } else {
+                    detail.innerHTML =
+                        '<div class="pm-qr"><div class="pm-qr-box">📱</div>' +
+                        '<p>สแกน QR เพื่อชำระผ่าน PromptPay (จำลอง)</p></div>';
+                }
+                detail.style.display = 'block';
+            });
+        });
+
+        document.getElementById('pmCancel').addEventListener('click', function () {
+            document.getElementById('payModal').style.display = 'none';
+        });
+
+        document.getElementById('payModal').addEventListener('click', function (e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+
+        document.getElementById('pmContinue').addEventListener('click', function () {
+            if (!selectedMethod) return;
+            document.getElementById('payFormMethod').value = selectedMethod;
+            document.getElementById('payForm').submit();
+        });
+    })();
+</script>
