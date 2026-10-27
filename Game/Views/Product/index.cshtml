@@ -1,125 +1,806 @@
+
 @model IEnumerable<Game.Models.Product>
 
 @{
     var title = ViewBag.CategoryName as string ?? "All Games";
     ViewData["Title"] = title;
-    var total = Model.Count();
+    var games = Model?.ToList() ?? new List<Game.Models.Product>();
+    var total = games.Count;
 }
 
 <style>
-    .gw-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 24px 56px; color: #fff; }
+    .gw-store {
+        --gw-purple: #a78bfa;
+        --gw-border: rgba(148, 163, 184, .14);
+        width: 100%;
+        min-height: 100vh;
+        padding: 36px 24px 70px;
+        color: #f8fafc;
+        background:
+            radial-gradient(ellipse at 80% 0%, rgba(124, 58, 237, .12), transparent 34%),
+            #080b14;
+    }
 
-    .gw-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px;
-               padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
-    .gw-head h1 { font-size: 24px; font-weight: 800; margin: 0; }
-    .gw-head span { font-size: 13px; color: #9ca3af; }
-    .gw-head b { color: #c4b5fd; }
+    .gw-wrap {
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto;
+    }
 
-    .gw-list { display: flex; flex-direction: column; gap: 8px; }
+    /* HEADER */
+    .gw-hero {
+        position: relative;
+        overflow: hidden;
+        padding: 28px 30px;
+        margin-bottom: 26px;
+        border: 1px solid rgba(167, 139, 250, .2);
+        border-radius: 18px;
+        background: linear-gradient(115deg, rgba(76, 29, 149, .28), rgba(17, 24, 39, .88) 65%);
+    }
 
-    .gw-row { display: flex; align-items: stretch; height: 80px; overflow: hidden;
-              color: inherit; text-decoration: none;
-              background: linear-gradient(to right, rgba(49,46,129,.55), rgba(17,24,39,.85));
-              border: 1px solid rgba(255,255,255,.08); border-radius: 6px;
-              transition: border-color .2s, background .2s, transform .15s; }
-    .gw-row:hover { border-color: rgba(139,92,246,.7); transform: translateX(2px);
-                    background: linear-gradient(to right, rgba(76,29,149,.65), rgba(30,27,75,.9)); }
+    .gw-hero::after {
+        position: absolute;
+        top: -75px;
+        right: -30px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: rgba(139, 92, 246, .12);
+        filter: blur(45px);
+        content: "";
+        pointer-events: none;
+    }
 
-    .gw-thumb { width: 200px; flex-shrink: 0; background: #0b1220; }
-    .gw-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .gw-noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .gw-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        color: #c4b5fd;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
 
-    .gw-info { flex: 1; min-width: 0; padding: 8px 16px; display: flex; flex-direction: column;
-               justify-content: center; gap: 3px; }
-    .gw-name { margin: 0; font-size: 16px; font-weight: 600; color: #fff;
-               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .gw-cat  { margin: 0; font-size: 12px; color: #a5b4fc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .gw-desc { margin: 0; font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gw-eyebrow i {
+        font-size: 12px;
+    }
 
-    .gw-side { display: flex; align-items: center; gap: 14px; padding-right: 12px; flex-shrink: 0; }
-    .gw-stock { font-size: 11px; color: #9ca3af; text-align: right; line-height: 1.3; }
-    .gw-stock small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
-    .gw-stock.low { color: #fbbf24; }
-    .gw-stock.out { color: #f87171; }
+    .gw-head {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+    }
 
-    .gw-price { padding: 6px 12px; border-radius: 4px; background: rgba(0,0,0,.45);
-                font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .gw-head h1 {
+        margin: 0 0 8px;
+        color: #fff;
+        font-size: clamp(25px, 3vw, 34px);
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: -.5px;
+        overflow-wrap: anywhere;
+    }
 
-    .gw-row.soldout .gw-thumb img { filter: grayscale(1); opacity: .55; }
-    .gw-row.soldout .gw-price { color: #9ca3af; }
+    .gw-head p {
+        margin: 0;
+        color: #9ca8bd;
+        font-size: 13px;
+        line-height: 1.8;
+    }
 
-    .gw-empty { text-align: center; padding: 64px 16px; border: 1px solid rgba(255,255,255,.1);
-                border-radius: 8px; background: rgba(255,255,255,.04); color: #9ca3af; }
-    .gw-empty a { display: inline-block; margin-top: 16px; padding: 8px 20px; border-radius: 8px;
-                  background: #7c3aed; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; }
+    .gw-count {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 15px;
+        border: 1px solid rgba(167, 139, 250, .22);
+        border-radius: 12px;
+        background: rgba(15, 18, 32, .75);
+        color: #c4b5fd;
+        font-size: 12px;
+    }
+
+    .gw-count strong {
+        color: white;
+        font-size: 17px;
+    }
+
+    /* SECTION HEADING */
+    .gw-section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .gw-section-heading h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        color: #e5e7eb;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .gw-section-heading h2 i {
+        color: #a78bfa;
+    }
+
+    .gw-section-caption {
+        color: #758098;
+        font-size: 11px;
+    }
+
+    /* GAME LIST */
+    .gw-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .gw-row {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        min-width: 0;
+        min-height: 116px;
+        overflow: hidden;
+        border: 1px solid var(--gw-border);
+        border-radius: 14px;
+        background: linear-gradient(105deg, #17182b, #111625 58%, #111522);
+        color: inherit;
+        text-decoration: none;
+        transition: border-color .22s ease, transform .22s ease, box-shadow .22s ease;
+    }
+
+    .gw-row::before {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 3px;
+        background: transparent;
+        content: "";
+        transition: background .22s ease;
+    }
+
+    .gw-row:hover {
+        transform: translateY(-2px);
+        border-color: rgba(167, 139, 250, .55);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .2), 0 0 24px rgba(124, 58, 237, .06);
+    }
+
+    .gw-row:hover::before {
+        background: #a78bfa;
+    }
+
+    /* IMAGE */
+    .gw-thumb {
+        position: relative;
+        flex: 0 0 210px;
+        width: 210px;
+        min-height: 116px;
+        overflow: hidden;
+        background: #0d1220;
+    }
+
+    .gw-thumb::after {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent 65%, rgba(17, 22, 37, .55));
+        content: "";
+        pointer-events: none;
+    }
+
+    .gw-thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 116px;
+        object-fit: cover;
+        transition: transform .35s ease, filter .25s ease;
+    }
+
+    .gw-row:hover .gw-thumb img {
+        transform: scale(1.055);
+    }
+
+    .gw-noimg {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 116px;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 7px;
+        color: #a78bfa;
+        background: radial-gradient(circle, rgba(124, 58, 237, .18), transparent 65%);
+    }
+
+    .gw-noimg i {
+        font-size: 30px;
+    }
+
+    .gw-noimg span {
+        color: #7d879e;
+        font-size: 10px;
+    }
+
+    /* GAME INFO */
+    .gw-info {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        padding: 17px 20px;
+        gap: 5px;
+    }
+
+    .gw-game-topline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1px;
+    }
+
+    .gw-game-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #a78bfa;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .gw-name {
+        margin: 0;
+        color: #f8fafc;
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        transition: color .2s ease;
+    }
+
+    .gw-row:hover .gw-name {
+        color: #c4b5fd;
+    }
+
+    .gw-cat {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        color: #b7a3f7;
+        font-size: 11px;
+    }
+
+    .gw-cat i {
+        font-size: 10px;
+    }
+
+    .gw-desc {
+        display: -webkit-box;
+        margin: 2px 0 0;
+        overflow: hidden;
+        color: #8993a9;
+        font-size: 11px;
+        line-height: 1.7;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    /* STOCK + PRICE */
+    .gw-side {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 18px;
+        padding: 15px 20px 15px 10px;
+    }
+
+    .gw-stock {
+        min-width: 65px;
+        color: #86efac;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: right;
+        line-height: 1.7;
+    }
+
+    .gw-stock small {
+        display: block;
+        margin-bottom: 2px;
+        color: #758098;
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+    }
+
+    .gw-stock.low {
+        color: #fbbf24;
+    }
+
+    .gw-stock.out {
+        color: #fb7185;
+    }
+
+    .gw-price-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .gw-price-label {
+        color: #758098;
+        font-size: 9px;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+    }
+
+    .gw-price {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 9px 13px;
+        border: 1px solid rgba(167, 139, 250, .2);
+        border-radius: 10px;
+        background: rgba(124, 58, 237, .12);
+        color: #ddd6fe;
+        font-size: 15px;
+        font-weight: 800;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .gw-price i {
+        color: #a78bfa;
+        font-size: 10px;
+    }
+
+    .gw-detail-hint {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #737d95;
+        font-size: 10px;
+        transition: color .2s ease;
+    }
+
+    .gw-row:hover .gw-detail-hint {
+        color: #c4b5fd;
+    }
+
+    .gw-row.soldout .gw-thumb img {
+        filter: grayscale(.85);
+        opacity: .6;
+    }
+
+    .gw-row.soldout .gw-price {
+        border-color: rgba(148, 163, 184, .15);
+        background: rgba(148, 163, 184, .07);
+        color: #a1a9bb;
+    }
+
+    .gw-row.soldout .gw-price i {
+        color: #8993a9;
+    }
+
+    /* EMPTY STATE */
+    .gw-empty {
+        display: flex;
+        min-height: 300px;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 35px 20px;
+        border: 1px dashed rgba(148, 163, 184, .23);
+        border-radius: 18px;
+        background: rgba(17, 22, 37, .7);
+        color: #9ca3af;
+        text-align: center;
+    }
+
+    .gw-empty-icon {
+        display: flex;
+        width: 72px;
+        height: 72px;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+        border: 1px solid rgba(167, 139, 250, .2);
+        border-radius: 22px;
+        background: rgba(124, 58, 237, .12);
+        color: #c4b5fd;
+        font-size: 29px;
+    }
+
+    .gw-empty h2 {
+        margin: 0 0 8px;
+        color: #f3f4f6;
+        font-size: 18px;
+    }
+
+    .gw-empty p {
+        max-width: 380px;
+        margin: 0;
+        color: #8b95aa;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .gw-empty a {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 22px;
+        padding: 11px 18px;
+        border: 1px solid rgba(196, 181, 253, .2);
+        border-radius: 10px;
+        background: linear-gradient(110deg, #7c3aed, #6d28d9);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 7px 20px rgba(124, 58, 237, .18);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .gw-empty a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(124, 58, 237, .3);
+    }
+
+    .gw-bottom-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 23px;
+        color: #606b83;
+        font-size: 10px;
+    }
+
+    .gw-bottom-note i {
+        color: #8b5cf6;
+    }
+
+    /* RESPONSIVE */
+    @@media (max-width: 850px) {
+        .gw-store {
+            padding: 26px 18px 50px;
+        }
+
+        .gw-thumb {
+            flex-basis: 175px;
+            width: 175px;
+        }
+
+        .gw-side {
+            gap: 12px;
+            padding-right: 14px;
+        }
+
+        .gw-stock {
+            min-width: 54px;
+        }
+
+        .gw-info {
+            padding: 14px;
+        }
+    }
 
     @@media (max-width: 640px) {
-        .gw-thumb { width: 120px; }
-        .gw-stock { display: none; }
-        .gw-name { font-size: 14px; }
+        .gw-store {
+            padding: 20px 12px 40px;
+        }
+
+        .gw-hero {
+            padding: 22px 18px;
+            margin-bottom: 22px;
+            border-radius: 15px;
+        }
+
+        .gw-head {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .gw-head h1 {
+            font-size: 26px;
+        }
+
+        .gw-count {
+            padding: 8px 11px;
+        }
+
+        .gw-section-caption {
+            display: none;
+        }
+
+        .gw-list {
+            gap: 10px;
+        }
+
+        .gw-row {
+            min-height: 105px;
+            border-radius: 12px;
+        }
+
+        .gw-thumb {
+            flex: 0 0 112px;
+            width: 112px;
+            min-height: 105px;
+        }
+
+        .gw-thumb img,
+        .gw-noimg {
+            min-height: 105px;
+        }
+
+        .gw-thumb::after {
+            background: linear-gradient(90deg, transparent 65%, rgba(17, 22, 37, .25));
+        }
+
+        .gw-info {
+            padding: 11px 10px;
+            gap: 4px;
+        }
+
+        .gw-game-label {
+            font-size: 8px;
+        }
+
+        .gw-name {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .gw-cat {
+            font-size: 10px;
+        }
+
+        .gw-desc {
+            font-size: 10px;
+            -webkit-line-clamp: 1;
+        }
+
+        .gw-side {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .gw-stock,
+        .gw-price-label,
+        .gw-detail-hint {
+            display: none;
+        }
+
+        .gw-price {
+            padding: 7px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+
+        .gw-price i {
+            display: none;
+        }
+
+        .gw-noimg i {
+            font-size: 24px;
+        }
+
+        .gw-empty {
+            min-height: 260px;
+        }
+    }
+
+    @@media (max-width: 390px) {
+        .gw-thumb {
+            flex-basis: 88px;
+            width: 88px;
+        }
+
+        .gw-info {
+            padding: 9px 8px;
+        }
+
+        .gw-name {
+            font-size: 12px;
+        }
+
+        .gw-side {
+            padding: 8px 7px;
+        }
+
+        .gw-price {
+            padding: 7px 6px;
+            font-size: 10px;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .gw-row,
+        .gw-thumb img,
+        .gw-empty a {
+            transition: none;
+        }
+
+        .gw-row:hover,
+        .gw-empty a:hover {
+            transform: none;
+        }
     }
 </style>
 
-<section class="gw-wrap">
+<section class="gw-store">
+    <div class="gw-wrap">
 
-    <!-- HEADER -->
-    <div class="gw-head">
-        <h1>@title</h1>
-        <span>พบทั้งหมด <b>@total</b> เกม</span>
-    </div>
+        <!-- HEADER -->
+        <header class="gw-hero">
+            <div class="gw-eyebrow">
+                <i class="fa-solid fa-bolt"></i>
+                GAMEWORLD STORE
+            </div>
 
-    @if (total > 0)
-    {
-        <!-- GAME LIST -->
-        <div class="gw-list">
-            @foreach (var game in Model)
-            {
-                var outOfStock = game.Stock <= 0;
-                var lowStock = game.Stock > 0 && game.Stock <= 5;
+            <div class="gw-head">
+                <div>
+                    <h1>@title</h1>
+                    <p>ค้นพบเกมโปรดของคุณ แล้วออกไปผจญภัยในโลกใบใหม่</p>
+                </div>
 
-                <a asp-controller="Product"
-                   asp-action="Detail"
-                   asp-route-id="@game.Id"
-                   class="gw-row @(outOfStock ? "soldout" : "")">
+                <div class="gw-count">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <strong>@total</strong>
+                    <span>เกมทั้งหมด</span>
+                </div>
+            </div>
+        </header>
 
-                    <!-- IMAGE -->
-                    <div class="gw-thumb">
-                        @if (!string.IsNullOrEmpty(game.ImageUrl))
-                        {
-                            <img src="@game.ImageUrl" alt="@game.Name" loading="lazy" />
-                        }
-                        else
-                        {
-                            <div class="gw-noimg">🎮</div>
-                        }
-                    </div>
+        <!-- LIST TITLE -->
+        <div class="gw-section-heading">
+            <h2>
+                <i class="fa-solid fa-border-all"></i>
+                รายการเกม
+            </h2>
+            <span class="gw-section-caption">เลือกเกมเพื่อดูรายละเอียดเพิ่มเติม</span>
+        </div>
 
-                    <!-- INFO -->
-                    <div class="gw-info">
-                        <h2 class="gw-name">@game.Name</h2>
-                        <p class="gw-cat">@(string.IsNullOrEmpty(game.Category) ? "Game" : game.Category)</p>
-                        @if (!string.IsNullOrWhiteSpace(game.Description))
-                        {
-                            <p class="gw-desc">@game.Description</p>
-                        }
-                    </div>
+        @if (total > 0)
+        {
+            <div class="gw-list">
+                @foreach (var game in games)
+                {
+                    var outOfStock = game.Stock <= 0;
+                    var lowStock = game.Stock > 0 && game.Stock <= 5;
 
-                    <!-- STOCK + PRICE -->
-                    <div class="gw-side">
-                       
-                        <div class="gw-price">฿@game.Price.ToString("N2")</div>
-                    </div>
+                    <a asp-controller="Product"
+                       asp-action="Detail"
+                       asp-route-id="@game.Id"
+                       class="gw-row @(outOfStock ? "soldout" : "")"
+                       aria-label="ดูรายละเอียด @game.Name">
+
+                        <!-- GAME IMAGE -->
+                        <div class="gw-thumb">
+                            @if (!string.IsNullOrWhiteSpace(game.ImageUrl))
+                            {
+                                <img src="@game.ImageUrl"
+                                     alt="@game.Name"
+                                     loading="lazy"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+
+                                <div class="gw-noimg" style="display:none">
+                                    <i class="fa-solid fa-gamepad"></i>
+                                    <span>ไม่มีรูปภาพ</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="gw-noimg">
+                                    <i class="fa-solid fa-gamepad"></i>
+                                    <span>ไม่มีรูปภาพ</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- GAME DETAILS -->
+                        <div class="gw-info">
+                            <div class="gw-game-topline">
+                                <span class="gw-game-label">
+                                    <i class="fa-solid fa-cube"></i>
+                                    PC GAME
+                                </span>
+                            </div>
+
+                            <h2 class="gw-name">@game.Name</h2>
+
+                            <p class="gw-cat">
+                                <i class="fa-solid fa-tag"></i>
+                                @(string.IsNullOrWhiteSpace(game.Category) ? "Game" : game.Category)
+                            </p>
+
+                            @if (!string.IsNullOrWhiteSpace(game.Description))
+                            {
+                                <p class="gw-desc">@game.Description</p>
+                            }
+                        </div>
+
+                        <!-- STOCK AND PRICE -->
+                        <div class="gw-side">
+                            <div class="gw-stock @(outOfStock ? "out" : lowStock ? "low" : "")">
+                                <small>STOCK</small>
+
+                                @if (outOfStock)
+                                {
+                                    <span>หมด</span>
+                                }
+                                else
+                                {
+                                    <span>@game.Stock ชิ้น</span>
+                                }
+                            </div>
+
+                            <div class="gw-price-wrap">
+                                <span class="gw-price-label">PRICE</span>
+                                <span class="gw-price">
+                                    <i class="fa-solid fa-tag"></i>
+                                    @if (outOfStock)
+                                    {
+                                        <span>สินค้าหมด</span>
+                                    }
+                                    else
+                                    {
+                                        <span>฿@game.Price.ToString("N2")</span>
+                                    }
+                                </span>
+
+                                <span class="gw-detail-hint">
+                                    ดูรายละเอียด <i class="fa-solid fa-arrow-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <div class="gw-bottom-note">
+                <i class="fa-solid fa-shield-halved"></i>
+                GAMEWORLD STORE · ค้นหาเกมที่ใช่สำหรับคุณ
+            </div>
+        }
+        else
+        {
+            <div class="gw-empty">
+                <div class="gw-empty-icon">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+
+                <h2>ยังไม่พบเกมในหมวดหมู่นี้</h2>
+                <p>
+                    ขณะนี้ยังไม่มีเกมที่จะแสดงในหมวดหมู่นี้
+                    ลองกลับไปดูเกมทั้งหมดเพื่อค้นหาเกมที่คุณสนใจ
+                </p>
+
+                <a asp-controller="Product" asp-action="Index">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    ดูเกมทั้งหมด
                 </a>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="gw-empty">
-            <div style="font-size:40px;margin-bottom:8px">🎮</div>
-            <p style="margin:0">ไม่พบรายการเกมในหมวดหมู่นี้</p>
-            <a href="/">กลับสู่หน้าแรก</a>
-        </div>
-    }
-
+            </div>
+        }
+    </div>
 </section>

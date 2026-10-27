@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Game.Data;
 using Game.Models;
@@ -12,118 +13,252 @@ namespace Game.Controllers
     public class AuthController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AppDbContext context)
+        public AuthController(
+            AppDbContext context,
+            ILogger<AuthController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
-        // --- หน้า Register (GET) ---
+        // ================= REGISTER GET =================
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
-        // --- ระบบ Register (POST) ---
+        // ================= REGISTER POST =================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(User model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                // 1. ตรวจสอบว่ามีอีเมลนี้ในระบบหรือยัง (เปลี่ยนมาใช้ _context.Users ตามตาราง users)
-                var existingUser = await _context.Users.FirstOrDefaultAsync(p => p.Email == model.Email);
-                if (existingUser != null)
-                {
-                    ModelState.AddModelError("", "อีเมลนี้ถูกใช้งานแล้ว");
-                    return View(model);
-                }
-
-                // 2. สร้าง ID ใหม่ (เนื่องจากตารางใช้ uuid() เป็นค่าเริ่มต้นได้ สามารถปล่อยให้ Database สร้าง หรือใส่ Guid เพิ่มได้)
-                Guid newId = Guid.NewGuid();
-
-                // 3. บันทึกลงตาราง users ผ่าน AppDbContext
-                var user = new User
-                {
-                    Id = newId,
-                    Email = model.Email,
-                    Password = model.Password, // บันทึกรหัสผ่านลงตาราง
-                    Role = string.IsNullOrEmpty(model.Role) ? "user" : model.Role
-                };
-
-                try
-                {
-                    _context.Users.Add(user);
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error: " + ex.InnerException?.Message ?? ex.Message);
-                }
-
-                // สมัครเสร็จให้เด้งไปหน้า Login
-                return RedirectToAction("Login");
+                return View(model);
             }
-            return View(model);
+
+            var email = model.Email?.Trim();
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ModelState.AddModelError(
+                    "",
+                    "กรุณากรอกอีเมล"
+                );
+
+                return View(model);
+            }
+
+            // ตรวจสอบอีเมลซ้ำ
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+
+            if (existingUser != null)
+            {
+                ModelState.AddModelError(
+                    "",
+                    "อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น"
+                );
+
+                return View(model);
+            }
+
+            // ตรวจสอบรหัสผ่าน
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError(
+                    "",
+                    "กรุณากรอกรหัสผ่าน"
+                );
+
+                return View(model);
+            }
+
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+
+                // ใช้รูปแบบเดิมของฐานข้อมูลปัจจุบัน
+                // ควรเปลี่ยนเป็น Password Hash ก่อนใช้งานจริง
+                Password = model.Password,
+
+                // ผู้สมัครทั่วไปไม่สามารถกำหนด Role เองได้
+                Role = "user"
+            };
+
+            try
+            {
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                // แจ้งเตือนสมัครสมาชิกสำเร็จ
+                TempData["SuccessMessage"] =
+                    "สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ";
+
+                return RedirectToAction(nameof(Login));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "เกิดข้อผิดพลาดขณะสมัครสมาชิก"
+                );
+
+                ModelState.AddModelError(
+                    "",
+                    "ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่อีกครั้ง"
+                );
+
+                return View(model);
+            }
         }
 
-        // --- หน้า Login (GET) ---
+        // ================= LOGIN GET =================
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
+
             return View();
         }
 
-        // --- ระบบ Login (POST) ---
+        // ================= LOGIN POST =================
         [HttpPost]
-        public async Task<IActionResult> Login(string email, string password)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(
+            string? email,
+            string? password,
+            string? returnUrl = null)
         {
-            // ค้นหาจากอีเมลและรหัสผ่านในตาราง users
-            var user = await _context.Users.FirstOrDefaultAsync(p => p.Email == email && p.Password == password);
-            
-            if (user != null)
+            ViewBag.ReturnUrl = returnUrl;
+
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(password))
             {
-                // 1. สร้าง Claims ระบุตัวตนผู้ใช้งาน
+                ModelState.AddModelError(
+                    "",
+                    "กรุณากรอกอีเมลและรหัสผ่าน"
+                );
+
+                return View();
+            }
+
+            try
+            {
+                var normalizedEmail = email.Trim();
+
+                // ใช้การตรวจสอบแบบเดิมให้เข้ากับฐานข้อมูลปัจจุบัน
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u =>
+                        u.Email == normalizedEmail &&
+                        u.Password == password);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+                    );
+
+                    return View();
+                }
+
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), 
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role ?? "user")
+                    new Claim(
+                        ClaimTypes.NameIdentifier,
+                        user.Id.ToString()
+                    ),
+                    new Claim(
+                        ClaimTypes.Name,
+                        user.Email ?? ""
+                    ),
+                    new Claim(
+                        ClaimTypes.Email,
+                        user.Email ?? ""
+                    ),
+                    new Claim(
+                        ClaimTypes.Role,
+                        user.Role ?? "user"
+                    )
                 };
 
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var claimsIdentity = new ClaimsIdentity(
+                    claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme
+                );
 
-                // 2. สั่งสร้างและบันทึกคุกกี้ล็อกอิน
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+                var principal = new ClaimsPrincipal(claimsIdentity);
 
-                // 3. ล็อกอินสำเร็จ เปลี่ยนเส้นทางไปหน้าแรก
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    principal
+                );
+
+                // แจ้งเตือนเข้าสู่ระบบสำเร็จ
+                TempData["SuccessMessage"] =
+                    "เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับสู่ GameWorld";
+
+                // Redirect กลับหน้าที่ต้องการ
+                // อนุญาตเฉพาะ URL ภายในเว็บไซต์เท่านั้น
+                if (!string.IsNullOrWhiteSpace(returnUrl) &&
+                    Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+
                 return RedirectToAction("Index", "Home");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
+                );
 
-            ModelState.AddModelError("", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-            return View();
+                ModelState.AddModelError(
+                    "",
+                    "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่"
+                );
+
+                return View();
+            }
         }
 
-        // --- ระบบ Logout ---
+        // ================= LOGOUT =================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+
             HttpContext.Session.Clear();
+
             return RedirectToAction("Index", "Home");
         }
 
-        // --- หน้า Profile ---
+        // ================= PROFILE =================
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Profile()
         {
-            // ดึง Email ของคนที่กำลังล็อกอินอยู่จาก Claim
-            var email = User.FindFirstValue(ClaimTypes.Email);
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
 
-            // ค้นหาข้อมูลจากตาราง users
-            var userProfile = await _context.Users.FirstOrDefaultAsync(p => p.Email == email);
+            if (!Guid.TryParse(userId, out var id))
+            {
+                return Unauthorized();
+            }
+
+            var userProfile = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id);
 
             if (userProfile == null)
             {

@@ -1,4 +1,3 @@
-
 @model List<Game.Models.Order>
 
 @{
@@ -6,8 +5,11 @@
     var email = ViewBag.UserEmail as string ?? "";
     Layout = null;
 
-    var pendingOrders = Model.Where(o => o.Status == "pending").ToList();
-    var paidOrders = Model.Where(o => o.Status == "paid").ToList();
+    var orders = Model ?? new List<Game.Models.Order>();
+    var pendingOrders = orders.Where(o => o.Status == "pending").ToList();
+    var paidOrders = orders.Where(o => o.Status == "paid").ToList();
+    var pendingTotal = pendingOrders.Sum(o => o.TotalPrice);
+    var paidTotal = paidOrders.Sum(o => o.TotalPrice);
 }
 
 <!DOCTYPE html>
@@ -15,520 +17,416 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"]</title>
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <title>@ViewData["Title"] - GameWorld</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
-            --bg: #080b14;
-            --sidebar: #080a11;
-            --surface: #111625;
-            --card: #171e30;
-            --border: #293249;
-            --text: #f1f5f9;
-            --muted: #94a3b8;
-            --purple: #823cf0;
-            --yellow: #facc15;
+            color-scheme: dark;
+            --bg: #090b13;
+            --sidebar: #0b0d17;
+            --surface: #111522;
+            --card: #151a2a;
+            --card-hover: #191f32;
+            --border: #252c41;
+            --text: #f5f7ff;
+            --muted: #929bb3;
+            --purple: #9b6cff;
+            --purple-strong: #7c3aed;
+            --yellow: #f6c85f;
             --green: #4ade80;
+            --red: #fb7185;
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        html, body {
-            margin: 0;
-            min-height: 100%;
-            width: 100%;
-        }
-
+        * { box-sizing: border-box; }
+        html { min-height: 100%; scroll-behavior: smooth; }
         body {
-            background: var(--bg);
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at 80% -10%, rgba(124, 58, 237, .15), transparent 36%),
+                radial-gradient(ellipse at 10% 90%, rgba(59, 130, 246, .05), transparent 30%),
+                var(--bg);
             color: var(--text);
-            font-family: "Segoe UI", Tahoma, sans-serif;
+            font-family: "Kanit", "Segoe UI", sans-serif;
             font-size: 14px;
+            -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
+        a { color: inherit; text-decoration: none; }
 
-        a {
-            text-decoration: none;
-        }
-
-        .mo-wrap {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* SIDEBAR */
+        .mo-wrap { display: flex; min-height: 100vh; }
         .mo-side {
-            width: 238px;
-            flex: 0 0 238px;
-            background: var(--sidebar);
-            border-right: 1px solid #1d2435;
-            padding: 25px 14px;
+            position: sticky;
+            top: 0;
             display: flex;
+            flex: 0 0 252px;
             flex-direction: column;
             gap: 7px;
+            width: 252px;
+            height: 100vh;
+            padding: 26px 16px;
+            background: rgba(10, 12, 21, .96);
+            border-right: 1px solid rgba(148, 163, 184, .12);
         }
-
         .mo-brand {
-            padding: 5px 12px 25px;
-            color: white;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 4px 10px 30px;
+            color: #fff;
             font-size: 19px;
             font-weight: 800;
-            letter-spacing: .3px;
+            letter-spacing: .6px;
         }
-
-        .mo-brand span {
-            color: #a78bfa;
+        .mo-brand-mark {
+            display: grid;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            border: 1px solid rgba(196, 181, 253, .35);
+            border-radius: 12px;
+            background: linear-gradient(145deg, #9b6cff, #5b21b6);
+            box-shadow: 0 7px 22px rgba(124, 58, 237, .25);
         }
-
+        .mo-brand span { color: #b69aff; }
+        .mo-nav-label {
+            padding: 0 12px 9px;
+            color: #68728a;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
         .mo-side a {
             display: flex;
             align-items: center;
             gap: 12px;
-            min-height: 43px;
-            padding: 11px 13px;
-            border-radius: 10px;
-            color: #aeb8ca;
+            min-height: 46px;
+            padding: 12px 14px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            color: #9ca6bd;
             font-size: 13px;
-            font-weight: 600;
-            transition: background .2s, color .2s;
+            font-weight: 400;
+            transition: .2s ease;
         }
-
-        .mo-side a i {
-            width: 18px;
-            text-align: center;
-        }
-
+        .mo-side a i { width: 19px; text-align: center; font-size: 15px; }
         .mo-side a:hover {
-            background: #171b2a;
-            color: white;
+            color: #fff;
+            background: rgba(255,255,255,.045);
+            border-color: rgba(148,163,184,.08);
         }
-
         .mo-side a.active {
-            color: white;
-            background: linear-gradient(100deg, #7837e8, #8b45f5);
-            box-shadow: 0 5px 16px rgba(124, 58, 237, .18);
+            color: #fff;
+            border-color: rgba(167,139,250,.22);
+            background: linear-gradient(100deg, rgba(124,58,237,.28), rgba(124,58,237,.08));
+            box-shadow: inset 3px 0 0 #a78bfa;
         }
-
-        /* MAIN CONTENT */
-        .mo-main {
-            flex: 1;
-            min-width: 0;
-            padding: 30px;
-            background:
-                radial-gradient(ellipse at top right,
-                    rgba(89, 55, 160, .09), transparent 38%),
-                var(--bg);
+        .mo-side a.active i { color: #c4b5fd; }
+        .mo-side-bottom {
+            margin-top: auto;
+            padding: 15px 13px;
+            border: 1px solid rgba(148,163,184,.12);
+            border-radius: 14px;
+            background: rgba(255,255,255,.025);
         }
+        .mo-side-bottom strong { display: block; margin-bottom: 4px; font-size: 12px; }
+        .mo-side-bottom span { color: var(--muted); font-size: 11px; line-height: 1.6; }
 
-        .mo-content {
-            width: 100%;
-            max-width: 1450px;
-            margin: 0 auto;
+        .mo-main { flex: 1; min-width: 0; padding: 36px clamp(18px, 3.2vw, 48px) 48px; }
+        .mo-content { width: 100%; max-width: 1500px; margin: 0 auto; }
+        .mo-topline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 27px;
         }
-
-        .mo-page-heading {
-            margin: 0 0 20px;
+        .mo-breadcrumb { display: flex; align-items: center; gap: 9px; color: #77819a; font-size: 12px; }
+        .mo-breadcrumb i { font-size: 10px; }
+        .mo-breadcrumb strong { color: #dce2f1; font-weight: 500; }
+        .mo-online {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid rgba(74,222,128,.15);
+            border-radius: 999px;
+            background: rgba(34,197,94,.06);
+            color: #86efac;
+            font-size: 11px;
         }
-
-        .mo-page-heading h1 {
-            margin: 0 0 6px;
-            font-size: 25px;
-            font-weight: 800;
-            letter-spacing: -.4px;
+        .mo-online-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 10px rgba(74,222,128,.7); }
+        .mo-page-heading { margin-bottom: 25px; }
+        .mo-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 9px;
+            color: #b69aff;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.3px;
+            text-transform: uppercase;
         }
+        .mo-page-heading h1 { margin: 0 0 7px; font-size: clamp(25px, 3vw, 34px); line-height: 1.25; font-weight: 700; letter-spacing: -.6px; }
+        .mo-page-heading p { margin: 0; color: var(--muted); font-size: 13px; }
 
-        .mo-page-heading p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        /* USER HEADER */
         .mo-user {
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 18px 22px;
             margin-bottom: 24px;
-            background: var(--surface);
-            border: 1px solid #20283a;
-            border-radius: 15px;
+            padding: 17px 20px;
+            border: 1px solid rgba(167,139,250,.15);
+            border-radius: 16px;
+            background: linear-gradient(110deg, rgba(124,58,237,.1), rgba(17,21,34,.96) 48%);
         }
-
         .mo-avatar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: grid;
+            flex: 0 0 46px;
             width: 46px;
             height: 46px;
-            flex-shrink: 0;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #9333ea, #6d28d9);
+            place-items: center;
+            border: 1px solid rgba(221,214,254,.25);
+            border-radius: 15px;
+            background: linear-gradient(145deg, #a78bfa, #6d28d9);
             color: white;
-            font-size: 17px;
-            font-weight: 800;
-        }
-
-        .mo-user .lbl {
-            margin-bottom: 4px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .mo-user .val {
-            color: #fff;
-            font-size: 14px;
+            font-size: 19px;
             font-weight: 700;
-            overflow-wrap: anywhere;
+            box-shadow: 0 6px 20px rgba(124,58,237,.2);
         }
+        .mo-user .lbl { margin-bottom: 3px; color: var(--muted); font-size: 11px; }
+        .mo-user .val { color: #fff; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+        .mo-user-meta { margin-left: auto; color: #8c96ad; font-size: 11px; text-align: right; }
+        .mo-user-meta i { margin-right: 5px; color: #a78bfa; }
 
-        .mo-alert {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 13px 16px;
-            border: 1px solid rgba(74, 222, 128, .22);
-            border-radius: 11px;
-            background: rgba(34, 197, 94, .09);
-            color: #86efac;
-        }
-
-        /* ORDER SECTIONS */
-        .mo-panel {
-            padding: 22px;
-            margin-bottom: 22px;
-            background: var(--surface);
-            border: 1px solid #20283a;
-            border-radius: 16px;
-        }
-
-        .mo-panel-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .mo-panel h2 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0;
-            font-size: 16px;
-            font-weight: 750;
-        }
-
-        .mo-panel h2.pending-title {
-            color: var(--yellow);
-        }
-
-        .mo-panel h2.paid-title {
-            color: var(--green);
-        }
-
-        .mo-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 27px;
-            height: 25px;
-            padding: 0 8px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #1b2235;
-            color: white;
-            font-size: 12px;
-        }
-
-        .mo-grid-container {
+        .mo-stats {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 15px;
+            margin-bottom: 26px;
         }
+        .mo-stat {
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+            padding: 19px 20px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(23,29,46,.96), rgba(16,20,32,.98));
+        }
+        .mo-stat::after {
+            position: absolute;
+            top: -26px;
+            right: -22px;
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            background: var(--glow, rgba(167,139,250,.12));
+            filter: blur(3px);
+            content: "";
+        }
+        .mo-stat-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
+        .mo-stat-label { color: #a3acc0; font-size: 12px; }
+        .mo-stat-icon { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 11px; background: var(--icon-bg, rgba(167,139,250,.12)); color: var(--icon-color, #c4b5fd); }
+        .mo-stat-value { margin-bottom: 4px; font-size: clamp(22px, 2.2vw, 28px); line-height: 1.15; font-weight: 700; letter-spacing: -.4px; overflow-wrap: anywhere; }
+        .mo-stat-note { color: #77819a; font-size: 11px; }
 
-        /* ORDER CARD */
+        .mo-panel {
+            margin-bottom: 23px;
+            padding: 22px;
+            border: 1px solid rgba(148,163,184,.13);
+            border-radius: 18px;
+            background: rgba(17,21,34,.88);
+            box-shadow: 0 12px 34px rgba(0,0,0,.09);
+        }
+        .mo-panel-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 19px; }
+        .mo-section-title { display: flex; align-items: center; gap: 12px; }
+        .mo-section-icon { display: grid; width: 39px; height: 39px; flex: 0 0 39px; place-items: center; border-radius: 12px; }
+        .mo-section-icon.pending { background: rgba(250,204,21,.1); color: var(--yellow); }
+        .mo-section-icon.paid { background: rgba(74,222,128,.1); color: var(--green); }
+        .mo-panel h2 { margin: 0 0 3px; color: #f3f5fc; font-size: 15px; font-weight: 600; }
+        .mo-panel-subtitle { color: #818ba2; font-size: 11px; }
+        .mo-count { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 9px; background: #171c2b; color: #c5ccdc; font-size: 11px; white-space: nowrap; }
+
+        .mo-grid-container { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
         .mo-order {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             min-width: 0;
             padding: 17px;
-            border: 1px solid var(--border);
-            border-radius: 13px;
-            background: var(--card);
-            transition: border-color .2s, transform .2s;
+            border: 1px solid #293148;
+            border-radius: 14px;
+            background: linear-gradient(155deg, #171d2e, #131827);
+            transition: border-color .2s ease, transform .2s ease, background .2s ease;
         }
+        .mo-order:hover { border-color: rgba(167,139,250,.55); background: var(--card-hover); transform: translateY(-2px); }
+        .mo-order-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+        .mo-order-no { color: #f6f7fc; font-size: 14px; font-weight: 700; letter-spacing: .3px; }
+        .mo-order-date { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: #8993aa; font-size: 10px; }
+        .mo-order-date i { color: #737f99; }
+        .mo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid transparent; border-radius: 8px; font-size: 10px; font-weight: 500; white-space: nowrap; }
+        .mo-badge.pending { border-color: rgba(250,204,21,.17); background: rgba(250,204,21,.08); color: #f9d66c; }
+        .mo-badge.paid { border-color: rgba(74,222,128,.16); background: rgba(74,222,128,.08); color: #86efac; }
+        .mo-items { display: flex; flex-direction: column; gap: 10px; }
+        .mo-line { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; color: #b7c0d3; font-size: 11px; line-height: 1.65; }
+        .mo-line .item-name { min-width: 0; overflow-wrap: anywhere; }
+        .mo-line .item-price { flex-shrink: 0; color: #e2e8f0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .mo-line.discount { color: #86efac; }
+        .mo-total { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 17px; padding-top: 14px; border-top: 1px solid #2a3145; color: #9da7bc; font-size: 12px; }
+        .mo-total .amount { color: #fff; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .mo-total .amount small { color: #9da7bc; font-size: 10px; font-weight: 400; }
 
-        .mo-order:hover {
-            border-color: #65509a;
-            transform: translateY(-2px);
+        .mo-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 175px; padding: 26px 15px; border: 1px dashed #30384e; border-radius: 14px; background: rgba(255,255,255,.012); color: #8b95ac; text-align: center; font-size: 12px; }
+        .mo-empty-icon { display: grid; width: 48px; height: 48px; place-items: center; margin-bottom: 3px; border: 1px solid #30384e; border-radius: 15px; background: #171c2b; color: #8f9ab3; font-size: 19px; }
+        .mo-empty strong { color: #cbd2e2; font-size: 13px; font-weight: 500; }
+        .mo-empty a { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; padding: 9px 13px; border: 1px solid rgba(167,139,250,.25); border-radius: 9px; background: rgba(124,58,237,.12); color: #c4b5fd; font-size: 11px; transition: .2s ease; }
+        .mo-empty a:hover { background: rgba(124,58,237,.23); }
+
+        .mo-footer { padding: 5px 0 0; color: #566078; font-size: 10px; text-align: center; }
+        @@media (max-width: 1400px) { .mo-grid-container { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @@media (max-width: 1000px) {
+            .mo-side { flex-basis: 220px; width: 220px; padding-inline: 12px; }
+            .mo-main { padding: 28px 22px 38px; }
+            .mo-stats { gap: 10px; }
+            .mo-stat { padding: 16px; }
         }
-
-        .mo-order-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 17px;
-        }
-
-        .mo-order-no {
-            color: #fff;
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: .2px;
-        }
-
-        .mo-order-date {
-            margin-top: 5px;
-            color: var(--muted);
-            font-size: 11px;
-        }
-
-        .mo-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-            padding: 5px 9px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .mo-badge.pending {
-            background: rgba(250, 204, 21, .12);
-            color: #fde047;
-        }
-
-        .mo-badge.paid {
-            background: rgba(34, 197, 94, .12);
-            color: #86efac;
-        }
-
-        .mo-items {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .mo-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-            color: #cbd5e1;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .mo-line .item-name {
-            min-width: 0;
-            overflow-wrap: anywhere;
-        }
-
-        .mo-line .item-price {
-            flex-shrink: 0;
-            color: #e2e8f0;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .mo-line.discount {
-            color: #86efac;
-        }
-
-        .mo-total {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border);
-            color: white;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .mo-total .amount {
-            color: #fff;
-            font-size: 16px;
-            font-weight: 800;
-            white-space: nowrap;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .mo-empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 32px 15px;
-            border: 1px dashed #30394d;
-            border-radius: 12px;
-            color: var(--muted);
-            text-align: center;
-            font-size: 13px;
-        }
-
-        .mo-empty i {
-            color: #64748b;
-            font-size: 24px;
-        }
-
-        /* RESPONSIVE */
-        @@media (max-width: 1200px) {
-            .mo-grid-container {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .mo-main {
-                padding: 24px;
-            }
-        }
-
         @@media (max-width: 760px) {
-            .mo-wrap {
-                flex-direction: column;
-            }
-
-            .mo-side {
-                width: 100%;
-                flex: 0 0 auto;
-                flex-direction: row;
-                align-items: center;
-                gap: 6px;
-                padding: 10px;
-                overflow-x: auto;
-                border-right: 0;
-                border-bottom: 1px solid #1d2435;
-            }
-
-            .mo-brand {
-                display: none;
-            }
-
-            .mo-side a {
-                flex: 0 0 auto;
-                min-height: 40px;
-                padding: 10px 13px;
-                font-size: 12px;
-            }
-
-            .mo-main {
-                padding: 20px 14px;
-            }
-
-            .mo-page-heading h1 {
-                font-size: 22px;
-            }
-
-            .mo-panel {
-                padding: 16px;
-                margin-bottom: 16px;
-            }
-
-            .mo-grid-container {
-                grid-template-columns: minmax(0, 1fr);
-            }
-
-            .mo-user {
-                padding: 15px;
-                margin-bottom: 18px;
-            }
+            .mo-wrap { flex-direction: column; }
+            .mo-side { position: sticky; z-index: 20; top: 0; flex: 0 0 auto; flex-direction: row; align-items: center; gap: 5px; width: 100%; height: auto; padding: 9px 10px; overflow-x: auto; border-right: 0; border-bottom: 1px solid rgba(148,163,184,.13); }
+            .mo-brand { display: flex; flex: 0 0 auto; gap: 8px; padding: 0 8px 0 2px; font-size: 13px; }
+            .mo-brand-mark { width: 30px; height: 30px; border-radius: 9px; font-size: 12px; }
+            .mo-nav-label, .mo-side-bottom { display: none; }
+            .mo-side a { flex: 0 0 auto; min-height: 38px; gap: 7px; padding: 9px 11px; font-size: 11px; white-space: nowrap; }
+            .mo-side a i { font-size: 12px; }
+            .mo-main { padding: 22px 14px 30px; }
+            .mo-topline { margin-bottom: 22px; }
+            .mo-online { display: none; }
+            .mo-page-heading { margin-bottom: 19px; }
+            .mo-user { padding: 14px; margin-bottom: 17px; }
+            .mo-user-meta { display: none; }
+            .mo-stats { grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+            .mo-stat { padding: 15px 17px; }
+            .mo-stat-top { margin-bottom: 9px; }
+            .mo-stat-value { font-size: 24px; }
+            .mo-panel { padding: 15px; margin-bottom: 16px; border-radius: 15px; }
+            .mo-grid-container { grid-template-columns: minmax(0, 1fr); gap: 11px; }
+            .mo-order { padding: 15px; }
         }
-
         @@media (prefers-reduced-motion: reduce) {
-            .mo-order,
-            .mo-side a {
-                transition: none;
-            }
-
-            .mo-order:hover {
-                transform: none;
-            }
+            *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+            .mo-order:hover { transform: none; }
         }
     </style>
 </head>
-
 <body>
 <div class="mo-wrap">
-
     <aside class="mo-side">
-        <div class="mo-brand">GAME<span>WORLD</span></div>
+        <a class="mo-brand" asp-controller="Home" asp-action="Index" aria-label="GameWorld หน้าแรก">
+            <span class="mo-brand-mark"><i class="fa-solid fa-gamepad"></i></span>
+            <span style="color:#fff">GAME<span>WORLD</span></span>
+        </a>
 
+        <div class="mo-nav-label">เมนูหลัก</div>
         <a asp-controller="Home" asp-action="Index">
-            <i class="fa-solid fa-house"></i>
-            <span>หน้าแรก</span>
+            <i class="fa-solid fa-house"></i><span>หน้าแรก</span>
         </a>
-
+        <a asp-controller="Product" asp-action="Index">
+            <i class="fa-solid fa-gamepad"></i><span>เลือกซื้อเกม</span>
+        </a>
         <a asp-controller="Cart" asp-action="Index">
-            <i class="fa-solid fa-cart-shopping"></i>
-            <span>ตะกร้า</span>
+            <i class="fa-solid fa-cart-shopping"></i><span>ตะกร้าสินค้า</span>
+        </a>
+        <a asp-controller="Cart" asp-action="MyOrders" class="active" aria-current="page">
+            <i class="fa-solid fa-clock-rotate-left"></i><span>ประวัติการสั่งซื้อ</span>
         </a>
 
-        <a asp-controller="Cart" asp-action="MyOrders" class="active">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>History</span>
-        </a>
+        <div class="mo-side-bottom">
+            <strong><i class="fa-solid fa-shield-halved" style="color:#a78bfa;margin-right:6px"></i> GAMEWORLD ACCOUNT</strong>
+            <span>ตรวจสอบคำสั่งซื้อและสถานะการชำระเงินของคุณได้ที่นี่</span>
+        </div>
     </aside>
 
     <main class="mo-main">
         <div class="mo-content">
-
-            <div class="mo-page-heading">
-                <h1>ประวัติการสั่งซื้อ</h1>
-                <p>ตรวจสอบรายการสั่งซื้อและสถานะการชำระเงินของคุณ</p>
+            <div class="mo-topline">
+                <div class="mo-breadcrumb">
+                    <span>บัญชีของฉัน</span><i class="fa-solid fa-chevron-right"></i><strong>ประวัติการสั่งซื้อ</strong>
+                </div>
+                <div class="mo-online"><span class="mo-online-dot"></span> บัญชีของคุณ</div>
             </div>
+
+            <header class="mo-page-heading">
+                <div class="mo-eyebrow"><i class="fa-solid fa-layer-group"></i> ORDER CENTER</div>
+                <h1>ประวัติการสั่งซื้อ</h1>
+                <p>ติดตามคำสั่งซื้อ ตรวจสอบรายการสินค้า และสถานะการชำระเงินของคุณ</p>
+            </header>
 
             <div class="mo-user">
                 <div class="mo-avatar">
-                    @(string.IsNullOrWhiteSpace(email)
-                        ? "?"
-                        : email.Substring(0, 1).ToUpperInvariant())
+                    @(string.IsNullOrWhiteSpace(email) ? "?" : email.Trim().Substring(0, 1).ToUpperInvariant())
                 </div>
-
                 <div>
-                    <div class="lbl">เข้าสู่ระบบด้วย</div>
-                    <div class="val">
-                        @(string.IsNullOrWhiteSpace(email) ? "ไม่พบอีเมลผู้ใช้" : email)
-                    </div>
+                    <div class="lbl">เข้าสู่ระบบด้วยอีเมล</div>
+                    <div class="val">@(string.IsNullOrWhiteSpace(email) ? "ไม่พบอีเมลผู้ใช้" : email)</div>
                 </div>
+                <div class="mo-user-meta"><i class="fa-solid fa-lock"></i> ข้อมูลบัญชีของคุณ</div>
             </div>
 
-            @if (TempData["PayOk"] != null)
-            {
-                <div class="mo-alert">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span>@TempData["PayOk"]</span>
+            <section class="mo-stats" aria-label="สรุปคำสั่งซื้อ">
+                <div class="mo-stat" style="--glow:rgba(167,139,250,.12);--icon-bg:rgba(167,139,250,.12);--icon-color:#c4b5fd">
+                    <div class="mo-stat-top">
+                        <span class="mo-stat-label">คำสั่งซื้อทั้งหมด</span>
+                        <span class="mo-stat-icon"><i class="fa-solid fa-receipt"></i></span>
+                    </div>
+                    <div class="mo-stat-value">@orders.Count</div>
+                    <div class="mo-stat-note">รายการสั่งซื้อทั้งหมดของคุณ</div>
                 </div>
-            }
+                <div class="mo-stat" style="--glow:rgba(250,204,21,.1);--icon-bg:rgba(250,204,21,.1);--icon-color:#f6d365">
+                    <div class="mo-stat-top">
+                        <span class="mo-stat-label">ยอดรอชำระเงิน</span>
+                        <span class="mo-stat-icon"><i class="fa-solid fa-hourglass-half"></i></span>
+                    </div>
+                    <div class="mo-stat-value">฿@pendingTotal.ToString("N2")</div>
+                    <div class="mo-stat-note">@pendingOrders.Count รายการที่ยังรอชำระเงิน</div>
+                </div>
+                <div class="mo-stat" style="--glow:rgba(74,222,128,.1);--icon-bg:rgba(74,222,128,.1);--icon-color:#86efac">
+                    <div class="mo-stat-top">
+                        <span class="mo-stat-label">ยอดชำระแล้ว</span>
+                        <span class="mo-stat-icon"><i class="fa-solid fa-circle-check"></i></span>
+                    </div>
+                    <div class="mo-stat-value">฿@paidTotal.ToString("N2")</div>
+                    <div class="mo-stat-note">ชำระสำเร็จ @paidOrders.Count รายการ</div>
+                </div>
+            </section>
 
             <!-- PENDING ORDERS -->
             <section class="mo-panel">
                 <div class="mo-panel-head">
-                    <h2 class="pending-title">
-                        <i class="fa-solid fa-hourglass-half"></i>
-                        รอชำระเงิน
-                    </h2>
-                    <span class="mo-count">@pendingOrders.Count รายการ</span>
+                    <div class="mo-section-title">
+                        <span class="mo-section-icon pending"><i class="fa-solid fa-hourglass-half"></i></span>
+                        <div>
+                            <h2>รอชำระเงิน</h2>
+                            <div class="mo-panel-subtitle">คำสั่งซื้อที่ยังดำเนินการชำระเงินไม่เสร็จ</div>
+                        </div>
+                    </div>
+                    <span class="mo-count"><i class="fa-regular fa-folder-open"></i> @pendingOrders.Count รายการ</span>
                 </div>
 
                 @if (!pendingOrders.Any())
                 {
                     <div class="mo-empty">
-                        <i class="fa-regular fa-folder-open"></i>
-                        <span>ไม่มีรายการที่รอชำระเงินในขณะนี้</span>
+                        <div class="mo-empty-icon"><i class="fa-regular fa-circle-check"></i></div>
+                        <strong>ไม่มีรายการรอชำระเงิน</strong>
+                        <span>ยอดเยี่ยม! ตอนนี้คุณไม่มีคำสั่งซื้อที่ค้างชำระ</span>
+                        <a asp-controller="Product" asp-action="Index"><i class="fa-solid fa-gamepad"></i> เลือกซื้อเกม</a>
                     </div>
                 }
                 else
@@ -537,61 +435,37 @@
                         @foreach (var order in pendingOrders)
                         {
                             var orderNo = order.Id.ToString();
-                            orderNo = orderNo.Length > 8
-                                ? orderNo.Substring(0, 8).ToUpperInvariant()
-                                : orderNo.ToUpperInvariant();
+                            orderNo = orderNo.Length > 8 ? orderNo.Substring(0, 8).ToUpperInvariant() : orderNo.ToUpperInvariant();
 
                             <article class="mo-order">
                                 <div>
                                     <div class="mo-order-head">
                                         <div>
                                             <div class="mo-order-no">#@orderNo</div>
-                                            <div class="mo-order-date">
-                                                @order.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
-                                            </div>
+                                            <div class="mo-order-date"><i class="fa-regular fa-calendar"></i>@order.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</div>
                                         </div>
-
-                                        <span class="mo-badge pending">
-                                            <i class="fa-regular fa-clock"></i>
-                                            รอชำระเงิน
-                                        </span>
+                                        <span class="mo-badge pending"><i class="fa-regular fa-clock"></i> รอชำระเงิน</span>
                                     </div>
-
                                     <div class="mo-items">
                                         @foreach (var item in order.Items)
                                         {
                                             <div class="mo-line">
-                                                <span class="item-name">
-                                                    @(item.Product?.Name ?? "สินค้า")
-                                                    × @item.Quantity
-                                                </span>
-                                                <span class="item-price">
-                                                    ฿@((item.Price * item.Quantity).ToString("N2"))
-                                                </span>
+                                                <span class="item-name">@(item.Product?.Name ?? "สินค้า") × @item.Quantity</span>
+                                                <span class="item-price">฿@((item.Price * item.Quantity).ToString("N2"))</span>
                                             </div>
                                         }
-
                                         @if (order.DiscountAmount > 0)
                                         {
                                             <div class="mo-line discount">
-                                                <span class="item-name">
-                                                    ส่วนลด @(string.IsNullOrWhiteSpace(order.CouponCode)
-                                                        ? ""
-                                                        : $"({order.CouponCode})")
-                                                </span>
-                                                <span class="item-price">
-                                                    −฿@order.DiscountAmount.ToString("N2")
-                                                </span>
+                                                <span class="item-name">ส่วนลด @(string.IsNullOrWhiteSpace(order.CouponCode) ? "" : $"({order.CouponCode})")</span>
+                                                <span class="item-price">−฿@order.DiscountAmount.ToString("N2")</span>
                                             </div>
                                         }
                                     </div>
                                 </div>
-
                                 <div class="mo-total">
                                     <span>ยอดสุทธิ</span>
-                                    <span class="amount">
-                                        ฿@order.TotalPrice.ToString("N2")
-                                    </span>
+                                    <span class="amount">฿@order.TotalPrice.ToString("N2")</span>
                                 </div>
                             </article>
                         }
@@ -602,18 +476,22 @@
             <!-- PAID ORDERS -->
             <section class="mo-panel">
                 <div class="mo-panel-head">
-                    <h2 class="paid-title">
-                        <i class="fa-solid fa-circle-check"></i>
-                        ชำระเงินแล้ว
-                    </h2>
-                    <span class="mo-count">@paidOrders.Count รายการ</span>
+                    <div class="mo-section-title">
+                        <span class="mo-section-icon paid"><i class="fa-solid fa-circle-check"></i></span>
+                        <div>
+                            <h2>ชำระเงินแล้ว</h2>
+                            <div class="mo-panel-subtitle">คำสั่งซื้อที่ชำระเงินสำเร็จเรียบร้อยแล้ว</div>
+                        </div>
+                    </div>
+                    <span class="mo-count"><i class="fa-solid fa-check"></i> @paidOrders.Count รายการ</span>
                 </div>
 
                 @if (!paidOrders.Any())
                 {
                     <div class="mo-empty">
-                        <i class="fa-regular fa-credit-card"></i>
-                        <span>ยังไม่มีประวัติการชำระเงินสำเร็จ</span>
+                        <div class="mo-empty-icon"><i class="fa-regular fa-credit-card"></i></div>
+                        <strong>ยังไม่มีประวัติการชำระเงิน</strong>
+                        <span>เมื่อคุณชำระเงินสำเร็จ รายการจะปรากฏในส่วนนี้</span>
                     </div>
                 }
                 else
@@ -622,61 +500,37 @@
                         @foreach (var order in paidOrders)
                         {
                             var orderNo = order.Id.ToString();
-                            orderNo = orderNo.Length > 8
-                                ? orderNo.Substring(0, 8).ToUpperInvariant()
-                                : orderNo.ToUpperInvariant();
+                            orderNo = orderNo.Length > 8 ? orderNo.Substring(0, 8).ToUpperInvariant() : orderNo.ToUpperInvariant();
 
                             <article class="mo-order">
                                 <div>
                                     <div class="mo-order-head">
                                         <div>
                                             <div class="mo-order-no">#@orderNo</div>
-                                            <div class="mo-order-date">
-                                                @order.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
-                                            </div>
+                                            <div class="mo-order-date"><i class="fa-regular fa-calendar"></i>@order.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</div>
                                         </div>
-
-                                        <span class="mo-badge paid">
-                                            <i class="fa-solid fa-check"></i>
-                                            ชำระเงินแล้ว
-                                        </span>
+                                        <span class="mo-badge paid"><i class="fa-solid fa-check"></i> ชำระเงินแล้ว</span>
                                     </div>
-
                                     <div class="mo-items">
                                         @foreach (var item in order.Items)
                                         {
                                             <div class="mo-line">
-                                                <span class="item-name">
-                                                    @(item.Product?.Name ?? "สินค้า")
-                                                    × @item.Quantity
-                                                </span>
-                                                <span class="item-price">
-                                                    ฿@((item.Price * item.Quantity).ToString("N2"))
-                                                </span>
+                                                <span class="item-name">@(item.Product?.Name ?? "สินค้า") × @item.Quantity</span>
+                                                <span class="item-price">฿@((item.Price * item.Quantity).ToString("N2"))</span>
                                             </div>
                                         }
-
                                         @if (order.DiscountAmount > 0)
                                         {
                                             <div class="mo-line discount">
-                                                <span class="item-name">
-                                                    ส่วนลด @(string.IsNullOrWhiteSpace(order.CouponCode)
-                                                        ? ""
-                                                        : $"({order.CouponCode})")
-                                                </span>
-                                                <span class="item-price">
-                                                    −฿@order.DiscountAmount.ToString("N2")
-                                                </span>
+                                                <span class="item-name">ส่วนลด @(string.IsNullOrWhiteSpace(order.CouponCode) ? "" : $"({order.CouponCode})")</span>
+                                                <span class="item-price">−฿@order.DiscountAmount.ToString("N2")</span>
                                             </div>
                                         }
                                     </div>
                                 </div>
-
                                 <div class="mo-total">
                                     <span>ยอดสุทธิ</span>
-                                    <span class="amount">
-                                        ฿@order.TotalPrice.ToString("N2")
-                                    </span>
+                                    <span class="amount">฿@order.TotalPrice.ToString("N2")</span>
                                 </div>
                             </article>
                         }
@@ -684,9 +538,25 @@
                 }
             </section>
 
+            <div class="mo-footer">© @DateTime.Now.Year GameWorld · All rights reserved.</div>
         </div>
     </main>
 </div>
+
+@if (TempData["PayOk"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'ชำระเงินสำเร็จ',
+            text: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["PayOk"]?.ToString())),
+            background: '#151a2a',
+            color: '#f5f7ff',
+            confirmButtonColor: '#7c3aed',
+            confirmButtonText: 'ตกลง',
+            customClass: { popup: 'gameworld-swal' }
+        });
+    </script>
+}
 </body>
 </html>
-```
