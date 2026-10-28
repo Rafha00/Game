@@ -18,5 +18,8 @@ namespace Game.Models
 
         [Column("role")]
         public string Role { get; set; } = "customer";
+
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
     }
 }

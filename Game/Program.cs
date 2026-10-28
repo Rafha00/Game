@@ -4,28 +4,24 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// === ดึง Connection String จาก appsettings.json ===
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// === เปลี่ยนมาใช้ MySQL ด้วย Pomelo.EntityFrameworkCore.MySql ===
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString) // ตรวจสอบเวอร์ชันของ MySQL อัตโนมัติ
+        ServerVersion.AutoDetect(connectionString)
     ));
 
-// === 1. บล็อกสำหรับลงทะเบียน Cookie Authentication ===
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
+        options.AccessDeniedPath = "/Auth/Login"; // หรือสร้างหน้า AccessDenied แยก
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     });
 
-// บริการ Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -48,9 +44,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseSession();
-
-// === 2. เรียกใช้งาน Authentication ก่อน Authorization ===
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

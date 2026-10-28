@@ -20,6 +20,6 @@ namespace Game.Models
         public string? CouponCode { get; set; }
         public decimal Discount { get; set; }
         public decimal Total => Math.Max(0, Subtotal - Discount);
-        public List<DiscountCode> AvailableCodes { get; set; } = new();
+        public List<Discount> AvailableCodes { get; set; } = new();
     }
 }

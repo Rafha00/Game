@@ -1,0 +1,221 @@
+@model List<Game.Models.User>
+
+@{
+    ViewData["Title"] = "จัดการพนักงาน";
+    Layout = null;
+
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.ToLowerInvariant();
+    var isAdmin = role == "admin" || role == "manager";
+}
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - GAMEWORLD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: #080b14;
+            color: #f8fafc;
+        }
+        .dashboard-layout { display: flex; min-height: 100vh; }
+        .dashboard-main {
+            flex: 1;
+            min-width: 0;
+            padding: 34px;
+            background: radial-gradient(ellipse at top right, rgba(124, 58, 237, .12), transparent 45%), #080b14;
+        }
+        .dashboard-container { max-width: 1200px; margin: 0 auto; }
+        .custom-card {
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            background: rgba(17, 22, 37, 0.94);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .table-custom th {
+            background: rgba(124, 58, 237, 0.15) !important;
+            color: #c4b5fd !important;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2) !important;
+        }
+        .table-custom td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            color: #e2e8f0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+
+        <div style="flex: 0 0 280px; min-width: 280px;">
+            <partial name="_Sidebar" />
+        </div>
+
+        <main class="dashboard-main">
+            <div class="dashboard-container">
+
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-900 shadow-lg shadow-purple-900/30 text-2xl text-white">
+                        <i class="fa-solid fa-id-badge"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-extrabold tracking-tight text-white m-0">รายชื่อพนักงาน</h1>
+                        <p class="text-sm text-slate-400 mt-1">จัดการข้อมูลพนักงาน ระงับการใช้งาน หรือลบบัญชีพนักงานในระบบ</p>
+                    </div>
+                </div>
+
+                @if (TempData["ManagerSuccess"] != null)
+                {
+                    <div class="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-lg"></i>
+                        <span>@TempData["ManagerSuccess"]</span>
+                    </div>
+                }
+                @if (TempData["ManagerError"] != null)
+                {
+                    <div class="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                        <span>@TempData["ManagerError"]</span>
+                    </div>
+                }
+
+                <div class="custom-card overflow-hidden">
+                    <div class="px-6 py-4 border-b border-purple-500/20 flex items-center justify-between bg-purple-950/20">
+                        <h3 class="font-bold text-white flex items-center gap-2 m-0 text-base">
+                            <i class="fa-solid fa-user-tie text-purple-400"></i> พนักงานทั้งหมด
+                        </h3>
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">รวม @Model.Count รายการ</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse table-custom">
+                            <thead>
+                                <tr>
+                                    <th class="py-3 px-6">อีเมลพนักงาน</th>
+                                    <th class="py-3 px-6">สถานะบัญชี</th>
+                                    <th class="py-3 px-6 text-end">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model)
+                                {
+                                    <tr class="hover:bg-purple-900/10 transition">
+                                        <td class="py-4 px-6 font-semibold text-white flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 text-xs font-bold">
+                                                @(string.IsNullOrEmpty(user.Email) ? "?" : user.Email.Substring(0, 1).ToUpperInvariant())
+                                            </div>
+                                            <span>@user.Email</span>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            @if (user.IsActive)
+                                            {
+                                                <span class="px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                                                    ● ปกติ
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-3 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+                                                    ● ถูกระงับ
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="py-4 px-6 text-end">
+                                            <div class="inline-flex items-center gap-2">
+                                                
+                                                @* ปุ่มระงับ / ยกเลิกระงับ *@
+                                             
+                                            <form asp-action="ToggleStatus" method="post" style="display:inline;" class="mr-2">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="email" value="@user.Email" />
+                                                <button type="submit" 
+                                                        class="inline-flex items-center px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
+                                                        onclick="confirmAction(event, 'toggle', '@user.Email')">
+                                                    <i class="fa-solid fa-user-slash mr-1.5"></i> ระงับ
+                                                </button>
+                                            </form>
+
+                                          
+                                            <form asp-action="DeleteStaff" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="email" value="@user.Email" />
+                                                <button type="submit" 
+                                                        class="inline-flex items-center px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
+                                                        onclick="confirmAction(event, 'delete', '@user.Email')">
+                                                    <i class="fa-solid fa-trash mr-1.5"></i> ลบ
+                                                </button>
+                                            </form>
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-12 text-slate-500">
+                                            <i class="fa-regular fa-id-badge text-4xl mb-3 block"></i> ไม่พบข้อมูลพนักงานในระบบ
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function confirmAction(event, actionType, email) {
+        event.preventDefault(); // หยุดการส่งฟอร์มชั่วคราว
+        const form = event.target.closest('form'); // ค้นหาฟอร์มปัจจุบัน
+
+        let titleText = actionType === 'toggle' ? 'ยืนยันการเปลี่ยนสถานะพนักงาน?' : 'คุณต้องการลบพนักงานนี้ใช่ไหม';
+        let descText = actionType === 'toggle' 
+            ? `ต้องการเปลี่ยนสถานะการใช้งานของบัญชี: ${email}` 
+            : `ข้อมูลของ ${email} จะถูกลบออกจากระบบอย่างถาวร!`;
+        
+        let confirmColor = actionType === 'toggle' ? '#f59e0b' : '#ef4444';
+        let confirmBtnText = actionType === 'toggle' ? 'ใช่, เปลี่ยนสถานะ' : 'ใช่, ลบข้อมูล';
+
+        Swal.fire({
+            title: titleText,
+            text: descText,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: confirmColor,
+            cancelButtonColor: '#334155', // สีเทาเข้มเข้ากับธีมดาร์ก
+            confirmButtonText: confirmBtnText,
+            cancelButtonText: 'ยกเลิก',
+            background: '#0b1221', // พื้นหลัง Popup โทนดาร์กมืด
+            color: '#f8fafc',      // ตัวหนังสือสีขาวสว่าง
+            iconColor: confirmColor,
+            buttonsStyling: true,
+            customClass: {
+                popup: 'border border-slate-800 rounded-2xl shadow-2xl',
+                confirmButton: 'px-4 py-2 rounded-xl font-semibold text-white ml-2',
+                cancelButton: 'px-4 py-2 rounded-xl font-semibold text-slate-300 mr-2'
+            },
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit(); // หากกดยืนยัน ให้ส่งฟอร์มทำงานต่อทันที
+            }
+        });
+    }
+</script>
+</body>
+</html>

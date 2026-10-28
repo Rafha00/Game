@@ -1,0 +1,1031 @@
+
+@model IEnumerable<Game.Models.Discount>
+
+@{
+    ViewData["Title"] = "จัดการโค้ดส่วนลด";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var discounts = Model?.ToList() ?? new List<Game.Models.Discount>();
+    var activeCount = discounts.Count(x => x.IsActive);
+    var inactiveCount = discounts.Count(x => !x.IsActive);
+}
+
+<style>
+    /* ================= PAGE ================= */
+  .discount-page {
+    width: 100%;
+    max-width: 1600px;
+
+    margin: 0 auto;
+
+    /* ดันลงจาก Navbar */
+    padding-top: 55px;
+
+    /* เว้นด้านข้าง */
+    padding-left: 24px;
+    padding-right: 24px;
+
+    /* ดันห่าง Footer */
+    padding-bottom: 200px;
+
+    color: #f8fafc;
+    box-sizing: border-box;
+
+    /* ทำให้ Content เต็มพื้นที่ */
+    min-height: calc(100vh - 320px);
+}
+
+    .discount-page * {
+        box-sizing: border-box;
+    }
+
+    .discount-page button,
+    .discount-page input,
+    .discount-page select {
+        font-family: inherit;
+    }
+
+    /* ================= HEADER ================= */
+    .discount-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+
+    gap: 22px;
+
+    margin-bottom: 40px;
+}
+
+    .discount-heading {
+        display: flex;
+        align-items: center;
+        gap: 17px;
+    }
+
+    .discount-heading-icon {
+        width: 66px;
+        height: 66px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        color: white;
+        font-size: 26px;
+        background: linear-gradient(140deg, #c084fc 0%, #9333ea 50%, #581c87 100%);
+        box-shadow: 0 10px 35px rgba(147, 51, 234, .28);
+        position: relative;
+    }
+
+    .discount-heading-icon::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 15px;
+    }
+
+    .discount-title {
+        margin: 0;
+        color: #fff;
+        font-size: clamp(22px, 2.2vw, 29px);
+        font-weight: 850;
+        letter-spacing: -.6px;
+    }
+
+    .discount-subtitle {
+        margin: 8px 0 0;
+        color: #94a3b8;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .discount-create-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        min-height: 47px;
+        padding: 12px 19px;
+        border: 1px solid rgba(216,180,254,.25);
+        border-radius: 13px;
+        background: linear-gradient(135deg, #a855f7, #7c3aed 65%, #6d28d9);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: .22s ease;
+        box-shadow: 0 7px 22px rgba(124,58,237,.2);
+    }
+
+    .discount-create-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(139,92,246,.3);
+        filter: brightness(1.1);
+    }
+
+    .discount-create-btn i {
+        font-size: 13px;
+    }
+
+    /* ================= SUMMARY ================= */
+    .discount-stats {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+
+    gap: 20px;
+
+    margin-bottom: 40px;
+}
+
+    .discount-stat {
+        min-width: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        padding: 22px;
+        overflow: hidden;
+        border: 1px solid rgba(148,163,184,.13);
+        border-radius: 18px;
+        background: linear-gradient(145deg, #151a2a, #101522 75%);
+        box-shadow: 0 8px 25px rgba(0,0,0,.12);
+        transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .discount-stat:hover {
+        transform: translateY(-3px);
+        border-color: rgba(168,85,247,.35);
+    }
+
+    .discount-stat::after {
+        content: "";
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        right: -35px;
+        top: -42px;
+        border-radius: 50%;
+        background: var(--stat-glow, rgba(168,85,247,.12));
+        filter: blur(5px);
+        pointer-events: none;
+    }
+
+    .discount-stat-icon {
+        width: 53px;
+        height: 53px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+        color: var(--stat-color, #c084fc);
+        background: var(--stat-bg, rgba(168,85,247,.12));
+        border: 1px solid var(--stat-border, rgba(168,85,247,.2));
+        font-size: 21px;
+    }
+
+    .discount-stat-label {
+        margin-bottom: 8px;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 550;
+    }
+
+    .discount-stat-number {
+        color: #fff;
+        font-size: 29px;
+        font-weight: 850;
+        line-height: 1;
+        letter-spacing: -.6px;
+    }
+
+    .discount-stat-caption {
+        margin-top: 8px;
+        color: #64748b;
+        font-size: 11px;
+    }
+
+    /* ================= TABLE CARD ================= */
+    .discount-card {
+    overflow: hidden;
+
+    border: 1px solid rgba(139,92,246,.22);
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(18,24,39,.98),
+            rgba(14,18,30,.98)
+        );
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.25);
+
+    margin-bottom: 100px;
+}
+
+    .discount-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 15px;
+        padding: 22px 25px;
+        border-bottom: 1px solid rgba(139,92,246,.17);
+        background:
+            radial-gradient(ellipse at top left, rgba(124,58,237,.12), transparent 55%),
+            #121827;
+    }
+
+    .discount-card-title {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin: 0;
+        color: #f8fafc;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .discount-card-title i {
+        color: #c084fc;
+        font-size: 17px;
+    }
+
+    .discount-card-description {
+        margin: 6px 0 0;
+        color: #718096;
+        font-size: 12px;
+    }
+
+    .discount-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid rgba(168,85,247,.22);
+        border-radius: 10px;
+        background: rgba(139,92,246,.1);
+        color: #d8b4fe;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .discount-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #6d28d9 #101522;
+    }
+
+    .discount-table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .discount-table thead th {
+        padding: 17px 21px;
+        background: rgba(139,92,246,.055);
+        color: #a5b4fc;
+        border-bottom: 1px solid rgba(139,92,246,.16);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .45px;
+        white-space: nowrap;
+    }
+
+    .discount-table tbody td {
+        padding: 20px 21px;
+        border-bottom: 1px solid rgba(255,255,255,.055);
+        color: #cbd5e1;
+        font-size: 12px;
+        vertical-align: middle;
+    }
+
+    .discount-table tbody tr {
+        transition: background .2s ease;
+    }
+
+    .discount-table tbody tr:hover {
+        background: rgba(139,92,246,.055);
+    }
+
+    .discount-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* ================= CODE & VALUE ================= */
+    .discount-code {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        border: 1px dashed rgba(192,132,252,.4);
+        border-radius: 9px;
+        background: linear-gradient(135deg, rgba(139,92,246,.16), rgba(88,28,135,.12));
+        color: #e9d5ff;
+        font-size: 12px;
+        font-weight: 850;
+        letter-spacing: .5px;
+        white-space: nowrap;
+    }
+
+    .discount-code i {
+        color: #c084fc;
+        font-size: 11px;
+    }
+
+    .discount-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #cbd5e1;
+        white-space: nowrap;
+    }
+
+    .discount-type i {
+        color: #a78bfa;
+    }
+
+    .discount-value {
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .discount-min-spend {
+        color: #cbd5e1;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    /* ================= STATUS ================= */
+    .discount-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .discount-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
+    }
+
+    .discount-status.active {
+        color: #34d399;
+        border: 1px solid rgba(16,185,129,.2);
+        background: rgba(16,185,129,.09);
+    }
+
+    .discount-status.inactive {
+        color: #f87171;
+        border: 1px solid rgba(239,68,68,.2);
+        background: rgba(239,68,68,.08);
+    }
+
+    /* ================= ACTION ================= */
+    .discount-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px 12px;
+        border: 1px solid rgba(244,63,94,.24);
+        border-radius: 9px;
+        background: rgba(244,63,94,.07);
+        color: #fb7185;
+        font-size: 11px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: .2s ease;
+        white-space: nowrap;
+    }
+
+    .discount-delete-btn:hover {
+        border-color: rgba(244,63,94,.55);
+        background: rgba(244,63,94,.16);
+        transform: translateY(-1px);
+    }
+
+    /* ================= EMPTY STATE ================= */
+    .discount-empty {
+        padding: 65px 20px !important;
+        text-align: center;
+        color: #94a3b8 !important;
+        line-height: 1.8;
+    }
+
+    .discount-empty-icon {
+        width: 68px;
+        height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        border: 1px solid rgba(168,85,247,.22);
+        border-radius: 21px;
+        background: rgba(139,92,246,.1);
+        color: #c084fc;
+        font-size: 27px;
+    }
+
+    .discount-empty strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #e2e8f0;
+        font-size: 15px;
+    }
+
+    /* ================= SWEETALERT ================= */
+    .swal2-popup.gw-discount-popup {
+        width: min(500px, calc(100vw - 28px)) !important;
+        padding: 25px !important;
+        border: 1px solid rgba(139,92,246,.3) !important;
+        border-radius: 20px !important;
+        background: #101522 !important;
+        color: #f8fafc !important;
+        box-shadow: 0 25px 80px rgba(0,0,0,.5) !important;
+    }
+
+    .gw-discount-popup .swal2-title {
+        color: #fff !important;
+        font-size: 21px !important;
+        font-weight: 800 !important;
+    }
+
+    .gw-discount-popup .swal2-html-container {
+        margin: 12px 0 0 !important;
+        color: #94a3b8 !important;
+    }
+
+    .gw-discount-form {
+        text-align: left;
+        padding: 0 3px;
+    }
+
+    .gw-discount-label {
+        display: block;
+        margin: 15px 0 7px;
+        color: #cbd5e1;
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .gw-discount-input,
+    .gw-discount-select {
+        display: block;
+        width: 100%;
+        min-height: 45px;
+        padding: 11px 13px;
+        border: 1px solid #30364a;
+        border-radius: 10px;
+        outline: none;
+        background: #0b1020;
+        color: #f8fafc;
+        font-size: 13px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .gw-discount-input:focus,
+    .gw-discount-select:focus {
+        border-color: #a855f7;
+        box-shadow: 0 0 0 3px rgba(168,85,247,.13);
+    }
+
+    .gw-discount-input::placeholder {
+        color: #64748b;
+    }
+
+    .gw-discount-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 19px;
+        padding: 13px;
+        border: 1px solid rgba(139,92,246,.18);
+        border-radius: 10px;
+        background: rgba(139,92,246,.07);
+        color: #cbd5e1;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .gw-discount-checkbox input {
+        width: 16px;
+        height: 16px;
+        accent-color: #9333ea;
+    }
+
+    .gw-discount-popup .swal2-styled {
+        border-radius: 10px !important;
+        font-size: 12px !important;
+        font-weight: 750 !important;
+    }
+
+    .gw-discount-popup .swal2-validation-message {
+        border-radius: 9px !important;
+        background: rgba(239,68,68,.1) !important;
+        color: #fca5a5 !important;
+        font-size: 12px !important;
+    }
+
+    /* ================= RESPONSIVE ================= */
+    @@media (max-width: 1100px) {
+        .discount-stats {
+            gap: 12px;
+        }
+
+        .discount-stat {
+            padding: 17px;
+            gap: 12px;
+        }
+
+        .discount-stat-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .discount-page {
+            padding: 8px 12px 25px;
+        }
+
+        .discount-header {
+            align-items: stretch;
+            margin-bottom: 22px;
+        }
+
+        .discount-heading {
+            gap: 12px;
+        }
+
+        .discount-heading-icon {
+            width: 51px;
+            height: 51px;
+            border-radius: 15px;
+            font-size: 21px;
+        }
+
+        .discount-heading-icon::after {
+            border-radius: 11px;
+        }
+
+        .discount-title {
+            font-size: 21px;
+        }
+
+        .discount-subtitle {
+            font-size: 11px;
+        }
+
+        .discount-create-btn {
+            width: 100%;
+        }
+
+        .discount-stats {
+            grid-template-columns: 1fr;
+            gap: 11px;
+            margin-bottom: 20px;
+        }
+
+        .discount-stat {
+            padding: 16px 18px;
+        }
+
+        .discount-stat-number {
+            font-size: 25px;
+        }
+
+        .discount-card {
+            border-radius: 15px;
+        }
+
+        .discount-card-header {
+            padding: 17px;
+        }
+
+        .discount-table thead th,
+        .discount-table tbody td {
+            padding: 15px 14px;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .discount-stat,
+        .discount-create-btn,
+        .discount-delete-btn {
+            transition: none;
+        }
+    }
+</style>
+
+<div class="discount-page">
+
+    <!-- HEADER -->
+    <header class="discount-header">
+        <div class="discount-heading">
+            <div class="discount-heading-icon">
+                <i class="fa-solid fa-tags"></i>
+            </div>
+
+            <div>
+                <h1 class="discount-title">จัดการโค้ดส่วนลด</h1>
+                <p class="discount-subtitle">
+                    จัดการโปรโมชั่นและส่วนลดสำหรับลูกค้า GameWorld
+                </p>
+            </div>
+        </div>
+
+        <button type="button"
+                class="discount-create-btn"
+                onclick="openCreateModal()">
+            <i class="fa-solid fa-plus"></i>
+            สร้างโค้ดส่วนลดใหม่
+        </button>
+    </header>
+
+    <!-- SUMMARY -->
+    <section class="discount-stats">
+
+        <div class="discount-stat"
+             style="--stat-color:#c084fc;--stat-bg:rgba(168,85,247,.12);--stat-border:rgba(168,85,247,.2);--stat-glow:rgba(168,85,247,.14);">
+            <div class="discount-stat-icon">
+                <i class="fa-solid fa-ticket"></i>
+            </div>
+            <div>
+                <div class="discount-stat-label">โค้ดส่วนลดทั้งหมด</div>
+                <div class="discount-stat-number">@discounts.Count</div>
+                <div class="discount-stat-caption">รายการในระบบ</div>
+            </div>
+        </div>
+
+        <div class="discount-stat"
+             style="--stat-color:#34d399;--stat-bg:rgba(16,185,129,.1);--stat-border:rgba(16,185,129,.2);--stat-glow:rgba(16,185,129,.1);">
+            <div class="discount-stat-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <div class="discount-stat-label">เปิดใช้งาน</div>
+                <div class="discount-stat-number">@activeCount</div>
+                <div class="discount-stat-caption">โค้ดที่เปิดใช้งานอยู่</div>
+            </div>
+        </div>
+
+        <div class="discount-stat"
+             style="--stat-color:#fb7185;--stat-bg:rgba(244,63,94,.1);--stat-border:rgba(244,63,94,.2);--stat-glow:rgba(244,63,94,.1);">
+            <div class="discount-stat-icon">
+                <i class="fa-solid fa-circle-pause"></i>
+            </div>
+            <div>
+                <div class="discount-stat-label">ปิดใช้งาน</div>
+                <div class="discount-stat-number">@inactiveCount</div>
+                <div class="discount-stat-caption">โค้ดที่ไม่ได้เปิดใช้งาน</div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- DISCOUNT TABLE -->
+    <section class="discount-card">
+
+        <div class="discount-card-header">
+            <div>
+                <h2 class="discount-card-title">
+                    <i class="fa-solid fa-ticket"></i>
+                    รายการโค้ดส่วนลด
+                </h2>
+                <p class="discount-card-description">
+                    ตรวจสอบรายละเอียดและสถานะของแต่ละโค้ด
+                </p>
+            </div>
+
+            <span class="discount-count">
+                <i class="fa-solid fa-layer-group"></i>
+                @discounts.Count รายการ
+            </span>
+        </div>
+
+        <div class="discount-table-wrap">
+            <table class="discount-table">
+                <thead>
+                    <tr>
+                        <th>รหัสส่วนลด</th>
+                        <th>ประเภท</th>
+                        <th>มูลค่าส่วนลด</th>
+                        <th>ยอดซื้อขั้นต่ำ</th>
+                        <th>สถานะ</th>
+                        <th style="text-align:right;">จัดการ</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (discounts.Any())
+                    {
+                        foreach (var item in discounts)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="discount-code">
+                                        <i class="fa-solid fa-tag"></i>
+                                        @item.Code
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="discount-type">
+                                        <i class="fa-solid @(item.Type == "Percent" ? "fa-percent" : "fa-money-bill-wave")"></i>
+                                        @(item.Type == "Percent"
+                                            ? "เปอร์เซ็นต์"
+                                            : "จำนวนเงิน")
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="discount-value">
+                                        @(item.Type == "Percent"
+                                            ? $"{item.Value:N2}%"
+                                            : $"฿{item.Value:N2}")
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="discount-min-spend">
+                                        ฿@item.MinSpend.ToString("N2")
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="discount-status active">
+                                            ใช้งานได้
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="discount-status inactive">
+                                            ปิดใช้งาน
+                                        </span>
+                                    }
+                                </td>
+
+                                <td style="text-align:right;">
+                                    <form asp-controller="Manager"
+                                          asp-action="DeleteDiscount"
+                                          method="post"
+                                          style="display:inline;">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@item.Id" />
+
+                                        <button type="button"
+                                                class="discount-delete-btn"
+                                                onclick="confirmDelete(this.form, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Code)))">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                            ลบ
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="discount-empty">
+                                <div class="discount-empty-icon">
+                                    <i class="fa-solid fa-ticket"></i>
+                                </div>
+                                <strong>ยังไม่มีโค้ดส่วนลด</strong>
+                                เริ่มต้นสร้างโค้ดส่วนลดแรกของคุณได้เลย
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<!-- ANTI-FORGERY TOKEN FOR CREATE -->
+<form id="discountTokenForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // ================= DELETE =================
+    function confirmDelete(form, code) {
+        Swal.fire({
+            title: 'ยืนยันการลบ?',
+            html: `คุณต้องการลบโค้ด <strong style="color:#d8b4fe">${escapeHtml(code)}</strong> ใช่หรือไม่`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-trash-can"></i> ยืนยันการลบ',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#374151',
+            background: '#101522',
+            color: '#fff',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup: 'gw-discount-popup'
+            }
+        }).then(result => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char];
+        });
+    }
+
+    // ================= CREATE MODAL =================
+    function openCreateModal() {
+        Swal.fire({
+            title: 'สร้างโค้ดส่วนลดใหม่',
+            html: `
+                <div class="gw-discount-form">
+
+                    <label class="gw-discount-label" for="discountCode">
+                        <i class="fa-solid fa-tag"></i> รหัสส่วนลด
+                    </label>
+                    <input id="discountCode"
+                           class="gw-discount-input"
+                           type="text"
+                           maxlength="50"
+                           placeholder="เช่น GAME10"
+                           autocomplete="off">
+
+                    <label class="gw-discount-label" for="discountType">
+                        <i class="fa-solid fa-sliders"></i> ประเภทส่วนลด
+                    </label>
+                    <select id="discountType" class="gw-discount-select">
+                        <option value="Amount">ลดเป็นจำนวนเงิน (บาท)</option>
+                        <option value="Percent">ลดเป็นเปอร์เซ็นต์ (%)</option>
+                    </select>
+
+                    <label class="gw-discount-label" for="discountValue">
+                        <i class="fa-solid fa-coins"></i> มูลค่าส่วนลด
+                    </label>
+                    <input id="discountValue"
+                           class="gw-discount-input"
+                           type="number"
+                           min="0.01"
+                           step="0.01"
+                           placeholder="ระบุมูลค่าส่วนลด">
+
+                    <label class="gw-discount-label" for="discountMinSpend">
+                        <i class="fa-solid fa-cart-shopping"></i> ยอดซื้อขั้นต่ำ (บาท)
+                    </label>
+                    <input id="discountMinSpend"
+                           class="gw-discount-input"
+                           type="number"
+                           min="0"
+                           step="0.01"
+                           value="0">
+
+                    <label class="gw-discount-checkbox" for="discountIsActive">
+                        <input id="discountIsActive" type="checkbox" checked>
+                        เปิดใช้งานโค้ดส่วนลดทันที
+                    </label>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-floppy-disk"></i> บันทึกโค้ด',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#7c3aed',
+            cancelButtonColor: '#374151',
+            background: '#101522',
+            color: '#fff',
+            focusConfirm: false,
+            buttonsStyling: true,
+            customClass: {
+                popup: 'gw-discount-popup'
+            },
+
+            didOpen: () => {
+                const codeInput = document.getElementById('discountCode');
+                const typeInput = document.getElementById('discountType');
+                const valueInput = document.getElementById('discountValue');
+
+                codeInput.focus();
+
+                typeInput.addEventListener('change', () => {
+                    if (typeInput.value === 'Percent') {
+                        valueInput.max = '100';
+                        valueInput.placeholder = 'ระบุเปอร์เซ็นต์ ไม่เกิน 100';
+                    } else {
+                        valueInput.removeAttribute('max');
+                        valueInput.placeholder = 'ระบุมูลค่าส่วนลดเป็นบาท';
+                    }
+
+                    valueInput.value = '';
+                });
+            },
+
+            preConfirm: () => {
+                const code = document.getElementById('discountCode').value.trim();
+                const type = document.getElementById('discountType').value;
+                const value = Number(document.getElementById('discountValue').value);
+                const minSpend = Number(document.getElementById('discountMinSpend').value);
+                const isActive = document.getElementById('discountIsActive').checked;
+
+                if (!code) {
+                    Swal.showValidationMessage('กรุณาระบุรหัสส่วนลด');
+                    return false;
+                }
+
+                if (!Number.isFinite(value) || value <= 0) {
+                    Swal.showValidationMessage('มูลค่าส่วนลดต้องมากกว่า 0');
+                    return false;
+                }
+
+                if (type === 'Percent' && value > 100) {
+                    Swal.showValidationMessage('ส่วนลดเปอร์เซ็นต์ต้องไม่เกิน 100%');
+                    return false;
+                }
+
+                if (!Number.isFinite(minSpend) || minSpend < 0) {
+                    Swal.showValidationMessage('ยอดซื้อขั้นต่ำต้องไม่น้อยกว่า 0');
+                    return false;
+                }
+
+                return {
+                    code: code,
+                    type: type,
+                    value: value,
+                    minSpend: minSpend,
+                    isActive: isActive
+                };
+            }
+        }).then(result => {
+            if (!result.isConfirmed || !result.value) return;
+
+            const data = result.value;
+            const form = document.createElement('form');
+
+            form.method = 'post';
+            form.action = '@Url.Action("CreateDiscount", "Manager")';
+            form.style.display = 'none';
+
+            const token = document.querySelector(
+                '#discountTokenForm input[name="__RequestVerificationToken"]'
+            );
+
+            if (token) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token.value;
+                form.appendChild(tokenInput);
+            }
+
+            Object.entries(data).forEach(([key, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = String(value);
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+</script>

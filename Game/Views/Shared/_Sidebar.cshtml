@@ -1,4 +1,3 @@
-
 @using System.Security.Claims
 
 @{
@@ -58,11 +57,9 @@
         <a asp-controller="Home"
            asp-action="Index"
            class="gw-brand">
-
             <span class="gw-brand-icon">
                 <i class="fa-solid fa-gamepad"></i>
             </span>
-
             <span class="gw-brand-text">
                 GAME<span>WORLD</span>
             </span>
@@ -74,17 +71,14 @@
                 @initial
                 <span class="gw-avatar-dot"></span>
             </div>
-
             <div class="gw-user-info">
                 <div class="gw-user-name" title="@email">
                     @email
                 </div>
-
                 <div class="gw-user-status">
                     <span class="gw-online-dot"></span>
                     บัญชีของคุณ
                 </div>
-
                 <span class="gw-role">
                     @roleLabel
                 </span>
@@ -99,13 +93,10 @@
             <a asp-controller="Auth"
                asp-action="Profile"
                class="@MenuClass("Auth", "Profile")">
-
                 <span class="gw-menu-icon">
                     <i class="fa-solid fa-user-astronaut"></i>
                 </span>
-
                 <span class="gw-menu-text">โปรไฟล์ของฉัน</span>
-
                 @if (IsActive("Auth", "Profile"))
                 {
                     <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -115,13 +106,10 @@
             <a asp-controller="Home"
                asp-action="Index"
                class="@MenuClass("Home", "Index")">
-
                 <span class="gw-menu-icon">
                     <i class="fa-solid fa-store"></i>
                 </span>
-
                 <span class="gw-menu-text">หน้าร้าน</span>
-
                 @if (IsActive("Home", "Index"))
                 {
                     <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -131,13 +119,10 @@
             <a asp-controller="Cart"
                asp-action="Index"
                class="@MenuClass("Cart", "Index")">
-
                 <span class="gw-menu-icon">
                     <i class="fa-solid fa-cart-shopping"></i>
                 </span>
-
                 <span class="gw-menu-text">ตะกร้าสินค้า</span>
-
                 @if (IsActive("Cart", "Index"))
                 {
                     <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -147,13 +132,10 @@
             <a asp-controller="Cart"
                asp-action="MyOrders"
                class="@MenuClass("Cart", "MyOrders")">
-
                 <span class="gw-menu-icon">
                     <i class="fa-solid fa-receipt"></i>
                 </span>
-
                 <span class="gw-menu-text">ประวัติการสั่งซื้อ</span>
-
                 @if (IsActive("Cart", "MyOrders"))
                 {
                     <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -169,13 +151,10 @@
                 <a asp-controller="Staff"
                    asp-action="Index"
                    class="@MenuClass("Staff", "Index")">
-
                     <span class="gw-menu-icon">
                         <i class="fa-solid fa-gauge-high"></i>
                     </span>
-
                     <span class="gw-menu-text">แดชบอร์ดพนักงาน</span>
-
                     @if (IsActive("Staff", "Index"))
                     {
                         <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -185,13 +164,10 @@
                 <a asp-controller="Staff"
                    asp-action="Orders"
                    class="@MenuClass("Staff", "Orders")">
-
                     <span class="gw-menu-icon">
                         <i class="fa-solid fa-box-open"></i>
                     </span>
-
                     <span class="gw-menu-text">สถานะสินค้า</span>
-
                     @if (IsActive("Staff", "Orders"))
                     {
                         <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -208,13 +184,10 @@
                 <a asp-controller="Staff"
                    asp-action="Products"
                    class="@MenuClass("Staff", "Products")">
-
                     <span class="gw-menu-icon">
                         <i class="fa-solid fa-gamepad"></i>
                     </span>
-
                     <span class="gw-menu-text">สินค้า / สต็อก</span>
-
                     @if (IsActive("Staff", "Products"))
                     {
                         <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -224,90 +197,46 @@
                 <a asp-controller="Staff"
                    asp-action="Customers"
                    class="@MenuClass("Staff", "Customers")">
-
                     <span class="gw-menu-icon">
                         <i class="fa-solid fa-users"></i>
                     </span>
-
                     <span class="gw-menu-text">ข้อมูลลูกค้า</span>
-
                     @if (IsActive("Staff", "Customers"))
                     {
                         <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
                     }
                 </a>
             }
-
             @if (isManager)
-            {
-                <div class="gw-section-label gw-section-spaced">
-                    จัดการธุรกิจ
-                </div>
+{
+    <div class="gw-section-label gw-section-spaced">
+        จัดการธุรกิจ
+    </div>
 
-                <a asp-controller="Manager"
-                   asp-action="Index"
-                   class="@MenuClass("Manager", "Index")">
+    <a asp-controller="Manager" asp-action="Index" class="@MenuClass("Manager", "Index")">
+        <span class="gw-menu-icon"><i class="fa-solid fa-chart-line"></i></span>
+        <span class="gw-menu-text">ภาพรวมยอดขาย</span>
+        @if (IsActive("Manager", "Index")) { <i class="fa-solid fa-chevron-right gw-menu-arrow"></i> }
+    </a>
 
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </span>
+    <a asp-controller="Manager" asp-action="Reports" class="@MenuClass("Manager", "Reports")">
+        <span class="gw-menu-icon"><i class="fa-solid fa-file-lines"></i></span>
+        <span class="gw-menu-text">รายงาน</span>
+        @if (IsActive("Manager", "Reports")) { <i class="fa-solid fa-chevron-right gw-menu-arrow"></i> }
+    </a>
 
-                    <span class="gw-menu-text">ภาพรวมยอดขาย</span>
+    <a asp-controller="Manager" asp-action="Staff" class="@MenuClass("Manager", "Staff")">
+        <span class="gw-menu-icon"><i class="fa-solid fa-user-tie"></i></span>
+        <span class="gw-menu-text">จัดการพนักงาน</span>
+        @if (IsActive("Manager", "Staff")) { <i class="fa-solid fa-chevron-right gw-menu-arrow"></i> }
+    </a>
 
-                    @if (IsActive("Manager", "Index"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
-
-                <a asp-controller="Manager"
-                   asp-action="Reports"
-                   class="@MenuClass("Manager", "Reports")">
-
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-file-lines"></i>
-                    </span>
-
-                    <span class="gw-menu-text">รายงาน</span>
-
-                    @if (IsActive("Manager", "Reports"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
-
-                <a asp-controller="Manager"
-                   asp-action="Staff"
-                   class="@MenuClass("Manager", "Staff")">
-
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-user-tie"></i>
-                    </span>
-
-                    <span class="gw-menu-text">จัดการพนักงาน</span>
-
-                    @if (IsActive("Manager", "Staff"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
-
-                <a asp-controller="Manager"
-                   asp-action="Discounts"
-                   class="@MenuClass("Manager", "Discounts")">
-
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-tags"></i>
-                    </span>
-
-                    <span class="gw-menu-text">โค้ดส่วนลด</span>
-
-                    @if (IsActive("Manager", "Discounts"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
-            }
+    <a asp-controller="Manager" asp-action="Discounts" class="@MenuClass("Manager", "Discounts")">
+        <span class="gw-menu-icon"><i class="fa-solid fa-tags"></i></span>
+        <span class="gw-menu-text">โค้ดส่วนลด</span>
+        @if (IsActive("Manager", "Discounts")) { <i class="fa-solid fa-chevron-right gw-menu-arrow"></i> }
+    </a>
+}
 
             @if (isAdmin)
             {
@@ -318,13 +247,10 @@
                 <a asp-controller="Admin"
                    asp-action="Index"
                    class="@MenuClass("Admin", "Index")">
-
                     <span class="gw-menu-icon">
                         <i class="fa-solid fa-shield-halved"></i>
                     </span>
-
                     <span class="gw-menu-text">แผงควบคุมแอดมิน</span>
-
                     @if (IsActive("Admin", "Index"))
                     {
                         <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
@@ -334,46 +260,11 @@
                 <a asp-controller="Admin"
                    asp-action="Users"
                    class="@MenuClass("Admin", "Users")">
-
                     <span class="gw-menu-icon">
                         <i class="fa-solid fa-users-gear"></i>
                     </span>
-
                     <span class="gw-menu-text">จัดการผู้ใช้ / Role</span>
-
                     @if (IsActive("Admin", "Users"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
-
-                <a asp-controller="Admin"
-                   asp-action="Products"
-                   class="@MenuClass("Admin", "Products")">
-
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-boxes-stacked"></i>
-                    </span>
-
-                    <span class="gw-menu-text">จัดการสินค้าทั้งหมด</span>
-
-                    @if (IsActive("Admin", "Products"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
-
-                <a asp-controller="Admin"
-                   asp-action="Settings"
-                   class="@MenuClass("Admin", "Settings")">
-
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-gear"></i>
-                    </span>
-
-                    <span class="gw-menu-text">ตั้งค่าระบบ</span>
-
-                    @if (IsActive("Admin", "Settings"))
                     {
                         <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
                     }
@@ -384,12 +275,9 @@
 
         <!-- SIDEBAR FOOTER -->
         <div class="gw-sidebar-footer">
-
             <div class="gw-footer-line"></div>
-
             <div class="gw-footer-user">
                 <div class="gw-footer-avatar">@initial</div>
-
                 <div class="gw-footer-info">
                     <div class="gw-footer-title">GAMEWORLD</div>
                     <div class="gw-footer-subtitle">Gaming Community</div>
@@ -400,15 +288,12 @@
                   asp-action="Logout"
                   method="post"
                   class="gw-logout-form">
-
                 @Html.AntiForgeryToken()
-
                 <button type="submit" class="gw-logout">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>ออกจากระบบ</span>
                 </button>
             </form>
-
         </div>
     </aside>
 }

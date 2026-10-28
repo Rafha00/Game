@@ -128,106 +128,115 @@ namespace Game.Controllers
 
         // ================= LOGIN POST =================
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(
-            string? email,
-            string? password,
-            string? returnUrl = null)
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Login(
+    string? email,
+    string? password,
+    string? returnUrl = null)
+{
+    ViewBag.ReturnUrl = returnUrl;
+
+    if (string.IsNullOrWhiteSpace(email) ||
+        string.IsNullOrWhiteSpace(password))
+    {
+        ModelState.AddModelError(
+            "",
+            "กรุณากรอกอีเมลและรหัสผ่าน"
+        );
+
+        return View();
+    }
+
+    try
+    {
+        var normalizedEmail = email.Trim();
+
+        // 1. ค้นหาผู้ใช้งานจากอีเมลและรหัสผ่าน
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u =>
+                u.Email == normalizedEmail &&
+                u.Password == password);
+
+        if (user == null)
         {
-            ViewBag.ReturnUrl = returnUrl;
+            ModelState.AddModelError(
+                "",
+                "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+            );
 
-            if (string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(password))
-            {
-                ModelState.AddModelError(
-                    "",
-                    "กรุณากรอกอีเมลและรหัสผ่าน"
-                );
-
-                return View();
-            }
-
-            try
-            {
-                var normalizedEmail = email.Trim();
-
-                // ใช้การตรวจสอบแบบเดิมให้เข้ากับฐานข้อมูลปัจจุบัน
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u =>
-                        u.Email == normalizedEmail &&
-                        u.Password == password);
-
-                if (user == null)
-                {
-                    ModelState.AddModelError(
-                        "",
-                        "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
-                    );
-
-                    return View();
-                }
-
-                var claims = new List<Claim>
-                {
-                    new Claim(
-                        ClaimTypes.NameIdentifier,
-                        user.Id.ToString()
-                    ),
-                    new Claim(
-                        ClaimTypes.Name,
-                        user.Email ?? ""
-                    ),
-                    new Claim(
-                        ClaimTypes.Email,
-                        user.Email ?? ""
-                    ),
-                    new Claim(
-                        ClaimTypes.Role,
-                        user.Role ?? "user"
-                    )
-                };
-
-                var claimsIdentity = new ClaimsIdentity(
-                    claims,
-                    CookieAuthenticationDefaults.AuthenticationScheme
-                );
-
-                var principal = new ClaimsPrincipal(claimsIdentity);
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    principal
-                );
-
-                // แจ้งเตือนเข้าสู่ระบบสำเร็จ
-                TempData["SuccessMessage"] =
-                    "เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับสู่ GameWorld";
-
-                // Redirect กลับหน้าที่ต้องการ
-                // อนุญาตเฉพาะ URL ภายในเว็บไซต์เท่านั้น
-                if (!string.IsNullOrWhiteSpace(returnUrl) &&
-                    Url.IsLocalUrl(returnUrl))
-                {
-                    return Redirect(returnUrl);
-                }
-
-                return RedirectToAction("Index", "Home");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
-                );
-
-                ModelState.AddModelError(
-                    "",
-                    "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่"
-                );
-
-                return View();
-            }
+            return View();
         }
+
+        // 2. [เพิ่มใหม่] ตรวจสอบว่าบัญชีถูกระงับการใช้งานหรือไม่ (IsActive == false)
+        if (!user.IsActive)
+        {
+            // ส่งค่าผ่าน TempData เพื่อไปสั่งเปิด Popup แจ้งเตือนที่หน้าเว็บ
+            TempData["ErrorPopupTitle"] = "บัญชีถูกระงับการใช้งาน!";
+            TempData["ErrorPopupText"] = "บัญชีของคุณถูกระงับการใช้งานชั่วคราว กรุณาติดต่อผู้ดูแลระบบ";
+            
+            return View();
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(
+                ClaimTypes.NameIdentifier,
+                user.Id.ToString()
+            ),
+            new Claim(
+                ClaimTypes.Name,
+                user.Email ?? ""
+            ),
+            new Claim(
+                ClaimTypes.Email,
+                user.Email ?? ""
+            ),
+            new Claim(
+                ClaimTypes.Role,
+                user.Role ?? "user"
+            )
+        };
+
+        var claimsIdentity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
+
+        var principal = new ClaimsPrincipal(claimsIdentity);
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal
+        );
+
+        // แจ้งเตือนเข้าสู่ระบบสำเร็จ
+        TempData["SuccessMessage"] =
+            "เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับสู่ WHATGAME";
+
+        // Redirect กลับหน้าที่ต้องการ
+        if (!string.IsNullOrWhiteSpace(returnUrl) &&
+            Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction("Index", "Home");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(
+            ex,
+            "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
+        );
+
+        ModelState.AddModelError(
+            "",
+            "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่"
+        );
+
+        return View();
+    }
+}
 
         // ================= LOGOUT =================
         [HttpPost]

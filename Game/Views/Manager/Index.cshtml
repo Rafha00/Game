@@ -1,0 +1,192 @@
+@model Game.Models.ViewModels.ManagerDashboardViewModel
+
+@{
+    ViewData["Title"] = "Manager Dashboard";
+    Layout = "_Layout";
+}
+
+<style>
+    .mgr-page {
+        min-height: 100vh;
+        padding: 32px 24px;
+        color: #f3f4f6;
+        background: #090b14;
+    }
+
+    .mgr-wrap { max-width: 1200px; margin: auto; }
+
+    .mgr-heading {
+        margin-bottom: 26px;
+    }
+
+    .mgr-heading h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0 0 8px;
+        color: #fff;
+    }
+
+    .mgr-heading p {
+        color: #9ca3af;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .mgr-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .mgr-card {
+        padding: 22px;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 16px;
+        background: linear-gradient(145deg,#17172a,#10131f);
+        box-shadow: 0 10px 30px rgba(0,0,0,.15);
+        transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .mgr-card:hover {
+        border-color: rgba(139,92,246,0.4);
+        transform: translateY(-2px);
+    }
+
+    .mgr-label {
+        color: #a1a1aa;
+        font-size: 13px;
+        margin-bottom: 14px;
+    }
+
+    .mgr-value {
+        color: #fff;
+        font-size: clamp(20px, 2.2vw, 28px);
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .mgr-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 18px;
+        border-radius: 12px;
+        color: #c4b5fd;
+        background: rgba(139,92,246,.15);
+    }
+
+    .mgr-links {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0,1fr));
+        gap: 14px;
+        margin-top: 24px;
+    }
+
+    .mgr-link {
+        display: block;
+        padding: 20px;
+        color: #fff;
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 14px;
+        background: #111522;
+        transition: .2s;
+        font-weight: 500;
+    }
+
+    .mgr-link:hover {
+        border-color: #8b5cf6;
+        transform: translateY(-3px);
+        color: #c4b5fd;
+    }
+
+    .mgr-link i {
+        margin-right: 9px;
+        color: #a78bfa;
+    }
+
+    @@media(max-width: 1024px) {
+        .mgr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @@media(max-width: 900px) {
+        .mgr-links { grid-template-columns: 1fr; }
+    }
+
+    @@media(max-width: 500px) {
+        .mgr-page { padding: 20px 14px; }
+        .mgr-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="mgr-page">
+    <div class="mgr-wrap">
+        <header class="mgr-heading">
+            <h1>Manager Dashboard</h1>
+            <p>ภาพรวมธุรกิจและสถานะร้าน GameWorld</p>
+        </header>
+
+        <div class="mgr-grid">
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="mgr-label">ยอดขายรวม</div>
+                <div class="mgr-value">฿@(Model.TotalSales.ToString("N2"))</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                <div class="mgr-label">ยอดขายวันนี้</div>
+                <div class="mgr-value">฿@(Model.TodaySales.ToString("N2"))</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                <div class="mgr-label">ยอดขายเดือนนี้</div>
+                <div class="mgr-value">฿@(Model.MonthSales.ToString("N2"))</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-receipt"></i></div>
+                <div class="mgr-label">คำสั่งซื้อทั้งหมด</div>
+                <div class="mgr-value">@Model.TotalOrders</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="mgr-label">รอดำเนินการ</div>
+                <div class="mgr-value">@Model.PendingOrders</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="mgr-label">คำสั่งซื้อชำระแล้ว</div>
+                <div class="mgr-value">@Model.PaidOrders</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div class="mgr-label">สินค้าทั้งหมด</div>
+                <div class="mgr-value">@Model.TotalProducts</div>
+            </div>
+
+            <div class="mgr-card">
+                <div class="mgr-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="mgr-label">สินค้าใกล้หมด / หมด</div>
+                <div class="mgr-value">@Model.LowStock / @Model.OutOfStock</div>
+            </div>
+        </div>
+
+        <div class="mgr-links">
+            <a class="mgr-link" asp-controller="Manager" asp-action="Reports">
+                <i class="fa-solid fa-chart-column"></i> รายงานยอดขายและสต็อก
+            </a>
+            <a class="mgr-link" asp-controller="Manager" asp-action="Staff">
+                <i class="fa-solid fa-users-gear"></i> จัดการพนักงาน
+            </a>
+            <a class="mgr-link" asp-controller="Manager" asp-action="Discounts">
+                <i class="fa-solid fa-tags"></i> จัดการโค้ดส่วนลด
+            </a>
+        </div>
+    </div>
+</div>

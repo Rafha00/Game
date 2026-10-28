@@ -1,0 +1,220 @@
+@using Game.Models
+@{
+    ViewData["Title"] = "รายงานธุรกิจ";
+    Layout = null;
+
+    var orders = ViewBag.Orders as List<Order> ?? new List<Order>();
+    var products = ViewBag.Products as List<Product> ?? new List<Product>();
+}
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - GAMEWORLD</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: #080b14;
+            color: #f8fafc;
+        }
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .dashboard-main {
+            flex: 1;
+            min-width: 0;
+            padding: 34px;
+            background: radial-gradient(ellipse at top right, rgba(124, 58, 237, .12), transparent 45%), #080b14;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .custom-card {
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            background: rgba(17, 22, 37, 0.94);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .custom-card:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.15);
+        }
+        .table-custom th {
+            background: rgba(124, 58, 237, 0.15) !important;
+            color: #c4b5fd !important;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2) !important;
+        }
+        .table-custom td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            color: #e2e8f0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+
+        @* บังคับให้ Sidebar อยู่ทางซ้ายเสมอ *@
+        <div style="flex: 0 0 280px; min-width: 280px;">
+            <partial name="_Sidebar" />
+        </div>
+
+        @* เนื้อหาหลักอยู่ทางขวา *@
+        <main class="dashboard-main">
+            <div class="dashboard-container">
+
+                @* Header หัวข้อหน้า *@
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-900 shadow-lg shadow-purple-900/30 text-2xl text-white">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-extrabold tracking-tight text-white m-0">รายงานธุรกิจ</h1>
+                        <p class="text-sm text-slate-400 mt-1">ภาพรวมยอดขาย สต็อกสินค้า และประวัติคำสั่งซื้อทั้งหมดในระบบ</p>
+                    </div>
+                </div>
+
+                @* การ์ดแสดงยอดขาย 3 ช่อง *@
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="custom-card p-6 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 text-purple-500/20 text-4xl"><i class="fa-solid fa-wallet"></i></div>
+                        <span class="text-xs font-semibold tracking-wider text-purple-400 uppercase">ยอดขายรวมทั้งหมด</span>
+                        <h2 class="text-3xl font-black text-white mt-2">฿@(((decimal)ViewBag.TotalSales).ToString("N2"))</h2>
+                        <div class="mt-3 text-xs text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> อัปเดตเรียลไทม์</div>
+                    </div>
+
+                    <div class="custom-card p-6 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 text-blue-500/20 text-4xl"><i class="fa-solid fa-calendar-day"></i></div>
+                        <span class="text-xs font-semibold tracking-wider text-blue-400 uppercase">ยอดขายวันนี้</span>
+                        <h2 class="text-3xl font-black text-white mt-2">฿@(((decimal)ViewBag.TodaySales).ToString("N2"))</h2>
+                        <div class="mt-3 text-xs text-blue-400 flex items-center gap-1"><i class="fa-solid fa-clock"></i> ข้อมูลจำเพาะวันนี้</div>
+                    </div>
+
+                    <div class="custom-card p-6 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 text-amber-500/20 text-4xl"><i class="fa-solid fa-calendar-days"></i></div>
+                        <span class="text-xs font-semibold tracking-wider text-amber-400 uppercase">ยอดขายเดือนนี้</span>
+                        <h2 class="text-3xl font-black text-white mt-2">฿@(((decimal)ViewBag.MonthSales).ToString("N2"))</h2>
+                        <div class="mt-3 text-xs text-amber-400 flex items-center gap-1"><i class="fa-solid fa-chart-pie"></i> ประจำเดือนนี้</div>
+                    </div>
+                </div>
+
+                @* ตารางประวัติคำสั่งซื้อ *@
+                <div class="custom-card mb-8 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-purple-500/20 flex items-center justify-between bg-purple-950/20">
+                        <h3 class="font-bold text-white flex items-center gap-2 m-0 text-base">
+                            <i class="fa-solid fa-receipt text-purple-400"></i> ประวัติคำสั่งซื้อล่าสุด
+                        </h3>
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">รวม @orders.Count รายการ</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse table-custom">
+                            <thead>
+                                <tr>
+                                    <th class="py-3 px-6">เลขที่คำสั่งซื้อ</th>
+                                    <th class="py-3 px-6">วันที่ทำรายการ</th>
+                                    <th class="py-3 px-6">สถานะ</th>
+                                    <th class="py-3 px-6 text-end">ยอดรวมสุทธิ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in orders)
+                                {
+                                    <tr class="hover:bg-purple-900/10 transition">
+                                        <td class="py-4 px-6 font-semibold text-purple-300">#@order.Id</td>
+                                        <td class="py-4 px-6 text-slate-300">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="py-4 px-6">
+                                            @if (order.Status?.ToLower() == "paid")
+                                            {
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">ชำระเงินแล้ว</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">@order.Status</span>
+                                            }
+                                        </td>
+                                        <td class="py-4 px-6 text-end font-bold text-white">฿@order.TotalPrice.ToString("N2")</td>
+                                    </tr>
+                                }
+                                @if (orders.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8 text-slate-500">
+                                            <i class="fa-regular fa-folder-open text-3xl mb-2 block"></i> ยังไม่มีประวัติคำสั่งซื้อในขณะนี้
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* ตารางสินค้าคงเหลือ *@
+                <div class="custom-card overflow-hidden">
+                    <div class="px-6 py-4 border-b border-purple-500/20 flex items-center justify-between bg-purple-950/20">
+                        <h3 class="font-bold text-white flex items-center gap-2 m-0 text-base">
+                            <i class="fa-solid fa-boxes-stacked text-purple-400"></i> สถานะสินค้าคงเหลือในสต็อก
+                        </h3>
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">รวม @products.Count รายการ</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse table-custom">
+                            <thead>
+                                <tr>
+                                    <th class="py-3 px-6">ชื่อสินค้า</th>
+                                    <th class="py-3 px-6">หมวดหมู่</th>
+                                    <th class="py-3 px-6 text-end">คงเหลือ (ชิ้น)</th>
+                                    <th class="py-3 px-6">สถานะสต็อก</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in products)
+                                {
+                                    <tr class="hover:bg-purple-900/10 transition">
+                                        <td class="py-4 px-6 font-semibold text-white">@product.Name</td>
+                                        <td class="py-4 px-6 text-slate-300">@product.Category</td>
+                                        <td class="py-4 px-6 text-end font-bold text-slate-200">@product.Stock</td>
+                                        <td class="py-4 px-6">
+                                            @if (product.Stock <= 0)
+                                            {
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-medium">สินค้าหมด</span>
+                                            }
+                                            else if (product.Stock <= 5)
+                                            {
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">ใกล้หมด</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">พร้อมขาย</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                                @if (products.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8 text-slate-500">
+                                            <i class="fa-regular fa-box-archive text-3xl mb-2 block"></i> ยังไม่มีข้อมูลสินค้าในระบบ
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</body>
+</html>

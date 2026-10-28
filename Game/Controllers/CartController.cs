@@ -149,10 +149,10 @@ public IActionResult RemoveCoupon()
 
 // ---------- helpers ----------
 
-private async Task<(DiscountCode? coupon, string? error)> ValidateCouponAsync(string code, decimal subtotal)
+private async Task<(Discount? coupon, string? error)> ValidateCouponAsync(string code, decimal subtotal)
 {
     code = code.Trim().ToUpper();
-    var coupon = await _db.DiscountCodes.FirstOrDefaultAsync(d => d.Code == code);
+    var coupon = await _db.Discounts.FirstOrDefaultAsync(d => d.Code == code);
 
     if (coupon == null || !coupon.IsActive)
         return (null, "ไม่พบโค้ดส่วนลดนี้");
@@ -205,7 +205,7 @@ private async Task<CartViewModel> BuildCartAsync(Guid userId)
         }
     }
 
-    vm.AvailableCodes = await _db.DiscountCodes
+    vm.AvailableCodes = await _db.Discounts
         .Where(d => d.IsActive && (d.ExpiresAt == null || d.ExpiresAt > DateTime.UtcNow))
         .OrderBy(d => d.MinSpend)
         .ToListAsync();

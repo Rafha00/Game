@@ -128,6 +128,8 @@
     </div>
 </div>
 
+
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -154,7 +156,7 @@
         });
     });
 
-    // สมัครสมาชิกสำเร็จ
+    // 1. แจ้งเตือนสมัครสมาชิกสำเร็จ (บล็อกแยกอิสระ)
     @if (TempData["SuccessMessage"] != null)
     {
         <text>
@@ -163,6 +165,23 @@
             title: 'สมัครสมาชิกสำเร็จ!',
             text: 'บัญชีของคุณพร้อมใช้งานแล้ว กรุณาเข้าสู่ระบบ',
             confirmButtonText: 'เข้าสู่ระบบ',
+            confirmButtonColor: '#ff1744',
+            background: '#0b1221',
+            color: '#f8fafc',
+            allowOutsideClick: false
+        });
+        </text>
+    }
+
+   // แจ้งเตือนเมื่อบัญชีถูกระงับการใช้งาน
+    @if (TempData["ErrorPopupTitle"] != null)
+    {
+        <text>
+        Swal.fire({
+            icon: 'error',
+            title: 'บัญชีถูกระงับการใช้งาน!',
+            text: 'บัญชีของคุณถูกระงับการใช้งานชั่วคราว กรุณาติดต่อผู้ดูแลระบบ',
+            confirmButtonText: 'ตกลง',
             confirmButtonColor: '#ff1744',
             background: '#0b1221',
             color: '#f8fafc',
