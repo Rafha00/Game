@@ -87,7 +87,7 @@ public async Task<IActionResult> UpdateQty(Guid id, int delta)
         if (newQty <= 0)
             _db.CartItems.Remove(item);
         else if (item.Product != null && newQty > item.Product.Stock)
-            TempData["CartError"] = $"สินค้านี้มีสต็อกเพียง {item.Product.Stock} ชิ้น";
+            TempData["CartError"] = $"สินค้านี้มีสต็อกเพียง {item.Product.Stock} รายการ";
         else
             item.Quantity = newQty;
 
@@ -299,49 +299,146 @@ public async Task<IActionResult> Checkout()
         }
 
        [HttpPost]
+
+[HttpPost]
+[ValidateAntiForgeryToken]
 public async Task<IActionResult> Pay(Guid id, string method)
 {
     var userId = GetUserId();
-    if (userId == null)
-        return RedirectToAction("Login", "Auth", new { returnUrl = "/Cart/MyOrders" });
 
-    var order = await _db.Orders.Include(o => o.Items)
+    if (userId == null)
+    {
+        return RedirectToAction("Login", "Auth",
+            new { returnUrl = "/Cart/MyOrders" });
+    }
+
+    var order = await _db.Orders
+        .Include(o => o.Items)
         .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
 
-    if (order == null || order.Status != "pending")
+    if (order == null)
+    {
+        TempData["PayError"] = "ไม่พบคำสั่งซื้อ";
         return RedirectToAction(nameof(MyOrders));
+    }
+
+    if (order.Status != "pending")
+    {
+        TempData["PayError"] = "คำสั่งซื้อนี้ได้รับการดำเนินการแล้ว";
+        return RedirectToAction(nameof(MyOrders));
+    }
+
+    if (method != "PromptPay" && method != "Visa")
+    {
+        TempData["PayError"] = "ช่องทางการชำระเงินไม่ถูกต้อง";
+        return RedirectToAction(nameof(MyOrders));
+    }
+
+    if (order.Items == null || !order.Items.Any())
+    {
+        TempData["PayError"] = "ไม่พบรายการสินค้าในคำสั่งซื้อ";
+        return RedirectToAction(nameof(MyOrders));
+    }
 
     await using var tx = await _db.Database.BeginTransactionAsync();
 
-    // ตัดสต็อกแบบ atomic ทีละชิ้น ถ้าชิ้นไหนสต็อกไม่พอ ย้อนกลับทั้งหมด
-    foreach (var item in order.Items)
+    try
     {
-        var qty = item.Quantity;
-        var affected = await _db.Products
-            .Where(p => p.Id == item.ProductId && p.Stock >= qty)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock - qty));
-
-        if (affected == 0)
+        foreach (var item in order.Items)
         {
-            TempData["PayError"] = "ขออภัย มีสินค้าบางรายการในคำสั่งซื้อนี้สต็อกไม่พอแล้ว";
-            return RedirectToAction(nameof(MyOrders));
+            var qty = item.Quantity;
+
+            var affected = await _db.Products
+                .Where(p => p.Id == item.ProductId && p.Stock >= qty)
+                .ExecuteUpdateAsync(s =>
+                    s.SetProperty(p => p.Stock, p => p.Stock - qty));
+
+            if (affected == 0)
+            {
+                await tx.RollbackAsync();
+
+                TempData["PayError"] =
+                    "ขออภัย สินค้าบางรายการมีสต็อกไม่เพียงพอ";
+
+                return RedirectToAction(nameof(MyOrders));
+            }
         }
+
+        order.Status = "paid";
+
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        var methodLabel = method == "Visa"
+            ? "บัตร Visa (จำลอง)"
+            : "PromptPay QR (จำลอง)";
+
+        TempData["PaySuccess"] = "true";
+        TempData["PayOrderId"] = order.Id.ToString();
+        TempData["PayMethod"] = methodLabel;
+    }
+    catch
+    {
+        await tx.RollbackAsync();
+
+        TempData["PayError"] =
+            "ไม่สามารถบันทึกการชำระเงินได้ กรุณาลองใหม่";
+
+        return RedirectToAction(nameof(MyOrders));
     }
 
-    order.Status = "paid";
-    await _db.SaveChangesAsync();
-    await tx.CommitAsync();
-
-    var methodLabel = method == "visa" ? "บัตร Visa" : "PromptPay QR";
-    TempData["PayOk"] = $"ชำระเงินคำสั่งซื้อ #{order.Id.ToString().Substring(0, 8).ToUpper()} ด้วย{methodLabel} สำเร็จ";
     return RedirectToAction(nameof(MyOrders));
 }
 
 
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> CancelOrder(Guid id)
+{
+    var userId = GetUserId();
+
+    if (userId == null)
+    {
+        return RedirectToAction(
+            "Login",
+            "Auth",
+            new { returnUrl = "/Cart/MyOrders" }
+        );
+    }
+
+    var order = await _db.Orders.FirstOrDefaultAsync(o =>
+        o.Id == id && o.UserId == userId.Value);
+
+    if (order == null)
+    {
+        TempData["CancelError"] = "ไม่พบคำสั่งซื้อที่ต้องการยกเลิก";
+        return RedirectToAction(nameof(MyOrders));
+    }
+
+    // อนุญาตให้ยกเลิกเฉพาะรายการที่ยังรอชำระเงิน
+    if (order.Status != "pending")
+    {
+        TempData["CancelError"] =
+            "ไม่สามารถยกเลิกได้ เนื่องจากคำสั่งซื้อนี้ไม่ได้อยู่ในสถานะรอชำระเงิน";
+
+        return RedirectToAction(nameof(MyOrders));
+    }
+
+    order.Status = "cancelled";
+
+    await _db.SaveChangesAsync();
+
+    TempData["CancelSuccess"] = "ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว";
+
+    return RedirectToAction(nameof(MyOrders));
+}
+
+}
+
+
 
 
 
 
 
     }
-}

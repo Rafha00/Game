@@ -1,90 +1,549 @@
+
 @model Game.Models.CartViewModel
+
 @{
     ViewData["Title"] = "ตะกร้าสินค้า";
+
+    var items = Model?.Items;
+    var itemCount = items?.Sum(i => i.Quantity) ?? 0;
 }
 
 <style>
-    .ct-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem; }
-    .ct-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; align-items: start; }
-    @@media (max-width: 900px) { .ct-grid { grid-template-columns: 1fr; } }
+    .ct-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem;
+        color: #f8fafc;
+    }
 
-    .ct-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
-    .ct-sub { color: #94a3b8; font-size: .85rem; margin: .15rem 0 1.25rem; }
+    .ct-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 1.5rem;
+        align-items: start;
+    }
 
-    .ct-item { display: flex; align-items: center; gap: 1rem; background: #111827; border: 1px solid rgba(255,255,255,.07);
-               border-radius: .9rem; padding: .8rem 1rem; margin-bottom: .9rem; }
-    .ct-img { width: 64px; height: 64px; border-radius: .6rem; overflow: hidden; background: #0b0f19;
-              display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
-    .ct-img img { width: 100%; height: 100%; object-fit: cover; }
-    .ct-info { flex: 1; min-width: 0; }
-    .ct-name { color: #fff; font-weight: 600; text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ct-cat { color: #94a3b8; font-size: .78rem; }
+    .ct-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
 
-    .ct-qty { display: flex; align-items: center; gap: .5rem; }
-    .ct-qty button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15);
-                     background: rgba(255,255,255,.05); color: #fff; cursor: pointer; line-height: 1; }
-    .ct-qty button:hover { background: #7c3aed; }
-    .ct-qty span { min-width: 1.5rem; text-align: center; font-weight: 700; }
+    .ct-sub {
+        color: #94a3b8;
+        font-size: .85rem;
+        margin: .25rem 0 1.25rem;
+    }
 
-    .ct-price { width: 90px; text-align: right; font-weight: 600; }
-    .ct-del { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: .4rem; }
-    .ct-del:hover { color: #f87171; }
+    .ct-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #111827;
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: .9rem;
+        padding: .8rem 1rem;
+        margin-bottom: .9rem;
+        min-width: 0;
+    }
 
-    .ct-alert { border-radius: .6rem; padding: .6rem .9rem; font-size: .85rem; margin-bottom: .9rem; }
-    .ct-alert.err { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
-    .ct-alert.ok  { background: rgba(34,197,94,.12); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+    .ct-img {
+        width: 64px;
+        height: 64px;
+        border-radius: .6rem;
+        overflow: hidden;
+        background: #0b0f19;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        flex-shrink: 0;
+        color: #a78bfa;
+    }
 
-    .ct-panel { background: linear-gradient(160deg, #5b3fd1, #3b2a8f); border-radius: 1.1rem; padding: 1.5rem; color: #fff;
-                position: sticky; top: 90px; }
-    .ct-panel h3 { font-size: 1.1rem; font-weight: 700; margin: 0 0 1.1rem; }
-    .ct-label { font-size: .8rem; opacity: .85; margin-bottom: .35rem; display: block; }
-    .ct-coupon { display: flex; gap: .5rem; }
-    .ct-coupon input { flex: 1; min-width: 0; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2);
-                       border-radius: .6rem; padding: .6rem .8rem; color: #fff; text-transform: uppercase; outline: none; }
-    .ct-coupon input::placeholder { color: rgba(255,255,255,.55); text-transform: none; }
-    .ct-coupon button { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.3); color: #fff;
-                        border-radius: .6rem; padding: 0 1rem; cursor: pointer; font-weight: 600; }
-    .ct-coupon button:hover { background: rgba(255,255,255,.3); }
+    .ct-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-    .ct-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
-    .ct-chip { background: rgba(255,255,255,.12); border: 1px dashed rgba(255,255,255,.4); color: #fff; border-radius: 9999px;
-               padding: .2rem .7rem; font-size: .75rem; cursor: pointer; }
-    .ct-chip:hover { background: rgba(255,255,255,.25); }
+    .ct-info {
+        flex: 1;
+        min-width: 0;
+    }
 
-    .ct-applied { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.14);
-                  border-radius: .6rem; padding: .55rem .8rem; margin-top: .8rem; font-size: .85rem; }
-    .ct-applied button { background: none; border: none; color: #fecaca; cursor: pointer; font-size: .8rem; }
+    .ct-name {
+        color: #fff;
+        font-weight: 600;
+        text-decoration: none;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-    .ct-sum { border-top: 1px solid rgba(255,255,255,.2); margin-top: 1.2rem; padding-top: 1rem; }
-    .ct-row { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: .5rem; }
-    .ct-row.disc { color: #bbf7d0; }
-    .ct-row.total { font-weight: 700; font-size: 1.05rem; margin-top: .6rem; }
+    .ct-name:hover {
+        color: #c4b5fd;
+    }
 
-    .ct-checkout { width: 100%; margin-top: 1.1rem; display: flex; justify-content: space-between; align-items: center;
-                   background: #4de1c4; color: #063b33; border: none; border-radius: .8rem; padding: .9rem 1.1rem;
-                   font-weight: 700; cursor: pointer; }
-    .ct-checkout:hover { background: #6ff0d5; }
+    .ct-cat {
+        color: #94a3b8;
+        font-size: .78rem;
+    }
 
-    .ct-empty { text-align: center; padding: 4rem 1rem; color: #94a3b8; }
-    .ct-empty a { display: inline-block; margin-top: 1rem; background: #7c3aed; color: #fff; padding: .6rem 1.4rem;
-                  border-radius: .7rem; text-decoration: none; font-weight: 600; }
+    .ct-qty {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-shrink: 0;
+    }
+
+    .ct-qty form {
+        margin: 0;
+    }
+
+    .ct-qty button {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,.15);
+        background: rgba(255,255,255,.05);
+        color: #fff;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .ct-qty button:hover {
+        background: #7c3aed;
+    }
+
+    .ct-qty span {
+        min-width: 1.5rem;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .ct-price {
+        width: 95px;
+        text-align: right;
+        font-weight: 700;
+        flex-shrink: 0;
+        font-size: .9rem;
+    }
+
+    .ct-del {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: .4rem;
+    }
+
+    .ct-del:hover {
+        color: #f87171;
+    }
+
+    .ct-alert {
+        border-radius: .6rem;
+        padding: .6rem .9rem;
+        font-size: .85rem;
+        margin-bottom: .9rem;
+    }
+
+    .ct-alert.err {
+        background: rgba(239,68,68,.12);
+        color: #fca5a5;
+        border: 1px solid rgba(239,68,68,.3);
+    }
+
+    .ct-alert.ok {
+        background: rgba(34,197,94,.12);
+        color: #86efac;
+        border: 1px solid rgba(34,197,94,.3);
+    }
+
+    .ct-panel {
+        background: linear-gradient(160deg, #5b3fd1, #3b2a8f);
+        border: 1px solid rgba(196,181,253,.25);
+        border-radius: 1.1rem;
+        padding: 1.5rem;
+        color: #fff;
+        position: sticky;
+        top: 90px;
+        box-shadow: 0 15px 40px rgba(0,0,0,.18);
+    }
+
+    .ct-panel h3 {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin: 0 0 1.1rem;
+    }
+
+    .ct-label {
+        font-size: .8rem;
+        opacity: .85;
+        margin-bottom: .35rem;
+        display: block;
+    }
+
+    .ct-coupon {
+        display: flex;
+        gap: .5rem;
+    }
+
+    .ct-coupon input {
+        flex: 1;
+        min-width: 0;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: .6rem;
+        padding: .6rem .8rem;
+        color: #fff;
+        text-transform: uppercase;
+        outline: none;
+    }
+
+    .ct-coupon input:focus {
+        border-color: #c4b5fd;
+        box-shadow: 0 0 0 2px rgba(196,181,253,.15);
+    }
+
+    .ct-coupon input::placeholder {
+        color: rgba(255,255,255,.55);
+        text-transform: none;
+    }
+
+    .ct-coupon button {
+        background: rgba(255,255,255,.2);
+        border: 1px solid rgba(255,255,255,.3);
+        color: #fff;
+        border-radius: .6rem;
+        padding: 0 1rem;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .ct-coupon button:hover {
+        background: rgba(255,255,255,.3);
+    }
+
+    .ct-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin-top: .6rem;
+    }
+
+    .ct-chip {
+        background: rgba(255,255,255,.12);
+        border: 1px dashed rgba(255,255,255,.4);
+        color: #fff;
+        border-radius: 9999px;
+        padding: .2rem .7rem;
+        font-size: .75rem;
+        cursor: pointer;
+    }
+
+    .ct-chip:hover {
+        background: rgba(255,255,255,.25);
+    }
+
+    .ct-applied {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .5rem;
+        background: rgba(255,255,255,.14);
+        border-radius: .6rem;
+        padding: .55rem .8rem;
+        margin-top: .8rem;
+        font-size: .85rem;
+    }
+
+    .ct-applied button {
+        background: none;
+        border: none;
+        color: #fecaca;
+        cursor: pointer;
+        font-size: .8rem;
+    }
+
+    .ct-sum {
+        border-top: 1px solid rgba(255,255,255,.2);
+        margin-top: 1.2rem;
+        padding-top: 1rem;
+    }
+
+    .ct-row {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        font-size: .9rem;
+        margin-bottom: .5rem;
+    }
+
+    .ct-row.disc {
+        color: #bbf7d0;
+    }
+
+    .ct-row.total {
+        font-weight: 800;
+        font-size: 1.05rem;
+        margin-top: .6rem;
+    }
+
+    .ct-checkout {
+        width: 100%;
+        margin-top: 1.1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .5rem;
+        background: #4de1c4;
+        color: #063b33;
+        border: none;
+        border-radius: .8rem;
+        padding: .9rem 1.1rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .ct-checkout:hover {
+        background: #6ff0d5;
+        transform: translateY(-1px);
+    }
+
+    .ct-empty {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: #94a3b8;
+        background: rgba(17,24,39,.6);
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 1rem;
+    }
+
+    .ct-empty a {
+        display: inline-block;
+        margin-top: 1rem;
+        background: #7c3aed;
+        color: #fff;
+        padding: .6rem 1.4rem;
+        border-radius: .7rem;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .ct-empty a:hover {
+        background: #6d28d9;
+    }
+
+    /* ===== Confirmation Popup ===== */
+
+    .ct-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(2,6,23,.82);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .ct-modal.show {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .ct-modal-box {
+        width: 100%;
+        max-width: 420px;
+        padding: 1.8rem;
+        text-align: center;
+        color: #f8fafc;
+        background: linear-gradient(145deg,#17152b,#0b1020);
+        border: 1px solid rgba(139,92,246,.5);
+        border-radius: 1.25rem;
+        box-shadow: 0 0 35px rgba(124,58,237,.2);
+        transform: translateY(15px) scale(.97);
+        transition: transform .2s ease;
+    }
+
+    .ct-modal.show .ct-modal-box {
+        transform: translateY(0) scale(1);
+    }
+
+    .ct-modal-icon {
+        width: 68px;
+        height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        color: #c4b5fd;
+        background: rgba(124,58,237,.16);
+        border: 1px solid rgba(167,139,250,.35);
+        font-size: 1.7rem;
+    }
+
+    .ct-modal-icon.danger {
+        color: #fca5a5;
+        background: rgba(239,68,68,.12);
+        border-color: rgba(248,113,113,.35);
+    }
+
+    .ct-modal-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin: 0 0 .65rem;
+    }
+
+    .ct-modal-message {
+        color: #a5b4cc;
+        font-size: .92rem;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+    }
+
+    .ct-modal-actions {
+        display: flex;
+        gap: .75rem;
+    }
+
+    .ct-modal-btn {
+        flex: 1;
+        min-height: 44px;
+        padding: .7rem 1rem;
+        border-radius: .7rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .ct-modal-cancel {
+        color: #e2e8f0;
+        background: #1e293b;
+        border: 1px solid #334155;
+    }
+
+    .ct-modal-cancel:hover {
+        background: #334155;
+    }
+
+    .ct-modal-confirm {
+        color: white;
+        background: linear-gradient(135deg,#7c3aed,#6d28d9);
+        border: 1px solid #8b5cf6;
+    }
+
+    .ct-modal-confirm:hover {
+        filter: brightness(1.15);
+        box-shadow: 0 0 18px rgba(139,92,246,.3);
+    }
+
+    .ct-modal-confirm.danger {
+        background: linear-gradient(135deg,#dc2626,#b91c1c);
+        border-color: #ef4444;
+    }
+
+    @@media (max-width: 900px) {
+        .ct-grid {
+            grid-template-columns: minmax(0,1fr);
+        }
+
+        .ct-panel {
+            position: static;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .ct-page {
+            padding: 1.25rem .75rem;
+        }
+
+        .ct-item {
+            flex-wrap: wrap;
+            gap: .65rem;
+            padding: .75rem;
+        }
+
+        .ct-img {
+            width: 56px;
+            height: 56px;
+        }
+
+        .ct-info {
+            flex-basis: calc(100% - 80px);
+        }
+
+        .ct-qty {
+            margin-left: auto;
+        }
+
+        .ct-price {
+            width: auto;
+            margin-left: auto;
+        }
+
+        .ct-panel {
+            padding: 1.15rem;
+        }
+
+        .ct-modal-box {
+            padding: 1.4rem;
+        }
+
+        .ct-modal-actions {
+            gap: .5rem;
+        }
+    }
 </style>
 
 <div class="ct-page">
-    <h1 class="ct-title">ตะกร้าสินค้า</h1>
-    <p class="ct-sub">คุณมี @Model.Items.Sum(i => i.Quantity) ชิ้นในตะกร้า</p>
+
+    <h1 class="ct-title">
+        <i class="fa-solid fa-cart-shopping" style="color:#a78bfa"></i>
+        ตะกร้าสินค้า
+    </h1>
+
+    <p class="ct-sub">
+        คุณมี @itemCount รายการในตะกร้า
+    </p>
 
     @if (TempData["CartError"] != null)
     {
-        <div class="ct-alert err">@TempData["CartError"]</div>
+        <div class="ct-alert err">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            @TempData["CartError"]
+        </div>
     }
 
-    @if (!Model.Items.Any())
+    @if (items == null || !items.Any())
     {
         <div class="ct-empty">
-            <div style="font-size:3rem;"><i class="fa-solid fa-cart-arrow-down"></i></div>
-            <p>ตะกร้าของคุณยังว่างอยู่</p>
-            <a asp-controller="Product" asp-action="Index">ไปเลือกซื้อเกม</a>
+            <div style="font-size:3rem;color:#a78bfa">
+                <i class="fa-solid fa-cart-arrow-down"></i>
+            </div>
+
+            <h3 style="color:#e2e8f0;font-weight:700">
+                ตะกร้าของคุณยังว่างอยู่
+            </h3>
+
+            <p>เลือกเกมที่คุณชื่นชอบแล้วเพิ่มลงในตะกร้าได้เลย</p>
+
+            <a asp-controller="Product" asp-action="Index">
+                <i class="fa-solid fa-gamepad"></i>
+                ไปเลือกซื้อเกม
+            </a>
         </div>
     }
     else
@@ -92,117 +551,464 @@
         <div class="ct-grid">
 
             <!-- LEFT: รายการสินค้า -->
-            <div>
-                @foreach (var item in Model.Items)
+
+            <div class="ct-items">
+
+                @foreach (var item in items)
                 {
                     <div class="ct-item">
+
                         <div class="ct-img">
-                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                             {
                                 <img src="@item.ImageUrl" alt="@item.Name" />
                             }
                             else
                             {
-                                <span><i class="fa-brands fa-playstation"></i></span>
+                                <i class="fa-brands fa-playstation"></i>
                             }
                         </div>
 
                         <div class="ct-info">
-                            <a class="ct-name" asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId">@item.Name</a>
-                            <span class="ct-cat">@item.Category · ฿@item.Price.ToString("N2")</span>
+                            <a class="ct-name"
+                               asp-controller="Product"
+                               asp-action="Detail"
+                               asp-route-id="@item.ProductId">
+                                @item.Name
+                            </a>
+
+                            <span class="ct-cat">
+                                @item.Category · ฿@item.Price.ToString("N2")
+                            </span>
                         </div>
 
                         <div class="ct-qty">
-                            <form asp-action="UpdateQty" method="post" style="margin:0">
-                                <input type="hidden" name="id" value="@item.CartItemId" />
-                                <input type="hidden" name="delta" value="-1" />
-                                <button type="submit" title="ลดจำนวน">−</button>
+
+                            <!-- ลดจำนวน -->
+                            <form asp-action="UpdateQty"
+                                  method="post"
+                                  style="margin:0"
+                                  data-confirm="@(item.Quantity == 1 ? "remove-last" : "")">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@item.CartItemId" />
+
+                                <input type="hidden"
+                                       name="delta"
+                                       value="-1" />
+
+                                <button type="submit"
+                                        title="ลดจำนวน"
+                                        aria-label="ลดจำนวน @item.Name">
+                                    −
+                                </button>
                             </form>
+
                             <span>@item.Quantity</span>
-                            <form asp-action="UpdateQty" method="post" style="margin:0">
-                                <input type="hidden" name="id" value="@item.CartItemId" />
-                                <input type="hidden" name="delta" value="1" />
-                                <button type="submit" title="เพิ่มจำนวน">+</button>
+
+                            <!-- เพิ่มจำนวน -->
+                            <form asp-action="UpdateQty"
+                                  method="post"
+                                  style="margin:0">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@item.CartItemId" />
+
+                                <input type="hidden"
+                                       name="delta"
+                                       value="1" />
+
+                                <button type="submit"
+                                        title="เพิ่มจำนวน"
+                                        aria-label="เพิ่มจำนวน @item.Name">
+                                    +
+                                </button>
                             </form>
+
                         </div>
 
-                        <div class="ct-price">฿@item.LineTotal.ToString("N2")</div>
+                        <div class="ct-price">
+                            ฿@item.LineTotal.ToString("N2")
+                        </div>
 
-                        <form asp-action="Remove" method="post" style="margin:0">
-                            <input type="hidden" name="id" value="@item.CartItemId" />
-                            <button type="submit" class="ct-del" title="ลบออกจากตะกร้า"><i class="fa-regular fa-trash-can"></i></button>
+                        <!-- ลบสินค้า -->
+                        <form asp-action="Remove"
+                              method="post"
+                              style="margin:0"
+                              data-confirm="remove">
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@item.CartItemId" />
+
+                            <button type="submit"
+                                    class="ct-del"
+                                    title="ลบออกจากตะกร้า"
+                                    aria-label="ลบ @item.Name">
+
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
                         </form>
+
                     </div>
                 }
+
             </div>
 
             <!-- RIGHT: สรุปยอด + โค้ดส่วนลด -->
-            <aside class="ct-panel">
-                <h3>สรุปคำสั่งซื้อ</h3>
 
-                <label class="ct-label" for="couponInput">โค้ดส่วนลด</label>
-                <form asp-action="ApplyCoupon" method="post" class="ct-coupon">
-                    <input id="couponInput" name="code" type="text" placeholder="กรอกโค้ดส่วนลด" autocomplete="off" />
+            <aside class="ct-panel">
+
+                <h3>
+                    <i class="fa-solid fa-receipt"></i>
+                    สรุปคำสั่งซื้อ
+                </h3>
+
+                <label class="ct-label" for="couponInput">
+                    โค้ดส่วนลด
+                </label>
+
+                <form asp-action="ApplyCoupon"
+                      method="post"
+                      class="ct-coupon">
+
+                    <input id="couponInput"
+                           name="code"
+                           type="text"
+                           placeholder="กรอกโค้ดส่วนลด"
+                           autocomplete="off" />
+
                     <button type="submit">ใช้โค้ด</button>
                 </form>
 
                 @if (TempData["CouponError"] != null)
                 {
-                    <div class="ct-alert err" style="margin:.7rem 0 0">@TempData["CouponError"]</div>
-                }
-                @if (TempData["CouponOk"] != null)
-                {
-                    <div class="ct-alert ok" style="margin:.7rem 0 0">@TempData["CouponOk"]</div>
+                    <div class="ct-alert err" style="margin:.7rem 0 0">
+                        @TempData["CouponError"]
+                    </div>
                 }
 
-                @if (Model.CouponCode != null)
+                @if (TempData["CouponOk"] != null)
+                {
+                    <div class="ct-alert ok" style="margin:.7rem 0 0">
+                        @TempData["CouponOk"]
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.CouponCode))
                 {
                     <div class="ct-applied">
-                        <span>🏷️ @Model.CouponCode</span>
-                        <form asp-action="RemoveCoupon" method="post" style="margin:0">
-                            <button type="submit">ยกเลิกโค้ด</button>
+                        <span>
+                            <i class="fa-solid fa-tag"></i>
+                            @Model.CouponCode
+                        </span>
+
+                        <form asp-action="RemoveCoupon"
+                              method="post"
+                              style="margin:0">
+
+                            <button type="submit">
+                                ยกเลิกโค้ด
+                            </button>
                         </form>
                     </div>
                 }
-                else if (Model.AvailableCodes.Any())
+                else if (Model.AvailableCodes != null
+                         && Model.AvailableCodes.Any())
                 {
                     <div class="ct-chips">
                         @foreach (var c in Model.AvailableCodes)
                         {
-                            <button type="button" class="ct-chip" data-code="@c.Code" title="@c.Description">@c.Code</button>
+                            <button type="button"
+                                    class="ct-chip"
+                                    data-code="@c.Code"
+                                    title="@c.Description">
+                                @c.Code
+                            </button>
                         }
                     </div>
                 }
 
                 <div class="ct-sum">
-                    <div class="ct-row"><span>ราคาเต็ม</span><span>฿@Model.Subtotal.ToString("N2")</span></div>
+
+                    <div class="ct-row">
+                        <span>ราคาเต็ม</span>
+                        <span>฿@Model.Subtotal.ToString("N2")</span>
+                    </div>
+
                     @if (Model.Discount > 0)
                     {
-                        <div class="ct-row disc"><span>ส่วนลด (@Model.CouponCode)</span><span>−฿@Model.Discount.ToString("N2")</span></div>
+                        <div class="ct-row disc">
+                            <span>ส่วนลด (@Model.CouponCode)</span>
+                            <span>−฿@Model.Discount.ToString("N2")</span>
+                        </div>
                     }
-                    <div class="ct-row total"><span>ยอดสุทธิ</span><span>฿@Model.Total.ToString("N2")</span></div>
+
+                    <div class="ct-row total">
+                        <span>ยอดสุทธิ</span>
+                        <span>฿@Model.Total.ToString("N2")</span>
+                    </div>
+
                 </div>
 
-                <form asp-action="Checkout" method="post" style="margin:0">
-                        <button type="submit" class="ct-checkout">
-                                <span>฿@Model.Total.ToString("N2")</span>
-                                 <span>ชำระเงิน  <i class="fa-solid fa-arrow-right"></i></span>
-                        </button>
+                <!-- ยืนยันชำระเงิน -->
+
+                <form asp-action="Checkout"
+                      method="post"
+                      style="margin:0"
+                      data-confirm="checkout">
+
+                    <button type="submit" class="ct-checkout">
+                        <span>฿@Model.Total.ToString("N2")</span>
+
+                        <span>
+                            ชำระเงิน
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </button>
                 </form>
+
             </aside>
+
         </div>
     }
+
+</div>
+
+<!-- ===== Confirmation Popup ===== -->
+
+<div class="ct-modal"
+     id="cartConfirmModal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="ctModalTitle"
+     aria-describedby="ctModalMessage"
+     aria-hidden="true">
+
+    <div class="ct-modal-box">
+
+        <div class="ct-modal-icon" id="ctModalIcon">
+            <i class="fa-solid fa-circle-question"></i>
+        </div>
+
+        <h3 class="ct-modal-title" id="ctModalTitle">
+            ยืนยันรายการ
+        </h3>
+
+        <p class="ct-modal-message" id="ctModalMessage">
+            คุณต้องการดำเนินการต่อหรือไม่?
+        </p>
+
+        <div class="ct-modal-actions">
+
+            <button type="button"
+                    class="ct-modal-btn ct-modal-cancel"
+                    id="ctModalCancel">
+                ยกเลิก
+            </button>
+
+            <button type="button"
+                    class="ct-modal-btn ct-modal-confirm"
+                    id="ctModalConfirm">
+                ยืนยัน
+            </button>
+
+        </div>
+
+    </div>
 </div>
 
 @section Scripts {
 <script>
-    // กดชิปโค้ด → ใส่ในช่องกรอกโค้ดให้อัตโนมัติ
-    document.querySelectorAll('.ct-chip').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            document.getElementById('couponInput').value = chip.dataset.code;
-        });
-    });
+    (() => {
+        // ========================================
+        // เลือกโค้ดส่วนลดอัตโนมัติ
+        // ========================================
 
-    
+        document.querySelectorAll('.ct-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const input = document.getElementById('couponInput');
+
+                if (input) {
+                    input.value = chip.dataset.code || '';
+                    input.focus();
+                }
+            });
+        });
+
+        // ========================================
+        // ตั้งค่า Confirmation Popup
+        // ========================================
+
+        const modal = document.getElementById('cartConfirmModal');
+        const modalIcon = document.getElementById('ctModalIcon');
+        const modalTitle = document.getElementById('ctModalTitle');
+        const modalMessage = document.getElementById('ctModalMessage');
+        const modalCancel = document.getElementById('ctModalCancel');
+        const modalConfirm = document.getElementById('ctModalConfirm');
+
+        if (!modal || !modalIcon || !modalTitle ||
+            !modalMessage || !modalCancel || !modalConfirm) {
+            return;
+        }
+
+        let pendingForm = null;
+        let previousFocus = null;
+        let submitting = false;
+
+        const settings = {
+            remove: {
+                title: 'ยืนยันการลบสินค้า',
+                message: 'คุณต้องการลบสินค้านี้ออกจากตะกร้าหรือไม่?',
+                icon: 'fa-trash-can',
+                danger: true,
+                button: 'ยืนยันการลบ'
+            },
+
+            'remove-last': {
+                title: 'สินค้านี้จะถูกนำออกจากตะกร้า',
+                message: ' คุณต้องการดำเนินการต่อหรือไม่?',
+                icon: 'fa-circle-exclamation',
+                danger: true,
+                button: 'ลบสินค้า'
+            },
+
+            checkout: {
+                title: 'ยืนยันการชำระเงิน',
+                message: 'คุณต้องการดำเนินการชำระเงินสำหรับคำสั่งซื้อนี้หรือไม่?',
+                icon: 'fa-credit-card',
+                danger: false,
+                button: 'ยืนยันชำระเงิน'
+            }
+        };
+
+        function openConfirm(form, type) {
+            const config = settings[type];
+
+            if (!config || submitting) return;
+
+            pendingForm = form;
+            previousFocus = document.activeElement;
+
+            modalTitle.textContent = config.title;
+            modalMessage.textContent = config.message;
+
+            if (type === 'checkout') {
+                const total = form.querySelector('.ct-checkout > span');
+
+                if (total) {
+                    modalMessage.textContent =
+                        'ยอดชำระ ' + total.textContent.trim() +
+                        ' คุณต้องการดำเนินการชำระเงินต่อหรือไม่?';
+                }
+            }
+
+            modalIcon.className = 'ct-modal-icon';
+
+            if (config.danger) {
+                modalIcon.classList.add('danger');
+            }
+
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid ' + config.icon;
+
+            modalIcon.replaceChildren(icon);
+
+            modalConfirm.textContent = config.button;
+            modalConfirm.className = 'ct-modal-btn ct-modal-confirm';
+
+            if (config.danger) {
+                modalConfirm.classList.add('danger');
+            }
+
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+
+            modalCancel.focus();
+        }
+
+        function closeConfirm() {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+
+            pendingForm = null;
+
+            if (previousFocus &&
+                typeof previousFocus.focus === 'function' &&
+                document.contains(previousFocus)) {
+                previousFocus.focus();
+            }
+        }
+
+        // ========================================
+        // ดักฟอร์มก่อนส่ง
+        // ========================================
+
+        document.querySelectorAll('form[data-confirm]').forEach(form => {
+            form.addEventListener('submit', event => {
+                if (form.dataset.confirmed === 'true') {
+                    delete form.dataset.confirmed;
+                    return;
+                }
+
+                const type = form.dataset.confirm;
+
+                // ปุ่มลดจำนวนปกติ ไม่ต้องแสดง Popup
+                if (!type || !settings[type]) {
+                    return;
+                }
+
+                event.preventDefault();
+                openConfirm(form, type);
+            });
+        });
+
+        // ========================================
+        // ปุ่มยืนยัน
+        // ========================================
+
+        modalConfirm.addEventListener('click', () => {
+            if (!pendingForm || submitting) return;
+
+            const form = pendingForm;
+
+            submitting = true;
+            pendingForm = null;
+
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+
+            form.dataset.confirmed = 'true';
+
+            // ใช้ฟอร์มเดิม รวมถึง hidden fields และ antiforgery token
+            form.requestSubmit();
+        });
+
+        // ========================================
+        // ปุ่มยกเลิก
+        // ========================================
+
+        modalCancel.addEventListener('click', closeConfirm);
+
+        // คลิกด้านนอก Popup เพื่อปิด
+        modal.addEventListener('click', event => {
+            if (event.target === modal) {
+                closeConfirm();
+            }
+        });
+
+        // กด Escape เพื่อยกเลิก
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' &&
+                modal.classList.contains('show')) {
+                closeConfirm();
+            }
+        });
+    })();
 </script>
 }

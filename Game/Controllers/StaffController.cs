@@ -100,7 +100,7 @@ namespace Game.Controllers
         {
             var query = _context.Users
                 .AsNoTracking()
-                .Where(u => u.Role.ToLower() == "customer")
+                .Where(u => u.Role.ToLower() == "user")
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
