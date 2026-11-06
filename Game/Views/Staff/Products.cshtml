@@ -1,8 +1,10 @@
-
 @model IEnumerable<Game.Models.Product>
 @{
     ViewData["Title"] = "สินค้า / สต็อก";
     Layout = null;
+
+    // เฉพาะ admin / manager ที่เห็นปุ่มจัดการ (staff จะไม่เห็น)
+    var canManage = User.IsInRole("admin") || User.IsInRole("manager");
 }
 <!DOCTYPE html>
 <html lang="th">
@@ -23,6 +25,19 @@
             <p class="mt-2 text-sm text-slate-400">ตรวจสอบราคาและจำนวนสินค้าคงเหลือ</p>
         </header>
 
+        @if (TempData["Success"] is string okMsg)
+        {
+            <div class="mb-4 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+                <i class="fa-solid fa-circle-check mr-2"></i>@okMsg
+            </div>
+        }
+        @if (TempData["Error"] is string errMsg)
+        {
+            <div class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-400">
+                <i class="fa-solid fa-circle-exclamation mr-2"></i>@errMsg
+            </div>
+        }
+
         <form method="get" class="mb-5 flex flex-wrap gap-3">
             <input name="search" value="@ViewBag.Search" placeholder="ค้นหาชื่อสินค้า..."
                    class="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#121729] px-4 py-3 text-sm outline-none focus:border-purple-500" />
@@ -39,17 +54,25 @@
                         <th class="p-4">ราคา</th>
                         <th class="p-4">คงเหลือ</th>
                         <th class="p-4">สถานะสต็อก</th>
+                        @if (canManage)
+                        {
+                            <th class="p-4 text-right">จัดการ</th>
+                        }
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                 @foreach (var product in Model)
                 {
-                    <tr class="hover:bg-purple-500/5">
+                    <tr class="hover:bg-purple-500/5 @(product.IsActive ? "" : "opacity-60")">
                         <td class="p-4 font-semibold">@product.Name</td>
                         <td class="p-4">฿@product.Price.ToString("N2")</td>
                         <td class="p-4 font-bold">@product.Stock</td>
                         <td class="p-4">
-                            @if (product.Stock <= 0)
+                            @if (!product.IsActive)
+                            {
+                                <span class="rounded-full bg-slate-500/20 px-3 py-1 text-xs text-slate-300">ปิดใช้งาน</span>
+                            }
+                            else if (product.Stock <= 0)
                             {
                                 <span class="rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-300">สินค้าหมด</span>
                             }
@@ -62,16 +85,246 @@
                                 <span class="rounded-full bg-green-500/10 px-3 py-1 text-xs text-green-300">พร้อมขาย</span>
                             }
                         </td>
+
+                        @if (canManage)
+                        {
+                            <td class="p-4">
+                                <div class="flex items-center justify-end gap-2">
+                                    <!-- เปิด/ปิดการใช้งาน (เปิด popup ยืนยัน) -->
+                                    <button type="button"
+                                            title="@(product.IsActive ? "ปิดการใช้งาน" : "เปิดการใช้งาน")"
+                                            class="pd-toggle-btn grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 transition hover:border-purple-500 hover:bg-purple-500/20 @(product.IsActive ? "text-green-400" : "text-slate-400")"
+                                            data-id="@product.Id"
+                                            data-name="@product.Name"
+                                            data-active="@(product.IsActive ? "1" : "0")">
+                                        <i class="fa-solid @(product.IsActive ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                                    </button>
+
+                                    <!-- แก้ไข -->
+                                    <button type="button" title="แก้ไข"
+                                            class="pd-edit-btn grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-yellow-300 transition hover:border-purple-500 hover:bg-purple-500/20"
+                                            data-id="@product.Id"
+                                            data-name="@product.Name"
+                                            data-price="@product.Price"
+                                            data-stock="@product.Stock">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+
+                                    <!-- ลบ -->
+                                    <button type="button" title="ลบ"
+                                            class="pd-del-btn grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-red-400 transition hover:border-red-400 hover:bg-red-400/15"
+                                            data-id="@product.Id"
+                                            data-name="@product.Name">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        }
                     </tr>
                 }
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="4" class="p-10 text-center text-slate-500">ไม่พบสินค้า</td></tr>
+                    <tr><td colspan="@(canManage ? 5 : 4)" class="p-10 text-center text-slate-500">ไม่พบสินค้า</td></tr>
                 }
                 </tbody>
             </table>
         </div>
     </main>
 </div>
+
+@if (canManage)
+{
+    <!-- ===== Toggle Modal ===== -->
+    <div id="toggleModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-[#05050f]/70 p-4 backdrop-blur-sm" aria-hidden="true">
+        <form method="post" asp-controller="Staff" asp-action="ToggleProduct" role="dialog" aria-modal="true"
+              class="w-full max-w-md rounded-3xl border border-white/10 bg-[#121729] p-7 text-center shadow-2xl">
+            <input type="hidden" name="id" id="toggleId" />
+
+            <div id="toggleIconWrap" class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border text-2xl">
+                <i id="toggleIcon" class="fa-solid"></i>
+            </div>
+            <h3 id="toggleTitle" class="mb-2 text-xl font-extrabold text-white"></h3>
+            <p class="text-sm leading-relaxed text-slate-400">
+                คุณต้องการ<span id="toggleAction"></span> <b id="toggleName" class="break-all text-white"></b> ใช่หรือไม่?<br />
+                <span id="toggleHint"></span>
+            </p>
+
+            <div class="mt-6 flex gap-3">
+                <button type="button" data-close="toggleModal"
+                        class="flex-1 rounded-xl border border-white/15 py-3 text-sm font-bold text-purple-300 hover:bg-white/5">ยกเลิก</button>
+                <button type="submit" id="toggleConfirm"
+                        class="flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-lg hover:-translate-y-px">
+                    <i id="toggleBtnIcon" class="fa-solid mr-1"></i> <span id="toggleBtnText"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== Edit Modal ===== -->
+    <div id="editModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-[#05050f]/70 p-4 backdrop-blur-sm" aria-hidden="true">
+        <form method="post" asp-controller="Staff" asp-action="EditProduct" role="dialog" aria-modal="true"
+              class="w-full max-w-md rounded-3xl border border-white/10 bg-[#121729] p-7 shadow-2xl">
+            <input type="hidden" name="id" id="editId" />
+
+            <div class="mb-5 flex items-center gap-3">
+                <div class="grid h-11 w-11 place-items-center rounded-full border border-yellow-300/30 bg-yellow-300/10 text-yellow-300">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-white">แก้ไขสินค้า</h3>
+            </div>
+
+            <label class="mb-1 block text-xs font-semibold text-slate-400">ชื่อสินค้า</label>
+            <input name="name" id="editName" required maxlength="200"
+                   class="mb-4 w-full rounded-xl border border-white/10 bg-[#0b0f1f] px-4 py-3 text-sm text-white outline-none focus:border-purple-500" />
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-slate-400">ราคา (฿)</label>
+                    <input name="price" id="editPrice" type="number" step="1" min="0" required
+                           class="w-full rounded-xl border border-white/10 bg-[#0b0f1f] px-4 py-3 text-sm text-white outline-none focus:border-purple-500" />
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-slate-400">คงเหลือ</label>
+                    <input name="stock" id="editStock" type="number" step="1" min="0" required
+                           class="w-full rounded-xl border border-white/10 bg-[#0b0f1f] px-4 py-3 text-sm text-white outline-none focus:border-purple-500" />
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+                <button type="button" data-close="editModal"
+                        class="flex-1 rounded-xl border border-white/15 py-3 text-sm font-bold text-purple-300 hover:bg-white/5">ยกเลิก</button>
+                <button type="submit"
+                        class="flex-1 rounded-xl bg-purple-600 py-3 text-sm font-bold text-white hover:bg-purple-500">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึก
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== Delete Modal ===== -->
+    <div id="delModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-[#05050f]/70 p-4 backdrop-blur-sm" aria-hidden="true">
+        <form method="post" asp-controller="Staff" asp-action="DeleteProduct" role="dialog" aria-modal="true"
+              class="w-full max-w-md rounded-3xl border border-white/10 bg-[#121729] p-7 text-center shadow-2xl">
+            <input type="hidden" name="id" id="delId" />
+
+            <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border border-red-400/30 bg-red-400/10 text-2xl text-red-400">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="mb-2 text-xl font-extrabold text-white">ยืนยันการลบสินค้า</h3>
+            <p class="text-sm leading-relaxed text-slate-400">
+                คุณต้องการลบ <b id="delName" class="break-all text-white"></b> ใช่หรือไม่?<br />การลบไม่สามารถกู้คืนได้
+            </p>
+
+            <div class="mt-6 flex gap-3">
+                <button type="button" data-close="delModal"
+                        class="flex-1 rounded-xl border border-white/15 py-3 text-sm font-bold text-purple-300 hover:bg-white/5">ยกเลิก</button>
+                <button type="submit" id="delConfirm"
+                        class="flex-1 rounded-xl bg-gradient-to-br from-red-400 to-red-600 py-3 text-sm font-bold text-white shadow-lg shadow-red-600/30 hover:-translate-y-px">
+                    <i class="fa-solid fa-trash mr-1"></i> ยืนยันลบ
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        (function () {
+            const editModal   = document.getElementById('editModal');
+            const delModal    = document.getElementById('delModal');
+            const toggleModal = document.getElementById('toggleModal');
+            const allModals   = [editModal, delModal, toggleModal];
+
+            function open(m)  { m.classList.remove('hidden'); m.classList.add('flex');  m.setAttribute('aria-hidden', 'false'); }
+            function close(m) { m.classList.add('hidden');    m.classList.remove('flex'); m.setAttribute('aria-hidden', 'true'); }
+
+            // ---------- แก้ไข ----------
+            document.querySelectorAll('.pd-edit-btn').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    document.getElementById('editId').value    = b.dataset.id;
+                    document.getElementById('editName').value  = b.dataset.name;
+                    document.getElementById('editPrice').value = b.dataset.price;
+                    document.getElementById('editStock').value = b.dataset.stock;
+                    open(editModal);
+                    document.getElementById('editName').focus();
+                });
+            });
+
+            // ---------- ลบ ----------
+            document.querySelectorAll('.pd-del-btn').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    document.getElementById('delId').value = b.dataset.id;
+                    document.getElementById('delName').textContent = b.dataset.name;
+                    open(delModal);
+                });
+            });
+
+            // ---------- เปิด/ปิดการใช้งาน ----------
+            const tIconWrap = document.getElementById('toggleIconWrap');
+            const tIcon     = document.getElementById('toggleIcon');
+            const tConfirm  = document.getElementById('toggleConfirm');
+            const tBtnIcon  = document.getElementById('toggleBtnIcon');
+
+            document.querySelectorAll('.pd-toggle-btn').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    const isActive = b.dataset.active === '1';
+
+                    document.getElementById('toggleId').value = b.dataset.id;
+                    document.getElementById('toggleName').textContent = b.dataset.name;
+
+                    if (isActive) {
+                        // กำลังเปิดอยู่ -> จะปิดการใช้งาน
+                        document.getElementById('toggleTitle').textContent = 'ยืนยันการปิดการใช้งาน';
+                        document.getElementById('toggleAction').textContent = 'ปิดการใช้งาน';
+                        document.getElementById('toggleHint').textContent = 'สินค้าจะไม่แสดงให้ลูกค้าเห็นจนกว่าจะเปิดใหม่';
+                        document.getElementById('toggleBtnText').textContent = 'ยืนยันปิดใช้งาน';
+
+                        tIconWrap.className = 'mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border text-2xl border-yellow-300/30 bg-yellow-300/10 text-yellow-300';
+                        tIcon.className = 'fa-solid fa-toggle-off';
+                        tConfirm.className = 'flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-lg hover:-translate-y-px bg-gradient-to-br from-yellow-400 to-amber-600 shadow-amber-600/30';
+                        tBtnIcon.className = 'fa-solid fa-toggle-off mr-1';
+                    } else {
+                        // ปิดอยู่ -> จะเปิดการใช้งาน
+                        document.getElementById('toggleTitle').textContent = 'ยืนยันการเปิดการใช้งาน';
+                        document.getElementById('toggleAction').textContent = 'เปิดการใช้งาน';
+                        document.getElementById('toggleHint').textContent = 'สินค้าจะกลับมาแสดงให้ลูกค้าเห็นอีกครั้ง';
+                        document.getElementById('toggleBtnText').textContent = 'ยืนยันเปิดใช้งาน';
+
+                        tIconWrap.className = 'mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border text-2xl border-green-400/30 bg-green-400/10 text-green-400';
+                        tIcon.className = 'fa-solid fa-toggle-on';
+                        tConfirm.className = 'flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-lg hover:-translate-y-px bg-gradient-to-br from-green-400 to-green-600 shadow-green-600/30';
+                        tBtnIcon.className = 'fa-solid fa-toggle-on mr-1';
+                    }
+
+                    tConfirm.disabled = false;
+                    open(toggleModal);
+                });
+            });
+
+            // ปุ่มยกเลิก
+            document.querySelectorAll('[data-close]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    close(document.getElementById(b.dataset.close));
+                });
+            });
+
+            // คลิกพื้นหลังเพื่อปิด
+            allModals.forEach(function (m) {
+                m.addEventListener('click', function (e) { if (e.target === m) close(m); });
+            });
+
+            // กด Esc เพื่อปิด
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') allModals.forEach(close);
+            });
+
+            // กันกดยืนยันซ้ำ
+            delModal.querySelector('form').addEventListener('submit', function () {
+                document.getElementById('delConfirm').disabled = true;
+            });
+            toggleModal.querySelector('form').addEventListener('submit', function () {
+                tConfirm.disabled = true;
+            });
+        })();
+    </script>
+}
 </body>
 </html>

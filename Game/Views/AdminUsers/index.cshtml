@@ -1,0 +1,305 @@
+@model Game.Models.UserListViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "จัดการผู้ใช้";
+
+    var roles = new (string Key, string Label)[]
+    {
+        ("admin", "ผู้ดูแลระบบ"),
+        ("manager", "ผู้จัดการ"),
+        ("staff", "พนักงาน"),
+        ("user", "ผู้ใช้ทั่วไป")
+    };
+}
+
+<style>
+    .ul-wrap{
+        color:#fff;
+        box-sizing:border-box;
+        width:100%;
+        max-width:1200px;
+        margin:0 auto;
+        padding:40px 32px 60px;
+    }
+    @@media (max-width:640px){
+        .ul-wrap{padding:24px 16px 40px}
+    }
+
+    .ul-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+    .ul-top h1{margin:0;font-size:28px;font-weight:800}
+    .ul-top p{margin:4px 0 0;color:#9ca3af;font-size:14px}
+
+    .ul-btn{
+        display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:14px;
+        font-weight:700;font-size:14px;color:#fff;text-decoration:none;border:0;cursor:pointer;
+        background:linear-gradient(135deg,#9d5cff,#7c3aed);box-shadow:0 8px 24px rgba(124,58,237,.4);
+        transition:transform .15s;
+    }
+    .ul-btn:hover{transform:translateY(-1px)}
+
+    .ul-alert{padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:14px}
+    .ul-alert.ok{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+    .ul-alert.err{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3)}
+
+    .ul-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+    .ul-search{position:relative;flex:1 1 280px;min-width:0}
+    .ul-search i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#8b5cf6}
+    .ul-search input{
+        width:100%;box-sizing:border-box;padding:13px 16px 13px 44px;border-radius:14px;
+        background:#14142b;border:1px solid rgba(255,255,255,.1);color:#fff;outline:none;font-family:inherit;
+    }
+    .ul-search input:focus{border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.2)}
+
+    .ul-chips{display:flex;gap:8px;flex-wrap:wrap}
+    .ul-chip{
+        padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none;
+        color:#c4b5fd;border:1px solid rgba(255,255,255,.12);background:transparent;
+    }
+    .ul-chip:hover{background:rgba(255,255,255,.05)}
+    .ul-chip.active{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    .ul-chip b{margin-left:6px;opacity:.7;font-weight:600}
+
+    .ul-card{background:#14142b;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:8px 24px}
+    .ul-row{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+    .ul-row:last-child{border-bottom:0}
+    .ul-avatar{
+        width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;
+        font-weight:800;background:linear-gradient(135deg,#7c3aed,#a855f7);
+    }
+    .ul-info{flex:1;min-width:0}
+    .ul-email{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    .ul-badge{padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid}
+    .ul-badge.admin{color:#a78bfa;border-color:#7c3aed;background:rgba(124,58,237,.12)}
+    .ul-badge.manager{color:#fbbf24;border-color:#d97706;background:rgba(251,191,36,.1)}
+    .ul-badge.staff{color:#22d3ee;border-color:#0891b2;background:rgba(34,211,238,.1)}
+    .ul-badge.user{color:#9ca3af;border-color:rgba(255,255,255,.2)}
+
+    .ul-acts{display:flex;gap:8px}
+    .ul-acts form{margin:0}
+    .ul-icon{
+        width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;
+        background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#c4b5fd;
+        text-decoration:none;transition:all .15s;
+    }
+    .ul-icon:hover{background:rgba(139,92,246,.2);border-color:#8b5cf6}
+    .ul-icon.del{color:#f87171}
+    .ul-icon.del:hover{background:rgba(248,113,113,.15);border-color:#f87171}
+
+    .ul-empty{padding:48px 0;text-align:center;color:#9ca3af}
+    .ul-pager{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:24px;color:#9ca3af;font-size:14px}
+    .ul-pager a{padding:9px 16px;border-radius:12px;color:#c4b5fd;text-decoration:none;border:1px solid rgba(255,255,255,.12)}
+    .ul-pager a:hover{background:rgba(255,255,255,.05)}
+
+    @@media (max-width:640px){
+        .ul-row{flex-wrap:wrap}
+        .ul-card{padding:8px 16px}
+    }
+
+        /* ===== Delete Modal ===== */
+    .ul-modal{
+        position:fixed;inset:0;z-index:9999;display:none;
+        align-items:center;justify-content:center;padding:16px;
+        background:rgba(5,5,15,.7);backdrop-filter:blur(4px);
+    }
+    .ul-modal.show{display:flex;animation:ulFade .15s ease}
+    .ul-modal-box{
+        width:100%;max-width:420px;box-sizing:border-box;
+        background:#14142b;border:1px solid rgba(255,255,255,.1);
+        border-radius:24px;padding:32px 28px 24px;text-align:center;
+        box-shadow:0 24px 60px rgba(0,0,0,.6);
+        
+        animation:ulPop .2s ease;
+    }
+    .ul-modal-box h3{margin:0 0 8px;font-size:20px;font-weight:800;color:#fff
+    }
+    .ul-modal-icon{
+        width:64px;height:64px;border-radius:50%;margin:0 auto 16px;
+        display:grid;place-items:center;font-size:26px;
+        color:#f87171;background:rgba(248,113,113,.12);
+        border:1px solid rgba(248,113,113,.3);
+    }
+    .ul-modal-box h3{margin:0 0 8px;font-size:20px;font-weight:800}
+    .ul-modal-box p{margin:0;color:#9ca3af;font-size:14px;line-height:1.6}
+    .ul-modal-box p b{color:#fff;word-break:break-all}
+    .ul-modal-acts{display:flex;gap:12px;margin-top:24px}
+    .ul-modal-acts button{
+        flex:1;padding:12px 16px;border-radius:14px;font-weight:700;
+        font-size:14px;font-family:inherit;cursor:pointer;transition:all .15s;
+    }
+    .ul-btn-cancel{
+        background:transparent;color:#c4b5fd;border:1px solid rgba(255,255,255,.15);
+    }
+    .ul-btn-cancel:hover{background:rgba(255,255,255,.06)}
+    .ul-btn-confirm{
+        color:#fff;border:0;
+        background:linear-gradient(135deg,#f87171,#dc2626);
+        box-shadow:0 8px 24px rgba(220,38,38,.35);
+    }
+    .ul-btn-confirm:hover{transform:translateY(-1px)}
+    @@keyframes ulFade{from{opacity:0}to{opacity:1}}
+    @@keyframes ulPop{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:none}}
+</style>
+
+<div class="ul-wrap">
+    <div class="ul-top">
+        <div>
+            <h1>จัดการผู้ใช้</h1>
+            <p>ทั้งหมด @Model.Total บัญชี</p>
+        </div>
+        <a class="ul-btn" asp-action="Create">
+            <i class="fa-solid fa-user-plus"></i> เพิ่มผู้ใช้ใหม่
+        </a>
+    </div>
+
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="ul-alert ok"><i class="fa-solid fa-circle-check"></i> @ok</div>
+    }
+    @if (TempData["Error"] is string er)
+    {
+        <div class="ul-alert err"><i class="fa-solid fa-circle-exclamation"></i> @er</div>
+    }
+
+    <div class="ul-tools">
+        <form method="get" asp-action="Index" class="ul-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="q" value="@Model.Q" placeholder="ค้นหาด้วยอีเมล..." />
+            @if (!string.IsNullOrEmpty(Model.Role))
+            {
+                <input type="hidden" name="role" value="@Model.Role" />
+            }
+        </form>
+
+        <div class="ul-chips">
+            <a class="ul-chip @(string.IsNullOrEmpty(Model.Role) ? "active" : "")"
+               asp-action="Index" asp-route-q="@Model.Q">ทั้งหมด</a>
+
+            @foreach (var r in roles)
+            {
+                var n = Model.Counts.TryGetValue(r.Key, out var c) ? c : 0;
+                <a class="ul-chip @(Model.Role == r.Key ? "active" : "")"
+                   asp-action="Index" asp-route-role="@r.Key" asp-route-q="@Model.Q">
+                    @r.Label<b>@n</b>
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="ul-card">
+        @if (!Model.Users.Any())
+        {
+            <div class="ul-empty">
+                <i class="fa-solid fa-user-slash" style="font-size:32px;margin-bottom:12px"></i>
+                <div>ไม่พบผู้ใช้</div>
+            </div>
+        }
+
+        @foreach (var u in Model.Users)
+        {
+            var role = string.IsNullOrWhiteSpace(u.Role) ? "user" : u.Role.ToLowerInvariant();
+            <div class="ul-row">
+                <div class="ul-avatar">@(u.Email.Length > 0 ? u.Email[0].ToString().ToUpper() : "?")</div>
+
+                <div class="ul-info">
+                    <div class="ul-email">@u.Email</div>
+                </div>
+
+                <span class="ul-badge @role">@role</span>
+
+                <div class="ul-acts">
+                    <a class="ul-icon" title="แก้ไข" asp-action="Edit" asp-route-id="@u.Id">
+                        <i class="fa-solid fa-pen-to-square" style="color: rgb(255, 212, 59);"></i>
+                    </a>
+
+                    <form method="post" asp-action="Delete" asp-route-id="@u.Id"
+                    class="ul-del-form" data-email="@u.Email">
+                    <button type="button" class="ul-icon del ul-del-btn" title="ลบ">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </form>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="ul-pager">
+            @if (Model.Page > 1)
+            {
+                <a asp-action="Index" asp-route-page="@(Model.Page - 1)"
+                   asp-route-role="@Model.Role" asp-route-q="@Model.Q">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            }
+            <span>หน้า @Model.Page / @Model.TotalPages</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-action="Index" asp-route-page="@(Model.Page + 1)"
+                   asp-route-role="@Model.Role" asp-route-q="@Model.Q">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            }
+        </div>
+    }
+</div>
+<div class="ul-modal" id="delModal" aria-hidden="true">
+    <div class="ul-modal-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+        <div class="ul-modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3 id="delTitle">ยืนยันการลบผู้ใช้</h3>
+        <p>คุณต้องการลบ <b id="delEmail"></b> ใช่หรือไม่?<br />การลบไม่สามารถกู้คืนได้</p>
+        <div class="ul-modal-acts">
+            <button type="button" class="ul-btn-cancel" id="delCancel">ยกเลิก</button>
+            <button type="button" class="ul-btn-confirm" id="delConfirm">
+                <i class="fa-solid fa-trash"></i> ยืนยันลบ
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal   = document.getElementById('delModal');
+        const emailEl = document.getElementById('delEmail');
+        const btnOk   = document.getElementById('delConfirm');
+        const btnNo   = document.getElementById('delCancel');
+        let targetForm = null;
+
+        function openModal(form) {
+            targetForm = form;
+            emailEl.textContent = form.dataset.email;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            btnNo.focus();
+        }
+        function closeModal() {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            targetForm = null;
+        }
+
+        document.querySelectorAll('.ul-del-btn').forEach(function (b) {
+            b.addEventListener('click', function () {
+                openModal(b.closest('form'));
+            });
+        });
+
+        btnOk.addEventListener('click', function () {
+            if (targetForm) {
+                btnOk.disabled = true;
+                targetForm.submit();
+            }
+        });
+        btnNo.addEventListener('click', closeModal);
+
+        // คลิกพื้นหลังเพื่อปิด
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModal();
+        });
+        // กด Esc เพื่อปิด
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+        });
+    })();
+</script>

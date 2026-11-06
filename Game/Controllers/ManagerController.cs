@@ -187,6 +187,10 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Staff));
         }
 
+        // ==========================================================
+        // DISCOUNTS
+        // ==========================================================
+
         // GET: /Manager/Discounts
         public async Task<IActionResult> Discounts()
         {
@@ -202,7 +206,14 @@ namespace Game.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "admin,manager")]
-        public async Task<IActionResult> CreateDiscount(string code, string type, decimal value, decimal minSpend, DateTime? expiresAt, string description)
+        public async Task<IActionResult> CreateDiscount(
+            string code,
+            string type,
+            decimal value,
+            decimal minSpend,
+            bool isActive,
+            DateTime? expiresAt,
+            string description)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -226,7 +237,7 @@ namespace Game.Controllers
                 Type = type,
                 Value = value,
                 MinSpend = minSpend,
-                IsActive = true,
+                IsActive = isActive, // รับค่าจากฟอร์ม (เดิมตั้งเป็น true เสมอ)
                 ExpiresAt = expiresAt,
                 Description = description
             };
@@ -235,6 +246,29 @@ namespace Game.Controllers
             await _context.SaveChangesAsync();
 
             TempData["ManagerSuccess"] = $"สร้างโค้ดส่วนลด ({discount.Code}) สำเร็จแล้ว";
+            return RedirectToAction(nameof(Discounts));
+        }
+
+        // POST: /Manager/ToggleDiscount (เปิด / ปิดการใช้งานโค้ดส่วนลด)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin,manager")]
+        public async Task<IActionResult> ToggleDiscount(string id)
+        {
+            var discount = await _context.Discounts.FindAsync(id);
+            if (discount == null)
+            {
+                TempData["ManagerError"] = "ไม่พบโค้ดส่วนลดที่ต้องการแก้ไข";
+                return RedirectToAction(nameof(Discounts));
+            }
+
+            discount.IsActive = !discount.IsActive;
+            await _context.SaveChangesAsync();
+
+            TempData["ManagerSuccess"] = discount.IsActive
+                ? $"เปิดใช้งานโค้ด ({discount.Code}) เรียบร้อยแล้ว"
+                : $"ปิดใช้งานโค้ด ({discount.Code}) เรียบร้อยแล้ว";
+
             return RedirectToAction(nameof(Discounts));
         }
 
@@ -254,9 +288,13 @@ namespace Game.Controllers
             _context.Discounts.Remove(discount);
             await _context.SaveChangesAsync();
 
-            TempData["ManagerSuccess"] = "ลบโค้ดส่วนลดเรียบร้อยแล้ว";
+            TempData["ManagerSuccess"] = $"ลบโค้ดส่วนลด ({discount.Code}) เรียบร้อยแล้ว";
             return RedirectToAction(nameof(Discounts));
         }
+
+        // ==========================================================
+        // STAFF
+        // ==========================================================
 
         // GET: /Manager/Staff
         public async Task<IActionResult> Staff()

@@ -17,194 +17,348 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
     <style>
+        :root {
+            --bg: #0a0c15;
+            --panel: #12162a;
+            --panel-soft: #0d1020;
+            --line: rgba(148,163,184,.16);
+            --line-strong: #2d3350;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --accent: #8b5cf6;
+            --accent-soft: #c4b5fd;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { min-height: 100%; }
+
         body {
             margin: 0;
             font-family: 'Kanit', sans-serif;
-            color: #f8fafc;
-            background:
-                radial-gradient(ellipse at top left, rgba(124,58,237,.17), transparent 40%),
-                #080a12;
+            color: var(--text);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(ellipse 60% 40% at 0% 0%, rgba(124,58,237,.16), transparent 70%),
+                radial-gradient(ellipse 50% 35% at 100% 100%, rgba(45,212,191,.07), transparent 70%),
+                var(--bg);
         }
 
         .panel {
-            background: rgba(17,21,36,.95);
-            border: 1px solid rgba(148,163,184,.15);
-            box-shadow: 0 25px 70px rgba(0,0,0,.25);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            box-shadow: 0 30px 80px -20px rgba(0,0,0,.55);
+        }
+
+        /* ---------- Fields ---------- */
+        .field-label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 13px;
+            margin-bottom: 6px;
         }
 
         .field {
             width: 100%;
-            box-sizing: border-box;
-            padding: 13px 15px;
-            border-radius: 12px;
-            border: 1px solid #30364b;
-            color: #f8fafc;
-            background: #0b0f1c;
+            padding: 9px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--line-strong);
+            color: var(--text);
+            background: var(--panel-soft);
             outline: none;
-            transition: .2s;
-        }
-
-        .field:focus {
-            border-color: #a78bfa;
-            box-shadow: 0 0 0 3px rgba(139,92,246,.13);
-        }
-
-        .field::placeholder {
-            color: #64748b;
-        }
-
-        .field-label {
-            display: block;
-            color: #cbd5e1;
+            font-family: inherit;
             font-size: 14px;
-            margin-bottom: 8px;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        .field:hover { border-color: #3d4466; }
+        .field:focus {
+            border-color: var(--accent);
+            background: #0f1326;
+            box-shadow: 0 0 0 3px rgba(139,92,246,.15);
+        }
+        .field::placeholder { color: #5b6580; }
+
+        textarea.field { resize: none; line-height: 1.5; height: 96px; }
+
+        .field.has-icon { padding-left: 40px; }
+        .field.select-field {
+            appearance: none;
+            -webkit-appearance: none;
+            padding-right: 38px;
+            cursor: pointer;
         }
 
-        textarea.field {
-            min-height: 130px;
-            resize: vertical;
+        .icon-left, .icon-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            z-index: 2;
         }
-
-        .save-btn {
-            background: linear-gradient(135deg,#8b5cf6,#6d28d9);
-            transition: .2s;
-        }
-
-        .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(124,58,237,.3);
-        }
+        .icon-left  { left: 14px;  color: var(--accent-soft); font-size: 13px; }
+        .icon-right { right: 14px; color: #64748b; font-size: 11px; }
+        .prefix-baht { font-size: 15px; font-weight: 500; left: 15px; }
 
         .validation-summary-errors,
         .field-validation-error {
+            display: block;
             color: #fda4af;
-            font-size: 13px;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        /* ---------- Image box ---------- */
+        .img-wrap { position: relative; height: 100%; min-height: 240px; }
+
+        .dropzone {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1.5px dashed var(--line-strong);
+            background: var(--panel-soft);
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color .2s, background .2s;
+        }
+        .dropzone:hover,
+        .dropzone.is-over {
+            border-color: var(--accent);
+            background: rgba(139,92,246,.07);
+        }
+        .dropzone-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+            color: var(--accent-soft);
+            background: rgba(139,92,246,.14);
+        }
+        .dropzone-main { font-size: 14px; font-weight: 500; }
+        .dropzone-hint { font-size: 12px; color: var(--muted); }
+
+        .dropzone.has-image { border-style: solid; padding: 0; }
+        .dropzone.has-image .dropzone-icon,
+        .dropzone.has-image .dropzone-main,
+        .dropzone.has-image .dropzone-hint { display: none; }
+
+        #imagePreview {
+            display: none;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .dropzone.has-image #imagePreview { display: block; }
+
+        .img-badge {
+            display: none;
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            padding: 22px 14px 10px;
+            font-size: 12px;
+            color: #e2e8f0;
+            background: linear-gradient(to top, rgba(5,7,15,.85), transparent);
+            text-align: left;
+        }
+        .dropzone.has-image .img-badge { display: block; }
+
+        .remove-btn {
+            display: none;
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 3;
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,.15);
+            background: rgba(8,10,18,.75);
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+        }
+        .remove-btn:hover { background: rgba(190,18,60,.85); color: #fff; }
+        .img-wrap.has-image .remove-btn { display: block; }
+
+        /* ---------- Buttons ---------- */
+        .save-btn {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            box-shadow: 0 6px 20px rgba(109,40,217,.35);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .save-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 28px rgba(109,40,217,.45);
+        }
+        .save-btn:focus-visible,
+        .back-btn:focus-visible {
+            outline: 2px solid var(--accent-soft);
+            outline-offset: 3px;
+        }
+        .back-btn {
+            color: #cbd5e1;
+            border: 1px solid var(--line-strong);
+            transition: background .2s, border-color .2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,.04); border-color: #46507a; }
+
+        .actions {
+            padding: 14px 28px;
+            border-top: 1px solid var(--line);
+            background: rgba(7,9,18,.45);
+        }
+
+        @@media (max-width: 767px) {
+            body { align-items: flex-start; }
+            .img-wrap { min-height: 220px; }
         }
     </style>
 </head>
 
 <body>
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+    <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6">
 
-        <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-3xl sm:text-4xl font-semibold">เพิ่มสินค้าใหม่</h1>
-            <p class="text-slate-400 text-sm mt-2">
-                กรอกข้อมูลเกม รูปภาพ ราคา หมวดหมู่ และจำนวนสต็อก
+        <!-- Header (บรรทัดเดียว) -->
+        <div class="flex items-end justify-between gap-4 mb-4">
+            <div>
+                <a asp-controller="Staff" asp-action="Products"
+                   class="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-violet-300 transition mb-1">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                    สินค้าทั้งหมด
+                </a>
+                <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">เพิ่มสินค้าใหม่</h1>
+            </div>
+            <p class="text-slate-400 text-sm hidden md:block pb-1">
+                กรอกข้อมูลเกม ราคา หมวดหมู่ สต็อก และรูปภาพ
             </p>
         </div>
 
-        <!-- Form Section -->
         <section class="panel rounded-3xl overflow-hidden">
             <div class="h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-teal-400"></div>
 
             <form asp-controller="Staff"
                   asp-action="CreateProduct"
                   method="post"
-                  enctype="multipart/form-data"
-                  class="p-5 sm:p-8">
+                  enctype="multipart/form-data">
 
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly" class="mb-5"></div>
+                <div asp-validation-summary="ModelOnly" class="px-7 pt-4"></div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- 2 คอลัมน์: ซ้าย = ข้อมูล / ขวา = รูปภาพ -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 p-5 sm:p-7">
 
-                    <!-- Name -->
-                    <div class="md:col-span-2">
-                        <label asp-for="Name" class="field-label">
-                            ชื่อสินค้า <span class="text-rose-400">*</span>
-                        </label>
-                        <input asp-for="Name"
-                               class="field"
-                               placeholder="เช่น Elden Ring"
-                               required />
-                        <span asp-validation-for="Name"></span>
-                    </div>
+                    <!-- ซ้าย -->
+                    <div class="md:col-span-3 grid grid-cols-2 gap-x-4 gap-y-4 content-start">
 
-                    <!-- Description -->
-                    <div class="md:col-span-2">
-                        <label asp-for="Description" class="field-label">
-                            รายละเอียดสินค้า
-                        </label>
-                        <textarea asp-for="Description"
-                                  class="field"
-                                  placeholder="รายละเอียดเกม เนื้อหา แพลตฟอร์ม หรือข้อมูลเพิ่มเติม"></textarea>
-                        <span asp-validation-for="Description"></span>
-                    </div>
-
-                    <!-- Price -->
-                    <div>
-                        <label asp-for="Price" class="field-label">
-                            ราคา (บาท) <span class="text-rose-400">*</span>
-                        </label>
-                        <input asp-for="Price"
-                               type="number"
-                               min="0"
-                               step="0.01"
-                               class="field"
-                               placeholder="0.00"
-                               required />
-                        <span asp-validation-for="Price"></span>
-                    </div>
-
-                    <!-- Stock -->
-                    <div>
-                        <label asp-for="Stock" class="field-label">
-                            จำนวนสต็อก <span class="text-rose-400">*</span>
-                        </label>
-                        <input asp-for="Stock"
-                               type="number"
-                               min="0"
-                               step="1"
-                               class="field"
-                               placeholder="0"
-                               required />
-                        <span asp-validation-for="Stock"></span>
-                    </div>
-
-                    <!-- Category -->
-                    <div class="md:col-span-2">
-                        <label asp-for="Category" class="field-label">
-                            หมวดหมู่สินค้า
-                        </label>
-                        <div class="relative">
-                            <i class="fa-solid fa-layer-group absolute left-4 top-1/2 -translate-y-1/2 text-violet-300"></i>
-                            <input asp-for="Category"
-                                   class="field pl-11"
-                                   placeholder="เช่น Action, RPG, FPS, Racing" />
+                        <div class="col-span-2">
+                            <label asp-for="Name" class="field-label">
+                                ชื่อสินค้า <span class="text-rose-400">*</span>
+                            </label>
+                            <input asp-for="Name"
+                                   class="field"
+                                   placeholder="เช่น Elden Ring"
+                                   required />
+                            <span asp-validation-for="Name"></span>
                         </div>
-                        <span asp-validation-for="Category"></span>
+
+                        <div class="col-span-2">
+                            <label asp-for="Category" class="field-label">หมวดหมู่สินค้า</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-layer-group icon-left"></i>
+                                <select asp-for="Category" class="field has-icon select-field">
+                                    <option value="" disabled selected>-- เลือกหมวดหมู่สินค้า --</option>
+                                    <option value="Action">Action</option>
+                                    <option value="RPG">RPG</option>
+                                    <option value="FPS">FPS</option>
+                                    <option value="Racing">Racing</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down icon-right"></i>
+                            </div>
+                            <span asp-validation-for="Category"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Price" class="field-label">
+                                ราคา (บาท) <span class="text-rose-400">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="icon-left prefix-baht">฿</span>
+                                <input asp-for="Price"
+                                       type="text"
+                                       inputmode="decimal"
+                                       class="field has-icon js-format-decimal"
+                                       placeholder="0.00"
+                                       required />
+                            </div>
+                            <span asp-validation-for="Price"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Stock" class="field-label">
+                                จำนวนสต็อก <span class="text-rose-400">*</span>
+                            </label>
+                            <div class="relative">
+                                <i class="fa-solid fa-boxes-stacked icon-left"></i>
+                                <input asp-for="Stock"
+                                       type="text"
+                                       inputmode="numeric"
+                                       class="field has-icon js-format-integer"
+                                       placeholder="0"
+                                       required />
+                            </div>
+                            <span asp-validation-for="Stock"></span>
+                        </div>
+
+                        <div class="col-span-2">
+                            <label asp-for="Description" class="field-label">รายละเอียดสินค้า</label>
+                            <textarea asp-for="Description"
+                                      class="field"
+                                      placeholder="รายละเอียดเกม เนื้อหา แพลตฟอร์ม หรือข้อมูลเพิ่มเติม"></textarea>
+                            <span asp-validation-for="Description"></span>
+                        </div>
                     </div>
 
-                    <!-- Image File Upload -->
-                    <div class="md:col-span-2">
-                        <label class="field-label">อัปโหลดรูปภาพสินค้า</label>
-                        <div class="relative">
+                    <!-- ขวา: รูปภาพ -->
+                    <div class="md:col-span-2 flex flex-col">
+                        <label class="field-label">รูปภาพสินค้า</label>
+
+                        <div id="imgWrap" class="img-wrap flex-1">
+                            <label for="imageFile" id="dropzone" class="dropzone">
+                                <span class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+                                <span class="dropzone-main">คลิกเพื่อเลือกรูป หรือลากมาวาง</span>
+                                <span class="dropzone-hint">JPG, PNG, WEBP</span>
+                                <img id="imagePreview" src="" alt="ตัวอย่างรูปสินค้า" />
+                                <span id="fileName" class="img-badge"></span>
+                            </label>
+
+                            <button type="button" id="removeImage" class="remove-btn" title="ลบรูป" aria-label="ลบรูป">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+
                             <input asp-for="ImageFile"
                                    type="file"
                                    id="imageFile"
                                    accept="image/*"
-                                   class="field file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-violet-600 file:text-white hover:file:bg-violet-700 cursor-pointer" />
+                                   class="sr-only" />
                         </div>
                         <span asp-validation-for="ImageFile"></span>
-
-                        <!-- Image preview -->
-                        <div id="previewContainer"
-                             class="hidden mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
-                            <p class="text-xs text-slate-400 mb-3">ตัวอย่างรูปภาพ</p>
-                            <img id="imagePreview"
-                                 src=""
-                                 alt="ตัวอย่างรูปสินค้า"
-                                 class="w-full max-h-64 object-contain rounded-xl" />
-                        </div>
                     </div>
-
                 </div>
 
-                <!-- Footer / Actions inside form -->
-                <div class="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <!-- Actions -->
+                <div class="actions flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <p class="text-xs text-slate-500 flex items-center">
                         <i class="fa-solid fa-shield-halved text-violet-400 mr-1.5"></i>
                         ตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึกสินค้า
@@ -213,16 +367,13 @@
                     <div class="flex flex-row gap-3 w-full sm:w-auto justify-end">
                         <a asp-controller="Staff"
                            asp-action="Products"
-                           class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-                                  bg-slate-800 hover:bg-slate-700 border border-white/10
-                                  text-slate-300 text-sm transition">
+                           class="back-btn flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm">
                             <i class="fa-solid fa-arrow-left"></i>
                             กลับหน้าสินค้า
                         </a>
 
                         <button type="submit"
-                                class="save-btn flex items-center justify-center gap-2 px-6 py-2.5
-                                       rounded-xl text-white font-medium text-sm">
+                                class="save-btn flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-white font-medium text-sm">
                             <i class="fa-solid fa-floppy-disk"></i>
                             บันทึกสินค้า
                         </button>
@@ -234,22 +385,127 @@
     </main>
 
     <script>
-        const imageFile = document.getElementById('imageFile');
-        const previewContainer = document.getElementById('previewContainer');
-        const imagePreview = document.getElementById('imagePreview');
+        document.addEventListener("DOMContentLoaded", function () {
 
-        imageFile.addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            if (file) {
+            // ---------------------------------------------------------
+            // 1) อัปโหลดรูป + พรีวิวในกรอบ + ลากวาง
+            // ---------------------------------------------------------
+            const imageFile = document.getElementById("imageFile");
+            const imgWrap = document.getElementById("imgWrap");
+            const dropzone = document.getElementById("dropzone");
+            const imagePreview = document.getElementById("imagePreview");
+            const fileName = document.getElementById("fileName");
+            const removeImage = document.getElementById("removeImage");
+
+            function showPreview(file) {
+                if (!file) {
+                    imagePreview.src = "";
+                    fileName.textContent = "";
+                    dropzone.classList.remove("has-image");
+                    imgWrap.classList.remove("has-image");
+                    return;
+                }
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     imagePreview.src = e.target.result;
-                    previewContainer.classList.remove('hidden');
-                }
+                    dropzone.classList.add("has-image");
+                    imgWrap.classList.add("has-image");
+                };
                 reader.readAsDataURL(file);
-            } else {
-                previewContainer.classList.add('hidden');
-                imagePreview.src = '';
+
+                const sizeKb = Math.round(file.size / 1024);
+                fileName.textContent = file.name + " · " + sizeKb.toLocaleString("en-US") + " KB";
+            }
+
+            imageFile.addEventListener("change", function (e) {
+                showPreview(e.target.files[0]);
+            });
+
+            removeImage.addEventListener("click", function () {
+                imageFile.value = "";
+                showPreview(null);
+            });
+
+            ["dragenter", "dragover"].forEach(function (evt) {
+                dropzone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    dropzone.classList.add("is-over");
+                });
+            });
+            ["dragleave", "drop"].forEach(function (evt) {
+                dropzone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    dropzone.classList.remove("is-over");
+                });
+            });
+            dropzone.addEventListener("drop", function (e) {
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith("image/")) {
+                    imageFile.files = e.dataTransfer.files;
+                    showPreview(file);
+                }
+            });
+
+            // ---------------------------------------------------------
+            // 2) ฟอร์แมตตัวเลข (ลูกน้ำ / ทศนิยม)
+            // ---------------------------------------------------------
+            function formatInteger(value) {
+                const clean = value.replace(/\D/g, "");
+                if (clean === "") return "";
+                return Number(clean).toLocaleString("en-US");
+            }
+
+            function formatDecimal(value) {
+                let clean = value.replace(/[^0-9.]/g, "");
+                const parts = clean.split(".");
+                const integerPart = parts[0] ? Number(parts[0]).toLocaleString("en-US") : "";
+                if (parts[1] !== undefined) {
+                    return integerPart + "." + parts.slice(1).join("").substring(0, 2);
+                }
+                return integerPart;
+            }
+
+            function bindFormatter(selector, formatter) {
+                document.querySelectorAll(selector).forEach(function (input) {
+                    input.value = formatter(input.value);
+
+                    input.addEventListener("input", function (e) {
+                        let pos = e.target.selectionStart;
+                        const oldLen = e.target.value.length;
+                        e.target.value = formatter(e.target.value);
+                        pos += e.target.value.length - oldLen;
+                        e.target.setSelectionRange(pos, pos);
+                    });
+                });
+            }
+
+            bindFormatter(".js-format-integer", formatInteger);
+            bindFormatter(".js-format-decimal", formatDecimal);
+
+            // เติม .00 เมื่อออกจากช่องราคา
+            document.querySelectorAll(".js-format-decimal").forEach(function (input) {
+                input.addEventListener("blur", function (e) {
+                    const val = e.target.value.replace(/,/g, "");
+                    if (val && !isNaN(val)) {
+                        e.target.value = Number(val).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                });
+            });
+
+            // ---------------------------------------------------------
+            // 3) ลบลูกน้ำก่อนส่งฟอร์ม เพื่อให้ Model Binding ของ C# ทำงานได้
+            // ---------------------------------------------------------
+            const firstInput = document.querySelector(".js-format-integer, .js-format-decimal");
+            const form = firstInput ? firstInput.closest("form") : null;
+            if (form) {
+                form.addEventListener("submit", function () {
+                    document.querySelectorAll(".js-format-integer, .js-format-decimal").forEach(function (input) {
+                        input.value = input.value.replace(/,/g, "");
+                    });
+                });
             }
         });
     </script>

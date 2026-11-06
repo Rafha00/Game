@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>@ViewData["Title"] · WHATGAME Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true">
+
+  <style>
+    /* ลบขอบขาวรอบหน้าจอ */
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #0b0b1a;
+      font-family: 'Prompt', 'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .admin-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      background: #0b0b1a;
+    }
+
+    .admin-container > .gw-sidebar {
+      flex-shrink: 0;
+    }
+
+    /* เนื้อหาหลักขยายเต็มพื้นที่ที่เหลือ */
+    .main-content {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 0;
+      background: #0b0b1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 1. ดึง Sidebar มาแสดงด้านซ้าย -->
+    <partial name="_Sidebar" />
+
+    <!-- 2. พื้นที่แสดงเนื้อหาหลักของแต่ละหน้า -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+  </div>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

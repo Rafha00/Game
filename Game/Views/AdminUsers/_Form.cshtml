@@ -1,0 +1,156 @@
+@model Game.Models.UserFormViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var editing = !string.IsNullOrEmpty(Model.Id);
+
+    var roleItems = new List<SelectListItem>
+    {
+        new("ผู้ดูแลระบบ (Admin)", "admin"),
+        new("ผู้จัดการ (Manager)", "manager"),
+        new("พนักงาน (Staff)", "staff"),
+        new("ผู้ใช้ทั่วไป (User)", "user")
+    };
+}
+
+<style>
+    .uf-card{
+        max-width:560px;margin:0 auto;padding:32px;
+        background:#14142b;border:1px solid rgba(255,255,255,.08);
+        border-radius:24px;box-shadow:0 20px 60px rgba(124,58,237,.18);
+        color:#fff;
+    }
+    .uf-head{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+    .uf-icon{
+        width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+        background:linear-gradient(135deg,#7c3aed,#a855f7);font-size:20px;
+    }
+    .uf-head h2{margin:0;font-size:22px;font-weight:700}
+    .uf-head p{margin:2px 0 0;font-size:13px;color:#9ca3af}
+
+    .uf-group{margin-bottom:20px}
+    .uf-group label{
+        display:block;margin-bottom:8px;font-size:13px;font-weight:600;color:#c4b5fd;
+    }
+    .uf-group label small{font-weight:400;color:#9ca3af}
+
+    .uf-field{position:relative}
+    .uf-field > i.lead{
+        position:absolute;left:16px;top:50%;transform:translateY(-50%);
+        color:#8b5cf6;font-size:14px;pointer-events:none;
+    }
+    .uf-field input,.uf-field select{
+        width:100%;box-sizing:border-box;padding:14px 16px 14px 44px;
+        background:#0d0d1f;color:#fff;font-size:15px;font-family:inherit;
+        border:1px solid rgba(255,255,255,.1);border-radius:14px;outline:none;
+        transition:border-color .2s, box-shadow .2s;
+    }
+    .uf-field select{appearance:none;cursor:pointer}
+    .uf-field input::placeholder{color:#6b7280}
+    .uf-field input:focus,.uf-field select:focus{
+        border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.2);
+    }
+    .uf-field .caret{
+        position:absolute;right:16px;top:50%;transform:translateY(-50%);
+        color:#9ca3af;pointer-events:none;font-size:12px;
+    }
+    .uf-eye{
+        position:absolute;right:8px;top:50%;transform:translateY(-50%);
+        background:none;border:0;color:#9ca3af;cursor:pointer;padding:8px 10px;
+    }
+    .uf-eye:hover{color:#c4b5fd}
+
+    .err-t{display:block;margin-top:6px;font-size:12px;color:#f87171}
+    .input-validation-error{border-color:#f87171 !important}
+
+    .uf-actions{display:flex;gap:12px;margin-top:28px}
+    .uf-btn{
+        flex:1;padding:14px 20px;border-radius:14px;font-size:15px;font-weight:700;
+        font-family:inherit;text-align:center;text-decoration:none;cursor:pointer;
+        border:1px solid transparent;transition:transform .15s, box-shadow .2s;
+    }
+    .uf-btn:hover{transform:translateY(-1px)}
+    .uf-btn.primary{
+        color:#fff;background:linear-gradient(135deg,#7c3aed,#9333ea);
+        box-shadow:0 8px 24px rgba(124,58,237,.4);
+    }
+    .uf-btn.ghost{
+        color:#c4b5fd;background:transparent;border-color:rgba(255,255,255,.15);
+    }
+    .uf-btn.ghost:hover{background:rgba(255,255,255,.05)}
+</style>
+
+<div class="uf-card">
+    <div class="uf-head">
+        <div class="uf-icon"><i class="fa-solid @(editing ? "fa-user-pen" : "fa-user-plus")"></i></div>
+        <div>
+            <h2>@(editing ? "แก้ไขผู้ใช้" : "เพิ่มผู้ใช้ใหม่")</h2>
+            <p>@(editing ? "ปรับข้อมูลและสิทธิ์การใช้งาน" : "สร้างบัญชีสำหรับสมาชิกใน WHATGAME")</p>
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="err-t" style="margin-bottom:16px"></div>
+
+    <div class="uf-group">
+        <label asp-for="Email">อีเมล</label>
+        <div class="uf-field">
+            <i class="fa-solid fa-envelope lead"></i>
+            <input asp-for="Email" placeholder="name@example.com" autocomplete="off" />
+        </div>
+        <span asp-validation-for="Email" class="err-t"></span>
+    </div>
+
+    <div class="uf-group">
+        <label asp-for="Role">สิทธิ์การใช้งาน (Role)</label>
+        <div class="uf-field">
+            <i class="fa-solid fa-shield-halved lead"></i>
+            <select asp-for="Role" asp-items="roleItems"></select>
+            <i class="fa-solid fa-chevron-down caret"></i>
+        </div>
+        <span asp-validation-for="Role" class="err-t"></span>
+    </div>
+
+    <div class="uf-group">
+        <label asp-for="Password">
+            รหัสผ่าน
+            @if (editing) { <small>(เว้นว่างหากไม่เปลี่ยน)</small> }
+        </label>
+        <div class="uf-field">
+            <i class="fa-solid fa-lock lead"></i>
+            <input asp-for="Password" type="password" placeholder="อย่างน้อย 8 ตัวอักษร" autocomplete="new-password" />
+            <button type="button" class="uf-eye" data-toggle="Password" tabindex="-1">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="err-t"></span>
+    </div>
+
+    <div class="uf-group">
+        <label asp-for="ConfirmPassword">ยืนยันรหัสผ่าน</label>
+        <div class="uf-field">
+            <i class="fa-solid fa-key lead"></i>
+            <input asp-for="ConfirmPassword" type="password" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password" />
+            <button type="button" class="uf-eye" data-toggle="ConfirmPassword" tabindex="-1">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="ConfirmPassword" class="err-t"></span>
+    </div>
+
+    <div class="uf-actions">
+        <a class="uf-btn ghost" asp-action="Index">ยกเลิก</a>
+        <button type="submit" class="uf-btn primary">
+            <i class="fa-solid fa-floppy-disk"></i> บันทึก
+        </button>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.uf-eye').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.getElementById(btn.dataset.toggle);
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.querySelector('i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        });
+    });
+</script>

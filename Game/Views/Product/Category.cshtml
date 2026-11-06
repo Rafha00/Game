@@ -6,67 +6,129 @@
     var total = Model.Count();
 }
 
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet" />
+
 <style>
-    .gw-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 24px 56px; color: #fff; }
+    .gw-wrap {
+        --gw-ink: #f5f3ff;
+        --gw-muted: #9b9ab8;
+        --gw-faint: #6c6b8a;
+        --gw-accent: #8b5cf6;
+        --gw-accent-soft: #c4b5fd;
+        --gw-ok: #34d399;
+        --gw-low: #fbbf24;
+        --gw-out: #f87171;
+        --gw-line: rgba(255,255,255,.08);
 
-    .gw-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px;
-               padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
-    .gw-head h1 { font-size: 24px; font-weight: 800; margin: 0; }
-    .gw-head span { font-size: 13px; color: #9ca3af; }
-    .gw-head b { color: #c4b5fd; }
+        max-width: 1080px; margin: 0 auto; padding: 40px 24px 72px;
+        color: var(--gw-ink);
+        font-family: 'IBM Plex Sans Thai', system-ui, sans-serif;
+    }
 
-    .gw-list { display: flex; flex-direction: column; gap: 8px; }
+    /* ---------- Header ---------- */
+    .gw-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+               margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--gw-line); }
+    .gw-head h1 { margin: 0; font-family: 'Prompt', sans-serif; font-weight: 700;
+                  font-size: clamp(28px, 4.5vw, 44px); line-height: 1.1; letter-spacing: -.01em; }
+    .gw-count { flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 13px;
+                color: var(--gw-accent-soft); background: rgba(139,92,246,.14);
+                border: 1px solid rgba(139,92,246,.35); }
+    .gw-count b { font-family: 'Prompt', sans-serif; font-weight: 600; color: #fff; }
 
-    .gw-row { display: flex; align-items: stretch; height: 80px; overflow: hidden;
-              color: inherit; text-decoration: none;
-              background: linear-gradient(to right, rgba(49,46,129,.55), rgba(17,24,39,.85));
-              border: 1px solid rgba(255,255,255,.08); border-radius: 6px;
-              transition: border-color .2s, background .2s, transform .15s; }
-    .gw-row:hover { border-color: rgba(139,92,246,.7); transform: translateX(2px);
-                    background: linear-gradient(to right, rgba(76,29,149,.65), rgba(30,27,75,.9)); }
+    /* ---------- List ---------- */
+    .gw-list { display: flex; flex-direction: column; gap: 12px; animation: gw-in .5s ease-out both; }
 
-    .gw-thumb { width: 200px; flex-shrink: 0; background: #0b1220; }
-    .gw-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .gw-noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .gw-row { position: relative; display: grid; grid-template-columns: 232px 1fr auto;
+              min-height: 112px; overflow: hidden; color: inherit; text-decoration: none;
+              background: linear-gradient(100deg, rgba(55,48,130,.40), rgba(15,18,36,.88) 55%);
+              border: 1px solid var(--gw-line); border-radius: 14px;
+              transition: border-color .2s, box-shadow .2s, background .2s; }
+    .gw-row::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; z-index: 2;
+                      background: linear-gradient(var(--gw-accent), #ec4899);
+                      transform: scaleY(0); transform-origin: center; transition: transform .25s ease; }
+    .gw-row:hover, .gw-row:focus-visible { border-color: rgba(139,92,246,.6);
+                      box-shadow: 0 10px 30px -12px rgba(124,58,237,.55);
+                      background: linear-gradient(100deg, rgba(76,48,170,.55), rgba(17,20,42,.92) 55%); }
+    .gw-row:hover::before, .gw-row:focus-visible::before { transform: scaleY(1); }
+    .gw-row:focus-visible { outline: 2px solid var(--gw-accent-soft); outline-offset: 2px; }
 
-    .gw-info { flex: 1; min-width: 0; padding: 8px 16px; display: flex; flex-direction: column;
-               justify-content: center; gap: 3px; }
-    .gw-name { margin: 0; font-size: 16px; font-weight: 600; color: #fff;
+    /* ---------- Thumbnail ---------- */
+    .gw-thumb { position: relative; overflow: hidden; background: #0b1020; }
+    .gw-thumb::after { content: ""; position: absolute; inset: 0;
+                       background: linear-gradient(to right, transparent 55%, rgba(15,18,36,.85)); }
+    .gw-thumb img { width: 100%; height: 100%; object-fit: cover; display: block;
+                    transition: transform .5s ease; }
+    .gw-row:hover .gw-thumb img { transform: scale(1.06); }
+    .gw-noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+                font-size: 34px; background: radial-gradient(circle at 30% 30%, #2e2a6b, #0b1020); }
+
+    /* ---------- Info ---------- */
+    .gw-info { min-width: 0; padding: 14px 20px; display: flex; flex-direction: column;
+               justify-content: center; align-items: flex-start; gap: 6px; }
+    .gw-name { margin: 0; max-width: 100%; font-family: 'Prompt', sans-serif; font-weight: 600;
+               font-size: 18px; line-height: 1.3; color: #fff;
                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .gw-cat  { margin: 0; font-size: 12px; color: #a5b4fc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .gw-desc { margin: 0; font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gw-cat { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500;
+              color: var(--gw-accent-soft); background: rgba(139,92,246,.16); }
+    .gw-desc { margin: 0; max-width: 100%; font-size: 13px; line-height: 1.5; color: var(--gw-muted);
+               display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 
-    .gw-side { display: flex; align-items: center; gap: 14px; padding-right: 12px; flex-shrink: 0; }
-    .gw-stock { font-size: 11px; color: #9ca3af; text-align: right; line-height: 1.3; }
-    .gw-stock small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
-    .gw-stock.low { color: #fbbf24; }
-    .gw-stock.out { color: #f87171; }
+    /* ---------- Stock + price ---------- */
+    .gw-side { display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+               gap: 8px; padding: 14px 22px 14px 8px; }
+    .gw-price { font-family: 'Prompt', sans-serif; font-weight: 700; font-size: 22px;
+                line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .gw-cur { margin-right: 2px; font-size: 15px; font-weight: 600; color: var(--gw-accent-soft); }
 
-    .gw-price { padding: 6px 12px; border-radius: 4px; background: rgba(0,0,0,.45);
-                font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .gw-stock { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--gw-muted); }
+    .gw-stock::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gw-ok); }
+    .gw-stock.low { color: var(--gw-low); }
+    .gw-stock.low::before { background: var(--gw-low); }
+    .gw-stock.out { color: var(--gw-out); }
+    .gw-stock.out::before { background: var(--gw-out); }
 
-    .gw-row.soldout .gw-thumb img { filter: grayscale(1); opacity: .55; }
-    .gw-row.soldout .gw-price { color: #9ca3af; }
+    .gw-row.soldout .gw-thumb img { filter: grayscale(1); opacity: .5; }
+    .gw-row.soldout .gw-price, .gw-row.soldout .gw-cur { color: var(--gw-faint); }
+    .gw-row.soldout .gw-name { color: #cfcde6; }
 
-    .gw-empty { text-align: center; padding: 64px 16px; border: 1px solid rgba(255,255,255,.1);
-                border-radius: 8px; background: rgba(255,255,255,.04); color: #9ca3af; }
-    .gw-empty a { display: inline-block; margin-top: 16px; padding: 8px 20px; border-radius: 8px;
-                  background: #7c3aed; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; }
+    /* ---------- Empty ---------- */
+    .gw-empty { text-align: center; padding: 72px 16px; border: 1px dashed rgba(255,255,255,.16);
+                border-radius: 16px; background: rgba(255,255,255,.03); color: var(--gw-muted); }
+    .gw-empty p { margin: 8px 0 0; font-size: 15px; }
+    .gw-empty a { display: inline-block; margin-top: 20px; padding: 10px 24px; border-radius: 10px;
+                  background: var(--gw-accent); color: #fff; text-decoration: none;
+                  font-size: 14px; font-weight: 600; transition: background .2s; }
+    .gw-empty a:hover { background: #7c3aed; }
 
-    @@media (max-width: 640px) {
-        .gw-thumb { width: 120px; }
-        .gw-stock { display: none; }
-        .gw-name { font-size: 14px; }
+    @@keyframes gw-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @@media (max-width: 720px) {
+        .gw-wrap { padding: 28px 16px 56px; }
+        .gw-row { grid-template-columns: 116px 1fr; min-height: 104px; }
+        .gw-info { padding: 12px 14px 4px; }
+        .gw-name { font-size: 15px; }
+        .gw-desc { display: none; }
+        .gw-side { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between;
+                   padding: 0 14px 12px; }
+        .gw-price { font-size: 18px; }
+        .gw-thumb { grid-row: 1 / span 2; }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .gw-list { animation: none; }
+        .gw-row, .gw-row::before, .gw-thumb img { transition: none; }
     }
 </style>
 
 <section class="gw-wrap">
 
     <!-- HEADER -->
-    <div class="gw-head">
+    <header class="gw-head">
         <h1>@title</h1>
-        <span>พบทั้งหมด <b>@total</b> เกม</span>
-    </div>
+        <span class="gw-count">พบทั้งหมด <b>@total</b> เกม</span>
+    </header>
 
     @if (total > 0)
     {
@@ -76,6 +138,8 @@
             {
                 var outOfStock = game.Stock <= 0;
                 var lowStock = game.Stock > 0 && game.Stock <= 5;
+                var stockClass = outOfStock ? "out" : lowStock ? "low" : "";
+                var stockText = outOfStock ? "สินค้าหมด" : lowStock ? $"เหลือเพียง {game.Stock} ชิ้น" : $"คงเหลือ {game.Stock} ชิ้น";
 
                 <a asp-controller="Product"
                    asp-action="Detail"
@@ -97,21 +161,17 @@
                     <!-- INFO -->
                     <div class="gw-info">
                         <h2 class="gw-name">@game.Name</h2>
-                        <p class="gw-cat">@(string.IsNullOrEmpty(game.Category) ? "Game" : game.Category)</p>
+                        <span class="gw-cat">@(string.IsNullOrEmpty(game.Category) ? "Game" : game.Category)</span>
                         @if (!string.IsNullOrWhiteSpace(game.Description))
                         {
                             <p class="gw-desc">@game.Description</p>
                         }
                     </div>
 
-                    <!-- STOCK + PRICE -->
+                    <!-- PRICE + STOCK -->
                     <div class="gw-side">
-                        <div class="text-xs text-gray-400 flex items-center gap-2@(outOfStock ? "out" : lowStock ? "low" : "")">
-                           <small>Stock</small>
-                            @(outOfStock ? "หมด" : $"{game.Stock} ชิ้น")  
-                           
-                        </div>
-                        <div class="gw-price">฿@game.Price.ToString("N2")</div>
+                        <div class="gw-price"><span class="gw-cur">฿</span>@game.Price.ToString("N2")</div>
+                        <div class="gw-stock @stockClass">@stockText</div>
                     </div>
                 </a>
             }
@@ -120,8 +180,8 @@
     else
     {
         <div class="gw-empty">
-            <div style="font-size:40px;margin-bottom:8px">🎮</div>
-            <p style="margin:0">ไม่พบรายการเกมในหมวดหมู่นี้</p>
+            <div style="font-size:44px"><i class="fa-regular fa-hourglass"></i></div>
+            <p>ยังไม่มีเกมในหมวดหมู่นี้</p>
             <a href="/">กลับสู่หน้าแรก</a>
         </div>
     }

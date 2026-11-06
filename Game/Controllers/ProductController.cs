@@ -6,7 +6,6 @@ namespace GameWorld.Controllers
 {
     public class ProductController : Controller
     {
-        // 1. เปลี่ยนชื่อจาก ApplicationDbContext เป็น AppDbContext
         private readonly AppDbContext _context;
 
         public ProductController(AppDbContext context)
@@ -18,13 +17,14 @@ namespace GameWorld.Controllers
         public IActionResult Index()
         {
             var products = _context.Products
+                .Where(p => p.IsActive)          // แสดงเฉพาะสินค้าที่เปิดใช้งาน
                 .ToList();
 
             return View(products);
         }
 
         // หน้าหมวดหมู่ย่อย (GET: /Product/Category/{id})
-        public IActionResult Category(string id) 
+        public IActionResult Category(string id)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -32,7 +32,9 @@ namespace GameWorld.Controllers
             }
 
             var products = _context.Products
-                .Where(p => p.Category != null && p.Category.ToLower() == id.ToLower())
+                .Where(p => p.IsActive &&        // แสดงเฉพาะสินค้าที่เปิดใช้งาน
+                            p.Category != null &&
+                            p.Category.ToLower() == id.ToLower())
                 .ToList();
 
             ViewBag.CategoryName = id.ToUpper();
@@ -43,7 +45,7 @@ namespace GameWorld.Controllers
         public IActionResult Detail(Guid id)
         {
             var product = _context.Products
-                .FirstOrDefault(p => p.Id == id);
+                .FirstOrDefault(p => p.Id == id && p.IsActive);   // กันเข้าผ่านลิงก์เก่า
 
             if (product == null)
             {
@@ -84,10 +86,8 @@ namespace GameWorld.Controllers
                 return StatusCode(500, new { message = "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error = ex.Message });
             }
         }
-      
-      
-            // ฟังก์ชันรองรับการกดปุ่มชำระเงิน (POST: /Product/Pay)
-               // ฟังก์ชันรองรับการกดปุ่มชำระเงิน (POST: /Product/Pay)
+
+        // ฟังก์ชันรองรับการกดปุ่มชำระเงิน (POST: /Product/Pay)
         [HttpPost]
         public IActionResult Pay(Guid id, string method)
         {
@@ -108,7 +108,7 @@ namespace GameWorld.Controllers
                 //     _context.SaveChanges();
                 // }
 
-                // [แก้ไขเพิ่ม] เก็บข้อความแจ้งเตือนชำระเงินสำเร็จส่งไปยังหน้าถัดไป
+                // เก็บข้อความแจ้งเตือนชำระเงินสำเร็จส่งไปยังหน้าถัดไป
                 TempData["PaymentSuccess"] = "ชำระเงินสำเร็จเรียบร้อยแล้ว!";
 
                 // 3. เมื่อระบบทำงานเสร็จสิ้น ให้สั่งโหลดหน้าเดิมใหม่ (หน้า Index)
@@ -119,8 +119,5 @@ namespace GameWorld.Controllers
                 return StatusCode(500, new { message = "เกิดข้อผิดพลาดในการบันทึกข้อมูลการชำระเงิน", error = ex.Message });
             }
         }
-
-
-    
     }
 }

@@ -58,10 +58,10 @@
            asp-action="Index"
            class="gw-brand">
             <span class="gw-brand-icon">
-                <i class="fa-solid fa-gamepad"></i>
+                <i class="fa-brands fa-xbox" style="color: rgb(255, 255, 255);"></i>
             </span>
             <span class="gw-brand-text">
-                GAME<span>WORLD</span>
+                WHAT<span>GAME</span>
             </span>
         </a>
 
@@ -257,18 +257,7 @@
                     }
                 </a>
 
-                <a asp-controller="Admin"
-                   asp-action="Users"
-                   class="@MenuClass("Admin", "Users")">
-                    <span class="gw-menu-icon">
-                        <i class="fa-solid fa-users-gear"></i>
-                    </span>
-                    <span class="gw-menu-text">จัดการผู้ใช้ / Role</span>
-                    @if (IsActive("Admin", "Users"))
-                    {
-                        <i class="fa-solid fa-chevron-right gw-menu-arrow"></i>
-                    }
-                </a>
+               
             }
 
         </nav>
@@ -279,7 +268,7 @@
             <div class="gw-footer-user">
                 <div class="gw-footer-avatar">@initial</div>
                 <div class="gw-footer-info">
-                    <div class="gw-footer-title">GAMEWORLD</div>
+                    <div class="gw-footer-title">WHATGAME</div>
                     <div class="gw-footer-subtitle">Gaming Community</div>
                 </div>
             </div>

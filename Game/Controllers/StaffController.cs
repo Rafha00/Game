@@ -159,6 +159,80 @@ public async Task<IActionResult> CreateProduct(Product product)
     }
     return View(product);
 }
-    
+            // POST: Staff/ToggleProduct (เปิด / ปิดการใช้งานสินค้า)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin,manager")]
+        public async Task<IActionResult> ToggleProduct(Guid id)
+        {
+            var p = await _context.Products.FindAsync(id);
+            if (p == null)
+            {
+                TempData["Error"] = "ไม่พบสินค้า";
+                return RedirectToAction(nameof(Products));
+            }
+
+            p.IsActive = !p.IsActive;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = p.IsActive
+                ? $"เปิดใช้งาน \"{p.Name}\" แล้ว"
+                : $"ปิดใช้งาน \"{p.Name}\" แล้ว";
+            return RedirectToAction(nameof(Products));
+        }
+
+        // POST: Staff/EditProduct
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin,manager")]
+        public async Task<IActionResult> EditProduct(Guid id, string name, long price, int stock)
+        {
+            if (string.IsNullOrWhiteSpace(name) || price < 0 || stock < 0)
+            {
+                TempData["Error"] = "ข้อมูลไม่ถูกต้อง";
+                return RedirectToAction(nameof(Products));
+            }
+
+            var p = await _context.Products.FindAsync(id);
+            if (p == null)
+            {
+                TempData["Error"] = "ไม่พบสินค้า";
+                return RedirectToAction(nameof(Products));
+            }
+
+            p.Name = name.Trim();
+            p.Price = price;
+            p.Stock = stock;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "บันทึกการแก้ไขสินค้าแล้ว";
+            return RedirectToAction(nameof(Products));
+        }
+
+        // POST: Staff/DeleteProduct
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin,manager")]
+        public async Task<IActionResult> DeleteProduct(Guid id)
+        {
+            var p = await _context.Products.FindAsync(id);
+            if (p == null)
+            {
+                TempData["Error"] = "ไม่พบสินค้า";
+                return RedirectToAction(nameof(Products));
+            }
+
+            try
+            {
+                _context.Products.Remove(p);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"ลบ \"{p.Name}\" แล้ว";
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "ลบไม่ได้ เพราะสินค้านี้ถูกใช้งานอยู่ ลองใช้ \"ปิดการใช้งาน\" แทน";
+            }
+            return RedirectToAction(nameof(Products));
+        }
     }
 }

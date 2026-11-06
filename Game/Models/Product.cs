@@ -31,5 +31,8 @@ namespace Game.Models
 
         [Column("stock")]
         public int Stock { get; set; }
+
+         [Column("is_active")]
+        public bool IsActive { get; set; } = true;
     }
 }
