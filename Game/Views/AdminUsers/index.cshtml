@@ -62,6 +62,8 @@
     .ul-card{background:#14142b;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:8px 24px}
     .ul-row{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.07)}
     .ul-row:last-child{border-bottom:0}
+    .ul-row.suspended .ul-avatar,
+    .ul-row.suspended .ul-info{opacity:.5}
     .ul-avatar{
         width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;
         font-weight:800;background:linear-gradient(135deg,#7c3aed,#a855f7);
@@ -74,6 +76,7 @@
     .ul-badge.manager{color:#fbbf24;border-color:#d97706;background:rgba(251,191,36,.1)}
     .ul-badge.staff{color:#22d3ee;border-color:#0891b2;background:rgba(34,211,238,.1)}
     .ul-badge.user{color:#9ca3af;border-color:rgba(255,255,255,.2)}
+    .ul-badge.suspended{color:#f87171;border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.1)}
 
     .ul-acts{display:flex;gap:8px}
     .ul-acts form{margin:0}
@@ -85,6 +88,10 @@
     .ul-icon:hover{background:rgba(139,92,246,.2);border-color:#8b5cf6}
     .ul-icon.del{color:#f87171}
     .ul-icon.del:hover{background:rgba(248,113,113,.15);border-color:#f87171}
+    .ul-icon.sus{color:#fb923c}
+    .ul-icon.sus:hover{background:rgba(251,146,60,.15);border-color:#fb923c}
+    .ul-icon.act{color:#4ade80}
+    .ul-icon.act:hover{background:rgba(74,222,128,.15);border-color:#4ade80}
 
     .ul-empty{padding:48px 0;text-align:center;color:#9ca3af}
     .ul-pager{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:24px;color:#9ca3af;font-size:14px}
@@ -96,7 +103,7 @@
         .ul-card{padding:8px 16px}
     }
 
-        /* ===== Delete Modal ===== */
+    /* ===== Modal (ใช้ร่วมกันทั้งลบ / ระงับ) ===== */
     .ul-modal{
         position:fixed;inset:0;z-index:9999;display:none;
         align-items:center;justify-content:center;padding:16px;
@@ -108,10 +115,8 @@
         background:#14142b;border:1px solid rgba(255,255,255,.1);
         border-radius:24px;padding:32px 28px 24px;text-align:center;
         box-shadow:0 24px 60px rgba(0,0,0,.6);
-        
+        color:#fff;
         animation:ulPop .2s ease;
-    }
-    .ul-modal-box h3{margin:0 0 8px;font-size:20px;font-weight:800;color:#fff
     }
     .ul-modal-icon{
         width:64px;height:64px;border-radius:50%;margin:0 auto 16px;
@@ -119,7 +124,9 @@
         color:#f87171;background:rgba(248,113,113,.12);
         border:1px solid rgba(248,113,113,.3);
     }
-    .ul-modal-box h3{margin:0 0 8px;font-size:20px;font-weight:800}
+    .ul-modal-icon.warn{color:#fb923c;background:rgba(251,146,60,.12);border-color:rgba(251,146,60,.3)}
+    .ul-modal-icon.good{color:#4ade80;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.3)}
+    .ul-modal-box h3{margin:0 0 8px;font-size:20px;font-weight:800;color:#fff}
     .ul-modal-box p{margin:0;color:#9ca3af;font-size:14px;line-height:1.6}
     .ul-modal-box p b{color:#fff;word-break:break-all}
     .ul-modal-acts{display:flex;gap:12px;margin-top:24px}
@@ -136,6 +143,8 @@
         background:linear-gradient(135deg,#f87171,#dc2626);
         box-shadow:0 8px 24px rgba(220,38,38,.35);
     }
+    .ul-btn-confirm.warn{background:linear-gradient(135deg,#fb923c,#ea580c);box-shadow:0 8px 24px rgba(234,88,12,.35)}
+    .ul-btn-confirm.good{background:linear-gradient(135deg,#4ade80,#16a34a);box-shadow:0 8px 24px rgba(22,163,74,.35)}
     .ul-btn-confirm:hover{transform:translateY(-1px)}
     @@keyframes ulFade{from{opacity:0}to{opacity:1}}
     @@keyframes ulPop{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:none}}
@@ -198,12 +207,19 @@
         @foreach (var u in Model.Users)
         {
             var role = string.IsNullOrWhiteSpace(u.Role) ? "user" : u.Role.ToLowerInvariant();
-            <div class="ul-row">
+            var isAdmin = role == "admin";
+
+            <div class="ul-row @(u.IsActive ? "" : "suspended")">
                 <div class="ul-avatar">@(u.Email.Length > 0 ? u.Email[0].ToString().ToUpper() : "?")</div>
 
                 <div class="ul-info">
                     <div class="ul-email">@u.Email</div>
                 </div>
+
+                @if (!u.IsActive)
+                {
+                    <span class="ul-badge suspended">ระงับ</span>
+                }
 
                 <span class="ul-badge @role">@role</span>
 
@@ -212,12 +228,25 @@
                         <i class="fa-solid fa-pen-to-square" style="color: rgb(255, 212, 59);"></i>
                     </a>
 
+                    @if (!isAdmin)
+                    {
+                        <!-- ระงับ / เปิดใช้งานบัญชี (admin ไม่แสดงปุ่มนี้) -->
+                        <form method="post" asp-action="ToggleStatus" asp-route-id="@u.Id"
+                              class="ul-sus-form" data-email="@u.Email" data-active="@(u.IsActive ? "1" : "0")">
+                            <button type="button"
+                                    class="ul-icon ul-sus-btn @(u.IsActive ? "sus" : "act")"
+                                    title="@(u.IsActive ? "ระงับบัญชี" : "เปิดใช้งานบัญชี")">
+                                <i class="fa-solid @(u.IsActive ? "fa-user-lock" : "fa-user-check")"></i>
+                            </button>
+                        </form>
+                    }
+
                     <form method="post" asp-action="Delete" asp-route-id="@u.Id"
-                    class="ul-del-form" data-email="@u.Email">
-                    <button type="button" class="ul-icon del ul-del-btn" title="ลบ">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </form>
+                          class="ul-del-form" data-email="@u.Email">
+                        <button type="button" class="ul-icon del ul-del-btn" title="ลบ">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         }
@@ -244,6 +273,8 @@
         </div>
     }
 </div>
+
+<!-- ===== Delete Modal ===== -->
 <div class="ul-modal" id="delModal" aria-hidden="true">
     <div class="ul-modal-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
         <div class="ul-modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -258,48 +289,106 @@
     </div>
 </div>
 
+<!-- ===== Suspend / Activate Modal ===== -->
+<div class="ul-modal" id="susModal" aria-hidden="true">
+    <div class="ul-modal-box" role="dialog" aria-modal="true" aria-labelledby="susTitle">
+        <div class="ul-modal-icon warn" id="susIconWrap"><i class="fa-solid fa-user-lock" id="susIcon"></i></div>
+        <h3 id="susTitle"></h3>
+        <p>คุณต้องการ<span id="susAction"></span> <b id="susEmail"></b> ใช่หรือไม่?<br /><span id="susHint"></span></p>
+        <div class="ul-modal-acts">
+            <button type="button" class="ul-btn-cancel" id="susCancel">ยกเลิก</button>
+            <button type="button" class="ul-btn-confirm warn" id="susConfirm">
+                <i class="fa-solid fa-user-lock" id="susBtnIcon"></i> <span id="susBtnText"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
-        const modal   = document.getElementById('delModal');
-        const emailEl = document.getElementById('delEmail');
-        const btnOk   = document.getElementById('delConfirm');
-        const btnNo   = document.getElementById('delCancel');
-        let targetForm = null;
+        function show(m) { m.classList.add('show'); m.setAttribute('aria-hidden', 'false'); }
+        function hide(m) { m.classList.remove('show'); m.setAttribute('aria-hidden', 'true'); }
 
-        function openModal(form) {
-            targetForm = form;
-            emailEl.textContent = form.dataset.email;
-            modal.classList.add('show');
-            modal.setAttribute('aria-hidden', 'false');
-            btnNo.focus();
-        }
-        function closeModal() {
-            modal.classList.remove('show');
-            modal.setAttribute('aria-hidden', 'true');
-            targetForm = null;
-        }
+        // ---------- ลบ ----------
+        const delModal = document.getElementById('delModal');
+        const delEmail = document.getElementById('delEmail');
+        const delOk    = document.getElementById('delConfirm');
+        const delNo    = document.getElementById('delCancel');
+        let delForm = null;
 
         document.querySelectorAll('.ul-del-btn').forEach(function (b) {
             b.addEventListener('click', function () {
-                openModal(b.closest('form'));
+                delForm = b.closest('form');
+                delEmail.textContent = delForm.dataset.email;
+                delOk.disabled = false;
+                show(delModal);
+                delNo.focus();
             });
         });
-
-        btnOk.addEventListener('click', function () {
-            if (targetForm) {
-                btnOk.disabled = true;
-                targetForm.submit();
-            }
+        delOk.addEventListener('click', function () {
+            if (delForm) { delOk.disabled = true; delForm.submit(); }
         });
-        btnNo.addEventListener('click', closeModal);
+        delNo.addEventListener('click', function () { hide(delModal); delForm = null; });
 
-        // คลิกพื้นหลังเพื่อปิด
-        modal.addEventListener('click', function (e) {
-            if (e.target === modal) closeModal();
+        // ---------- ระงับ / เปิดใช้งาน ----------
+        const susModal = document.getElementById('susModal');
+        const susOk    = document.getElementById('susConfirm');
+        const susNo    = document.getElementById('susCancel');
+        const susWrap  = document.getElementById('susIconWrap');
+        const susIcon  = document.getElementById('susIcon');
+        const susBtnIc = document.getElementById('susBtnIcon');
+        let susForm = null;
+
+        document.querySelectorAll('.ul-sus-btn').forEach(function (b) {
+            b.addEventListener('click', function () {
+                susForm = b.closest('form');
+                const isActive = susForm.dataset.active === '1';
+
+                document.getElementById('susEmail').textContent = susForm.dataset.email;
+
+                if (isActive) {
+                    // กำลังใช้งาน -> จะระงับ
+                    document.getElementById('susTitle').textContent = 'ยืนยันการระงับบัญชี';
+                    document.getElementById('susAction').textContent = 'ระงับบัญชี';
+                    document.getElementById('susHint').textContent = 'ผู้ใช้นี้จะไม่สามารถเข้าสู่ระบบได้จนกว่าจะเปิดใช้งานใหม่';
+                    document.getElementById('susBtnText').textContent = 'ยืนยันระงับ';
+                    susWrap.className = 'ul-modal-icon warn';
+                    susIcon.className = 'fa-solid fa-user-lock';
+                    susOk.className = 'ul-btn-confirm warn';
+                    susBtnIc.className = 'fa-solid fa-user-lock';
+                } else {
+                    // ถูกระงับอยู่ -> จะเปิดใช้งาน
+                    document.getElementById('susTitle').textContent = 'ยืนยันการเปิดใช้งานบัญชี';
+                    document.getElementById('susAction').textContent = 'เปิดใช้งานบัญชี';
+                    document.getElementById('susHint').textContent = 'ผู้ใช้นี้จะกลับมาเข้าสู่ระบบได้ตามปกติ';
+                    document.getElementById('susBtnText').textContent = 'ยืนยันเปิดใช้งาน';
+                    susWrap.className = 'ul-modal-icon good';
+                    susIcon.className = 'fa-solid fa-user-check';
+                    susOk.className = 'ul-btn-confirm good';
+                    susBtnIc.className = 'fa-solid fa-user-check';
+                }
+
+                susOk.disabled = false;
+                show(susModal);
+                susNo.focus();
+            });
         });
-        // กด Esc เพื่อปิด
+        susOk.addEventListener('click', function () {
+            if (susForm) { susOk.disabled = true; susForm.submit(); }
+        });
+        susNo.addEventListener('click', function () { hide(susModal); susForm = null; });
+
+        // ---------- คลิกพื้นหลัง / Esc ----------
+        [delModal, susModal].forEach(function (m) {
+            m.addEventListener('click', function (e) {
+                if (e.target === m) { hide(m); delForm = null; susForm = null; }
+            });
+        });
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+            if (e.key === 'Escape') {
+                hide(delModal); hide(susModal);
+                delForm = null; susForm = null;
+            }
         });
     })();
 </script>

@@ -337,5 +337,42 @@ namespace Game.Controllers
             TempData["Success"] = "ลบผู้ใช้เรียบร้อยแล้ว";
             return RedirectToAction(nameof(Index));
         }
+                // ==========================================
+        // ระงับ / เปิดใช้งานบัญชี POST
+        // ==========================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleStatus(Guid id)
+        {
+            var user = await _db.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // ห้ามระงับบัญชี admin
+            if (string.Equals(user.Role, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "ไม่สามารถระงับบัญชีผู้ดูแลระบบได้";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // ห้ามระงับบัญชีตัวเอง
+            if (string.Equals(user.Email, CurrentUserEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "ไม่สามารถระงับบัญชีของตัวเองได้";
+                return RedirectToAction(nameof(Index));
+            }
+
+            user.IsActive = !user.IsActive;
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = user.IsActive
+                ? $"เปิดใช้งานบัญชี {user.Email} เรียบร้อยแล้ว"
+                : $"ระงับบัญชี {user.Email} เรียบร้อยแล้ว";
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
