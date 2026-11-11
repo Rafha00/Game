@@ -1,0 +1,511 @@
+@model IEnumerable<Game.Models.Order>
+
+@{
+    Layout = "_AdminLayout";
+
+    var orders = (Model ?? Enumerable.Empty<Game.Models.Order>())
+                    .OrderByDescending(o => o.CreatedAt)
+                    .ToList();
+
+    var totalRevenue = orders.Sum(o => o.TotalPrice);
+    var totalOrders  = orders.Count;
+    var totalItems   = orders.Sum(o => o.Items.Sum(i => i.Quantity));
+    var avgOrder     = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    var grossTotal   = orders.Sum(o => o.Items.Sum(i => i.Price * i.Quantity));
+    var discountSum  = grossTotal - totalRevenue;
+}
+
+<div class="rp-wrap">
+    <div class="rp-card">
+
+        <!-- Header -->
+        <div class="rp-header">
+            <div>
+                <h2 class="rp-title">รายงานสรุปยอดขายตามออร์เดอร์</h2>
+                <p class="rp-sub">วันที่ออกรายงาน: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+            <button type="button" onclick="printReport()" class="rp-btn no-print">
+                🖨️ พิมพ์รายงาน / บันทึก PDF
+            </button>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="rp-stats">
+            <div class="rp-stat rp-stat-green">
+                <span class="rp-stat-label">ยอดขายรวม</span>
+                <span class="rp-stat-value">@totalRevenue.ToString("N2") <small>บาท</small></span>
+            </div>
+            <div class="rp-stat rp-stat-blue">
+                <span class="rp-stat-label">จำนวนออร์เดอร์</span>
+                <span class="rp-stat-value">@totalOrders.ToString("N0") <small>รายการ</small></span>
+            </div>
+            <div class="rp-stat rp-stat-purple">
+                <span class="rp-stat-label">สินค้าที่ขายได้</span>
+                <span class="rp-stat-value">@totalItems.ToString("N0") <small>ชิ้น</small></span>
+            </div>
+            <div class="rp-stat rp-stat-orange">
+                <span class="rp-stat-label">เฉลี่ยต่อออร์เดอร์</span>
+                <span class="rp-stat-value">@avgOrder.ToString("N2") <small>บาท</small></span>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="rp-table-wrap">
+            <table class="rp-table">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>รหัสออร์เดอร์</th>
+                        <th>วันที่สั่งซื้อ</th>
+                        <th>รายการสินค้าที่ขายออก</th>
+                        <th class="rp-right">ยอดรวมสุทธิ (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody id="rpBody">
+                @if (orders.Any())
+                {
+                    var no = 1;
+                    foreach (var order in orders)
+                    {
+                        var itemsTotal = order.Items.Sum(i => i.Price * i.Quantity);
+                        var discount   = itemsTotal - order.TotalPrice;
+
+                        <tr class="rp-row">
+                            <td class="rp-muted">@(no++)</td>
+
+                            <td>
+                                <span class="rp-id" title="@order.Id">@order.Id.ToString().Substring(0, 8)…</span>
+                            </td>
+
+                            <td>
+                                <div>@order.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                <div class="rp-muted rp-small">@order.CreatedAt.ToString("HH:mm") น.</div>
+                            </td>
+
+                            <td>
+                                <ul class="rp-items">
+                                    @foreach (var item in order.Items)
+                                    {
+                                        <li>
+                                            <span class="rp-item-name">@item.Product.Name</span>
+                                            <span class="rp-badge">x@(item.Quantity)</span>
+                                            <span class="rp-muted rp-small">@item.Price.ToString("N2") บาท</span>
+                                        </li>
+                                    }
+                                </ul>
+                            </td>
+
+                            <td class="rp-right">
+                                <div class="rp-total">@order.TotalPrice.ToString("N2")</div>
+                                @if (discount > 0)
+                                {
+                                    <div class="rp-discount">ส่วนลด -@discount.ToString("N2")</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="rp-empty">📭 ไม่พบข้อมูลประวัติการขาย</td>
+                    </tr>
+                }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="rp-right rp-foot-label">ยอดขายรวมทั้งหมด</td>
+                        <td class="rp-right rp-foot-value">@totalRevenue.ToString("N2") บาท</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Pager -->
+        <div class="rp-pager no-print" id="rpPager" style="display:none;">
+            <div class="rp-pager-info">
+                <span id="rpInfo"></span>
+            </div>
+            <div class="rp-pager-ctrl">
+                <label class="rp-pager-size">แสดง
+                    <select id="rpSize">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                    รายการ/หน้า
+                </label>
+                <button type="button" class="rp-arrow" id="rpPrev" aria-label="หน้าก่อนหน้า">&#10094;</button>
+                <span class="rp-page" id="rpPage"></span>
+                <button type="button" class="rp-arrow" id="rpNext" aria-label="หน้าถัดไป">&#10095;</button>
+            </div>
+        </div>
+
+        <p class="rp-footnote">— สิ้นสุดรายงาน —</p>
+    </div>
+</div>
+
+@* ===== รายงานแบบทางการ (แสดงเฉพาะตอนพิมพ์) ===== *@
+<div id="formal-report">
+    <div class="fm-head">
+        <div class="fm-company">WHATGAME</div>
+        <h1 class="fm-title">รายงานสรุปยอดขายตามออร์เดอร์</h1>
+        <div class="fm-meta">วันที่ออกรายงาน: @DateTime.Now.ToString("dd/MM/yyyy HH:mm") น.</div>
+    </div>
+
+    <table class="fm-table">
+        <thead>
+            <tr>
+                <th style="width:5%;">ลำดับ</th>
+                <th style="width:25%;">รหัสออร์เดอร์</th>
+                <th style="width:12%;">วันที่สั่งซื้อ</th>
+                <th>รายการสินค้า</th>
+                <th style="width:11%;" class="fm-r">ราคารวม</th>
+                <th style="width:9%;" class="fm-r">ส่วนลด</th>
+                <th style="width:12%;" class="fm-r">ยอดสุทธิ</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (orders.Any())
+        {
+            var n = 1;
+            foreach (var order in orders)
+            {
+                var gross = order.Items.Sum(i => i.Price * i.Quantity);
+                var disc  = gross - order.TotalPrice;
+                <tr>
+                    <td class="fm-c">@(n++)</td>
+                    <td class="fm-mono">@order.Id</td>
+                    <td>@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        @foreach (var item in order.Items)
+                        {
+                            <div>@item.Product.Name &times; @item.Quantity</div>
+                        }
+                    </td>
+                    <td class="fm-r">@gross.ToString("N2")</td>
+                    <td class="fm-r">@(disc > 0 ? disc.ToString("N2") : "-")</td>
+                    <td class="fm-r">@order.TotalPrice.ToString("N2")</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="7" class="fm-c">ไม่พบข้อมูลประวัติการขาย</td></tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="fm-summary-wrap">
+        <table class="fm-summary">
+            <tr><td>จำนวนออร์เดอร์ทั้งหมด</td><td class="fm-r">@totalOrders.ToString("N0") รายการ</td></tr>
+            <tr><td>จำนวนสินค้าที่ขายได้</td><td class="fm-r">@totalItems.ToString("N0") ชิ้น</td></tr>
+            <tr><td>ยอดขายรวมก่อนหักส่วนลด</td><td class="fm-r">@grossTotal.ToString("N2") บาท</td></tr>
+            <tr><td>ส่วนลดรวม</td><td class="fm-r">@discountSum.ToString("N2") บาท</td></tr>
+            <tr class="fm-grand"><td>ยอดขายสุทธิรวมทั้งสิ้น</td><td class="fm-r">@totalRevenue.ToString("N2") บาท</td></tr>
+        </table>
+    </div>
+
+    <div class="fm-sign">
+        <div class="fm-sign-box">
+            <div class="fm-line"></div>
+            <div>ผู้จัดทำรายงาน</div>
+            <div class="fm-date">วันที่ ....... / ....... / .......</div>
+        </div>
+        <div class="fm-sign-box">
+            <div class="fm-line"></div>
+            <div>ผู้อนุมัติ</div>
+            <div class="fm-date">วันที่ ....... / ....... / .......</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        function init() {
+            var body = document.getElementById('rpBody');
+            if (!body) return;
+            var rows = Array.prototype.slice.call(body.querySelectorAll('tr.rp-row'));
+            var pager = document.getElementById('rpPager');
+            if (!rows.length || !pager) return;
+
+            var size = 10, page = 1;
+            var info = document.getElementById('rpInfo');
+            var label = document.getElementById('rpPage');
+            var prev = document.getElementById('rpPrev');
+            var next = document.getElementById('rpNext');
+            var sel = document.getElementById('rpSize');
+
+            function render() {
+                var pages = Math.max(1, Math.ceil(rows.length / size));
+                if (page > pages) page = pages;
+                if (page < 1) page = 1;
+                var start = (page - 1) * size, end = Math.min(start + size, rows.length);
+
+                rows.forEach(function (r, i) {
+                    r.style.display = (i >= start && i < end) ? '' : 'none';
+                });
+
+                info.textContent = 'แสดง ' + (start + 1) + '–' + end + ' จาก ' + rows.length + ' รายการ';
+                label.textContent = 'หน้า ' + page + ' / ' + pages;
+                prev.disabled = page <= 1;
+                next.disabled = page >= pages;
+                pager.style.display = rows.length > 5 ? 'flex' : 'none';
+            }
+
+            prev.addEventListener('click', function () { page--; render(); });
+            next.addEventListener('click', function () { page++; render(); });
+            sel.addEventListener('change', function () { size = parseInt(sel.value, 10); page = 1; render(); });
+
+            // ใช้ปุ่มลูกศรซ้าย/ขวาบนคีย์บอร์ดได้ด้วย
+            document.addEventListener('keydown', function (e) {
+                var t = e.target.tagName;
+                if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA') return;
+                if (e.key === 'ArrowLeft' && !prev.disabled) { page--; render(); }
+                if (e.key === 'ArrowRight' && !next.disabled) { page++; render(); }
+            });
+
+            render();
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+    })();
+</script>
+
+<script>
+    function printReport() {
+        var src = document.getElementById('formal-report');
+        if (!src) { window.print(); return; }
+
+        var old = document.getElementById('print-root');
+        if (old) old.remove();
+
+        // คัดลอกรายงานไปไว้นอก Layout เพื่อไม่ให้ถูก sidebar/overflow ของ Layout บัง
+        var clone = src.cloneNode(true);
+        clone.id = 'print-root';
+        document.body.appendChild(clone);
+        document.body.classList.add('printing');
+
+        var cleanup = function () {
+            document.body.classList.remove('printing');
+            var el = document.getElementById('print-root');
+            if (el) el.remove();
+            window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
+
+        window.print();
+    }
+</script>
+
+@* ใช้ @@media เพื่อป้องกัน Razor มองเป็นคำสั่ง C# *@
+<style>
+    #print-root, #formal-report { display: none; }
+    .rp-wrap { padding: 24px 16px 48px; }
+    .rp-card {
+        max-width: 1100px;
+        margin: 0 auto;
+        background: #ffffff;
+        color: #1f2937;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+    }
+
+    /* Header */
+    .rp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #eef0f6;
+        margin-bottom: 24px;
+    }
+    .rp-title { margin: 0; font-size: 1.6rem; font-weight: 700; color: #111827; }
+    .rp-sub   { margin: 6px 0 0; color: #6b7280; font-size: .9rem; }
+    .rp-btn {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        border: 0;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: .95rem;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, .4);
+        transition: transform .15s, box-shadow .15s;
+    }
+    .rp-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99, 102, 241, .5); }
+
+    /* Stats */
+    .rp-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    .rp-stat {
+        border-radius: 12px;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        border-left: 5px solid;
+    }
+    .rp-stat-label { font-size: .85rem; color: #6b7280; }
+    .rp-stat-value { font-size: 1.45rem; font-weight: 700; color: #111827; }
+    .rp-stat-value small { font-size: .8rem; font-weight: 400; color: #6b7280; }
+    .rp-stat-green  { background: #ecfdf5; border-color: #10b981; }
+    .rp-stat-blue   { background: #eff6ff; border-color: #3b82f6; }
+    .rp-stat-purple { background: #f5f3ff; border-color: #8b5cf6; }
+    .rp-stat-orange { background: #fff7ed; border-color: #f97316; }
+
+    /* Table */
+    .rp-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e5e7eb; }
+    .rp-table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+    .rp-table thead th {
+        background: #1e1b4b;
+        color: #fff;
+        text-align: left;
+        padding: 14px 16px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .rp-table tbody td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f0f1f5;
+        vertical-align: top;
+        color: #1f2937;
+    }
+    .rp-table tbody tr:nth-child(even) { background: #fafbff; }
+    .rp-table tbody tr:hover { background: #eef2ff; }
+
+    .rp-right { text-align: right !important; }
+    .rp-muted { color: #9ca3af; }
+    .rp-small { font-size: .8rem; }
+
+    .rp-id {
+        font-family: Consolas, monospace;
+        background: #eef2ff;
+        color: #4338ca;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: .85rem;
+    }
+
+    .rp-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .rp-item-name { font-weight: 500; }
+    .rp-badge {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #3730a3;
+        font-size: .75rem;
+        padding: 1px 8px;
+        border-radius: 999px;
+        margin: 0 6px;
+    }
+
+    .rp-total { font-weight: 700; font-size: 1.05rem; color: #059669; }
+    .rp-discount { font-size: .78rem; color: #dc2626; margin-top: 2px; }
+
+    .rp-empty { text-align: center; padding: 40px !important; color: #9ca3af !important; font-size: 1rem; }
+
+    .rp-table tfoot td {
+        background: #f3f4f6;
+        padding: 16px;
+        border-top: 2px solid #1e1b4b;
+    }
+    .rp-foot-label { font-weight: 600; color: #374151; }
+    .rp-foot-value { font-size: 1.25rem; font-weight: 800; color: #059669; white-space: nowrap; }
+
+    .rp-footnote { text-align: center; color: #9ca3af; font-size: .8rem; margin: 24px 0 0; }
+
+    @@media (max-width: 640px) {
+        .rp-card { padding: 18px; }
+        .rp-title { font-size: 1.3rem; }
+    }
+
+    /* Pager */
+    .rp-pager {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+        font-size: .9rem;
+        color: #4b5563;
+    }
+    .rp-pager-ctrl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .rp-pager-size select {
+        margin: 0 4px;
+        padding: 4px 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+        color: #1f2937;
+        font-family: inherit;
+    }
+    .rp-page { min-width: 90px; text-align: center; font-weight: 600; color: #111827; }
+    .rp-arrow {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #c7d2fe;
+        background: #eef2ff;
+        color: #4338ca;
+        border-radius: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background .15s, transform .15s;
+    }
+    .rp-arrow:hover:not(:disabled) { background: #6366f1; color: #fff; transform: translateY(-1px); }
+    .rp-arrow:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* ===== รายงานแบบทางการ ===== */
+    .fm-head { text-align: center; margin-bottom: 14px; }
+    .fm-company { font-size: 13pt; font-weight: 700; letter-spacing: 3px; }
+    .fm-title { font-size: 18pt; font-weight: 700; margin: 4px 0; }
+    .fm-meta { font-size: 10pt; }
+
+    .fm-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 8px; }
+    .fm-table th, .fm-table td { border: 1px solid #000; padding: 5px 7px; vertical-align: top; color: #000; }
+    .fm-table thead th { background: #e5e5e5; text-align: center; font-weight: 700; }
+    .fm-table thead { display: table-header-group; }
+    .fm-table tr { page-break-inside: avoid; }
+    .fm-r { text-align: right; }
+    .fm-c { text-align: center; }
+    .fm-mono { font-family: Consolas, monospace; font-size: 8pt; word-break: break-all; }
+
+    .fm-summary-wrap { display: flex; justify-content: flex-end; margin-top: 14px; page-break-inside: avoid; }
+    .fm-summary { width: 45%; border-collapse: collapse; font-size: 10pt; }
+    .fm-summary td { border: 1px solid #000; padding: 5px 9px; color: #000; }
+    .fm-grand td { font-weight: 700; font-size: 11pt; background: #e5e5e5; border-top: 3px double #000; }
+
+    .fm-sign { display: flex; justify-content: space-around; margin-top: 50px; page-break-inside: avoid; font-size: 10pt; text-align: center; }
+    .fm-sign-box { width: 30%; }
+    .fm-line { border-bottom: 1px dotted #000; height: 40px; margin-bottom: 6px; }
+    .fm-date { margin-top: 4px; font-size: 9pt; }
+
+    @@media print {
+        @@page { size: A4 landscape; margin: 12mm; }
+
+        /* ซ่อนทุกอย่างในหน้า ยกเว้นสำเนารายงานทางการ */
+        body.printing > *:not(#print-root) { display: none !important; }
+        body.printing #print-root { display: block !important; }
+
+        html, body {
+            height: auto !important;
+            overflow: visible !important;
+            background: #fff !important;
+            color: #000 !important;
+        }
+        .no-print { display: none !important; }
+        .fm-table thead th, .fm-grand td {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>

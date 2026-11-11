@@ -369,6 +369,22 @@ namespace Game.Controllers
 
             TempData["ManagerSuccess"] = $"ลบพนักงาน ({email}) เรียบร้อยแล้ว";
             return RedirectToAction(nameof(Staff));
+        
         }
+
+        [HttpGet]
+       
+        [Authorize(Roles = "admin,manager")]
+        public async Task<IActionResult> SalesSummaryReport()
+    {
+        // ดึงข้อมูล Order และ Include ข้อมูลสินค้าที่เกี่ยวข้อง (ปรับแก้ชื่อ DbSet ตาม Model จริงของคุณ เช่น Orders, OrderItems)
+       var orders = await _context.Orders
+        .Include(o => o.Items)        // ดึงรายการสินค้าในออร์เดอร์ (เช็คชื่อ DbSet ใน Model Order ของคุณว่าชื่อ OrderItems หรือชื่ออื่นไหม)
+        .ThenInclude(i => i.Product)       // ดึงข้อมูลชื่อและราคาของสินค้า
+        .OrderByDescending(o => o.Id)
+        .ToListAsync();
+
+        return View(orders);
+    }
     }
 }

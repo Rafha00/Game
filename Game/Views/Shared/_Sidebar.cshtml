@@ -236,6 +236,11 @@
         <span class="gw-menu-text">โค้ดส่วนลด</span>
         @if (IsActive("Manager", "Discounts")) { <i class="fa-solid fa-chevron-right gw-menu-arrow"></i> }
     </a>
+      <a asp-controller="Manager" asp-action="SalesSummaryReport" class="@MenuClass("Manager", "SalesSummaryReport")">
+    <span class="gw-menu-icon"><i class="fa-solid fa-tags"></i></span>
+    <span class="gw-menu-text">รายงานสรุปยอดขาย</span>
+    @if (IsActive("Manager", "SalesSummaryReport")) { <i class="fa-solid fa-chevron-right gw-menu-arrow"></i> }
+</a>
 }
 
             @if (isAdmin)

@@ -11,9 +11,15 @@ namespace Game.Models
         public Guid Id { get; set; } = Guid.Empty;
 
         [Column("email")]
+        [Required(ErrorMessage = "กรุณากรอกอีเมล")]
+        [EmailAddress(ErrorMessage = "รูปแบบอีเมลไม่ถูกต้อง")]
+        [RegularExpression(@"^[a-zA-Z0-9_@.-]+$", ErrorMessage = "ไม่อนุญาตให้ใช้อักขระพิเศษในอีเมล")]
         public string Email { get; set; } = string.Empty;
 
-        [Column("password")] // เพิ่มส่วนรองรับรหัสผ่านให้ตรงกับฐานข้อมูล
+        [Column("password")]
+        [Required(ErrorMessage = "กรุณากรอกรหัสผ่าน")]
+        [MinLength(8, ErrorMessage = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", ErrorMessage = "รหัสผ่านต้องมีตัวอักษรพิมพ์เล็ก , พิมพ์ใหญ่ , ตัวเลข , และอักขระพิเศษอย่างน้อยหนึ่งตัว")]
         public string Password { get; set; } = string.Empty;
 
         [Column("role")]
