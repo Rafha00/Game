@@ -71,18 +71,20 @@
                         var discount   = itemsTotal - order.TotalPrice;
 
                         <tr class="rp-row">
-                            <td class="rp-muted">@(no++)</td>
+                            <td data-label="ลำดับ" class="rp-muted">@(no++)</td>
 
-                            <td>
+                            <td data-label="รหัสออร์เดอร์">
                                 <span class="rp-id" title="@order.Id">@order.Id.ToString().Substring(0, 8)…</span>
                             </td>
 
-                            <td>
-                                <div>@order.CreatedAt.ToString("dd/MM/yyyy")</div>
-                                <div class="rp-muted rp-small">@order.CreatedAt.ToString("HH:mm") น.</div>
+                            <td data-label="วันที่สั่งซื้อ">
+                                <div>
+                                    <div>@order.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    <div class="rp-muted rp-small">@order.CreatedAt.ToString("HH:mm") น.</div>
+                                </div>
                             </td>
 
-                            <td>
+                            <td data-label="สินค้า">
                                 <ul class="rp-items">
                                     @foreach (var item in order.Items)
                                     {
@@ -95,12 +97,14 @@
                                 </ul>
                             </td>
 
-                            <td class="rp-right">
-                                <div class="rp-total">@order.TotalPrice.ToString("N2")</div>
-                                @if (discount > 0)
-                                {
-                                    <div class="rp-discount">ส่วนลด -@discount.ToString("N2")</div>
-                                }
+                            <td data-label="ยอดสุทธิ" class="rp-right">
+                                <div>
+                                    <div class="rp-total">@order.TotalPrice.ToString("N2")</div>
+                                    @if (discount > 0)
+                                    {
+                                        <div class="rp-discount">ส่วนลด -@discount.ToString("N2")</div>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -136,9 +140,11 @@
                     </select>
                     รายการ/หน้า
                 </label>
-                <button type="button" class="rp-arrow" id="rpPrev" aria-label="หน้าก่อนหน้า">&#10094;</button>
-                <span class="rp-page" id="rpPage"></span>
-                <button type="button" class="rp-arrow" id="rpNext" aria-label="หน้าถัดไป">&#10095;</button>
+                <div class="rp-pager-nav">
+                    <button type="button" class="rp-arrow" id="rpPrev" aria-label="หน้าก่อนหน้า">&#10094;</button>
+                    <span class="rp-page" id="rpPage"></span>
+                    <button type="button" class="rp-arrow" id="rpNext" aria-label="หน้าถัดไป">&#10095;</button>
+                </div>
             </div>
         </div>
 
@@ -302,6 +308,13 @@
 @* ใช้ @@media เพื่อป้องกัน Razor มองเป็นคำสั่ง C# *@
 <style>
     #print-root, #formal-report { display: none; }
+
+    /* กันการ์ดล้นขอบ: padding/border รวมอยู่ในความกว้างเสมอ */
+    .rp-wrap,
+    .rp-wrap *,
+    .rp-wrap *::before,
+    .rp-wrap *::after { box-sizing: border-box; }
+
     .rp-wrap { padding: 24px 16px 48px; }
     .rp-card {
         max-width: 1100px;
@@ -343,7 +356,7 @@
     /* Stats */
     .rp-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
         gap: 16px;
         margin-bottom: 28px;
     }
@@ -354,9 +367,10 @@
         flex-direction: column;
         gap: 6px;
         border-left: 5px solid;
+        min-width: 0;
     }
     .rp-stat-label { font-size: .85rem; color: #6b7280; }
-    .rp-stat-value { font-size: 1.45rem; font-weight: 700; color: #111827; }
+    .rp-stat-value { font-size: 1.45rem; font-weight: 700; color: #111827; word-break: break-word; }
     .rp-stat-value small { font-size: .8rem; font-weight: 400; color: #6b7280; }
     .rp-stat-green  { background: #ecfdf5; border-color: #10b981; }
     .rp-stat-blue   { background: #eff6ff; border-color: #3b82f6; }
@@ -365,7 +379,7 @@
 
     /* Table */
     .rp-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e5e7eb; }
-    .rp-table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+    .rp-table { width: 100%; border-collapse: collapse; font-size: .93rem; min-width: 720px; }
     .rp-table thead th {
         background: #1e1b4b;
         color: #fff;
@@ -423,11 +437,6 @@
 
     .rp-footnote { text-align: center; color: #9ca3af; font-size: .8rem; margin: 24px 0 0; }
 
-    @@media (max-width: 640px) {
-        .rp-card { padding: 18px; }
-        .rp-title { font-size: 1.3rem; }
-    }
-
     /* Pager */
     .rp-pager {
         display: flex;
@@ -440,6 +449,7 @@
         color: #4b5563;
     }
     .rp-pager-ctrl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .rp-pager-nav { display: flex; align-items: center; gap: 10px; }
     .rp-pager-size select {
         margin: 0 4px;
         padding: 4px 8px;
@@ -463,6 +473,89 @@
     }
     .rp-arrow:hover:not(:disabled) { background: #6366f1; color: #fff; transform: translateY(-1px); }
     .rp-arrow:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* ===== Tablet (< 1024px) ===== */
+    @@media (max-width: 1023px) {
+        .rp-wrap { padding: 18px 12px 40px; }
+        .rp-card { padding: 24px; }
+    }
+
+    /* ===== Mobile (< 640px) ===== */
+    @@media (max-width: 639px) {
+        .rp-wrap { padding: 12px 8px 32px; }
+        .rp-card { padding: 16px; border-radius: 14px; }
+        .rp-title { font-size: 1.2rem; }
+        .rp-sub { font-size: .82rem; }
+
+        .rp-header { flex-direction: column; align-items: stretch; margin-bottom: 18px; padding-bottom: 16px; }
+        .rp-btn { width: 100%; padding: 12px 16px; }
+
+        .rp-stats { gap: 10px; margin-bottom: 20px; }
+        .rp-stat { padding: 12px 14px; }
+        .rp-stat-value { font-size: 1.2rem; }
+
+        /* ตาราง -> การ์ด */
+        .rp-table-wrap { border: 0; border-radius: 0; overflow: visible; }
+        .rp-table { min-width: 0; }
+        .rp-table thead { display: none; }
+        .rp-table,
+        .rp-table tbody,
+        .rp-table tfoot,
+        .rp-table tr { display: block; width: 100%; max-width: 100%; }
+
+        .rp-table tbody tr {
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff !important;
+        }
+        .rp-table tbody td {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 6px 0;
+            border: 0;
+            text-align: right;
+        }
+        .rp-table tbody td[data-label]::before {
+            content: attr(data-label);
+            flex-shrink: 0;
+            font-size: .8rem;
+            color: #6b7280;
+            text-align: left;
+        }
+        .rp-items { align-items: flex-end; }
+        .rp-items li { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+
+        .rp-table tbody tr td.rp-empty { display: block; text-align: center; padding: 28px 8px !important; }
+
+        .rp-table tfoot tr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #f3f4f6;
+            border-top: 2px solid #1e1b4b;
+            border-radius: 10px;
+        }
+        .rp-table tfoot td {
+            display: block;
+            width: auto;
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+        .rp-foot-value { font-size: 1.1rem; }
+
+        /* Pager */
+        .rp-pager { flex-direction: column; align-items: stretch; text-align: center; }
+        .rp-pager-ctrl { flex-direction: column; gap: 12px; }
+        .rp-pager-nav { justify-content: center; }
+        .rp-arrow { width: 44px; height: 44px; }
+    }
 
     /* ===== รายงานแบบทางการ ===== */
     .fm-head { text-align: center; margin-bottom: 14px; }

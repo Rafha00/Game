@@ -1,0 +1,26 @@
+
+# Development Environment
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /src
+
+# Copy project file
+COPY *.csproj ./
+
+# Restore packages
+RUN dotnet restore
+
+# Copy source code
+COPY . .
+
+# Development settings
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_URLS=http://+:8080
+
+# Enable file watcher for Docker volumes
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1
+
+EXPOSE 8080
+
+# Start Hot Reload
+CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:8080"]

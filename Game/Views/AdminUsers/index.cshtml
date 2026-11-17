@@ -216,20 +216,26 @@
                     <div class="ul-email">@u.Email</div>
                 </div>
 
+                    
                 @if (!u.IsActive)
                 {
                     <span class="ul-badge suspended">ระงับ</span>
                 }
 
-                <span class="ul-badge @role">@role</span>
+                <span class="ul-badge  @role">@role</span>
+                
 
                 <div class="ul-acts">
-                    <a class="ul-icon" title="แก้ไข" asp-action="Edit" asp-route-id="@u.Id">
-                        <i class="fa-solid fa-pen-to-square" style="color: rgb(255, 212, 59);"></i>
-                    </a>
+                    
+                  
+                  
 
                     @if (!isAdmin)
-                    {
+                    { 
+                        
+                         <a class="ul-icon" title="แก้ไข" asp-action="Edit" asp-route-id="@u.Id">
+                                <i class="fa-solid fa-pen-to-square" style="color: rgb(255, 212, 59);"></i>
+                            </a>
                         <!-- ระงับ / เปิดใช้งานบัญชี (admin ไม่แสดงปุ่มนี้) -->
                         <form method="post" asp-action="ToggleStatus" asp-route-id="@u.Id"
                               class="ul-sus-form" data-email="@u.Email" data-active="@(u.IsActive ? "1" : "0")">
@@ -239,14 +245,17 @@
                                 <i class="fa-solid @(u.IsActive ? "fa-user-lock" : "fa-user-check")"></i>
                             </button>
                         </form>
-                    }
-
-                    <form method="post" asp-action="Delete" asp-route-id="@u.Id"
+                        
+                         <form method="post" asp-action="Delete" asp-route-id="@u.Id"
                           class="ul-del-form" data-email="@u.Email">
                         <button type="button" class="ul-icon del ul-del-btn" title="ลบ">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </form>
+                    }
+                    
+
+                   
                 </div>
             </div>
         }

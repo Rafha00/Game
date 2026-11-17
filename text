@@ -25,3 +25,16 @@ dotnet build
 คำสั่งส่งโครงสร้างไปสร้างตารางจริงบน mysql:
 
 dotnet ef database update
+
+        คำสั่ง docker
+
+        สร้าง
+
+docker build -t my-dotnet-web .
+
+ คำสั่งลบ
+docker rm -f my-web-app
+
+คำสั่งเชื่อม
+
+docker run -d -p 5000:8080 --name my-web-app my-dotnet-web

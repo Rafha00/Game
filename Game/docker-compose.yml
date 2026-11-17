@@ -1,0 +1,32 @@
+
+services:
+  gameworld:
+    container_name: gameworld-dev
+
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      # Sync source code
+      - .:/src
+
+      # Preserve build files and packages
+      - gameworld_obj:/src/obj
+      - gameworld_bin:/src/bin
+      - gameworld_nuget:/root/.nuget/packages
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+
+    restart: unless-stopped
+
+volumes:
+  gameworld_obj:
+  gameworld_bin:
+  gameworld_nuget:

@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>เพิ่มสินค้า | GAMEWORLD</title>
+    <title>เพิ่มสินค้า | WHATGAME</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -41,6 +41,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow-x: hidden;
             background:
                 radial-gradient(ellipse 60% 40% at 0% 0%, rgba(124,58,237,.16), transparent 70%),
                 radial-gradient(ellipse 50% 35% at 100% 100%, rgba(45,212,191,.07), transparent 70%),
@@ -172,6 +173,9 @@
             color: #e2e8f0;
             background: linear-gradient(to top, rgba(5,7,15,.85), transparent);
             text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .dropzone.has-image .img-badge { display: block; }
 
@@ -180,7 +184,7 @@
             position: absolute;
             top: 10px; right: 10px;
             z-index: 3;
-            width: 32px; height: 32px;
+            width: 36px; height: 36px;
             border-radius: 9px;
             border: 1px solid rgba(255,255,255,.15);
             background: rgba(8,10,18,.75);
@@ -214,26 +218,38 @@
         .back-btn:hover { background: rgba(255,255,255,.04); border-color: #46507a; }
 
         .actions {
-            padding: 14px 28px;
+            padding: 14px 20px;
             border-top: 1px solid var(--line);
             background: rgba(7,9,18,.45);
         }
 
+        /* ---------- Responsive ---------- */
+        @@media (min-width: 640px) {
+            .actions { padding: 14px 28px; }
+        }
+
         @@media (max-width: 767px) {
             body { align-items: flex-start; }
-            .img-wrap { min-height: 220px; }
+            .img-wrap { min-height: 220px; height: 220px; }
+            /* กัน iOS ซูมอัตโนมัติตอนแตะช่องกรอก (ต้อง >= 16px) */
+            .field { font-size: 16px; padding: 11px 14px; }
+            textarea.field { height: 110px; }
+        }
+
+        @@media (max-width: 479px) {
+            .img-wrap { min-height: 190px; height: 190px; }
         }
     </style>
 </head>
 
 <body>
-    <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6">
+    <main class="w-full max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
 
-        <!-- Header (บรรทัดเดียว) -->
-        <div class="flex items-end justify-between gap-4 mb-4">
+        <!-- Header -->
+        <div class="flex flex-col gap-1 md:flex-row md:items-end md:justify-between md:gap-4 mb-4">
             <div>
                 <a asp-controller="Staff" asp-action="Products"
-                   class="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-violet-300 transition mb-1">
+                   class="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-violet-300 transition mb-1 py-1">
                     <i class="fa-solid fa-chevron-left text-[10px]"></i>
                     สินค้าทั้งหมด
                 </a>
@@ -244,7 +260,7 @@
             </p>
         </div>
 
-        <section class="panel rounded-3xl overflow-hidden">
+        <section class="panel rounded-2xl sm:rounded-3xl overflow-hidden">
             <div class="h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-teal-400"></div>
 
             <form asp-controller="Staff"
@@ -254,15 +270,15 @@
 
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly" class="px-7 pt-4"></div>
+                <div asp-validation-summary="ModelOnly" class="px-5 pt-4 sm:px-7"></div>
 
-                <!-- 2 คอลัมน์: ซ้าย = ข้อมูล / ขวา = รูปภาพ -->
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 p-5 sm:p-7">
+                <!-- มือถือ: เรียงลงมา / md ขึ้นไป: ซ้าย = ข้อมูล, ขวา = รูปภาพ -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-5 sm:gap-6 p-4 sm:p-7">
 
-                    <!-- ซ้าย -->
-                    <div class="md:col-span-3 grid grid-cols-2 gap-x-4 gap-y-4 content-start">
+                    <!-- ข้อมูลสินค้า -->
+                    <div class="md:col-span-3 grid grid-cols-1 min-[480px]:grid-cols-2 gap-x-4 gap-y-4 content-start">
 
-                        <div class="col-span-2">
+                        <div class="min-[480px]:col-span-2">
                             <label asp-for="Name" class="field-label">
                                 ชื่อสินค้า <span class="text-rose-400">*</span>
                             </label>
@@ -273,7 +289,7 @@
                             <span asp-validation-for="Name"></span>
                         </div>
 
-                        <div class="col-span-2">
+                        <div class="min-[480px]:col-span-2">
                             <label asp-for="Category" class="field-label">หมวดหมู่สินค้า</label>
                             <div class="relative">
                                 <i class="fa-solid fa-layer-group icon-left"></i>
@@ -321,7 +337,7 @@
                             <span asp-validation-for="Stock"></span>
                         </div>
 
-                        <div class="col-span-2">
+                        <div class="min-[480px]:col-span-2">
                             <label asp-for="Description" class="field-label">รายละเอียดสินค้า</label>
                             <textarea asp-for="Description"
                                       class="field"
@@ -330,14 +346,14 @@
                         </div>
                     </div>
 
-                    <!-- ขวา: รูปภาพ -->
+                    <!-- รูปภาพ -->
                     <div class="md:col-span-2 flex flex-col">
                         <label class="field-label">รูปภาพสินค้า</label>
 
                         <div id="imgWrap" class="img-wrap flex-1">
                             <label for="imageFile" id="dropzone" class="dropzone">
                                 <span class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
-                                <span class="dropzone-main">คลิกเพื่อเลือกรูป หรือลากมาวาง</span>
+                                <span class="dropzone-main">แตะเพื่อเลือกรูป<span class="hidden md:inline"> หรือลากมาวาง</span></span>
                                 <span class="dropzone-hint">JPG, PNG, WEBP</span>
                                 <img id="imagePreview" src="" alt="ตัวอย่างรูปสินค้า" />
                                 <span id="fileName" class="img-badge"></span>
@@ -357,23 +373,23 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="actions flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <p class="text-xs text-slate-500 flex items-center">
+                <!-- Actions: มือถือปุ่มเรียงลงเต็มความกว้าง (ปุ่มบันทึกอยู่บนสุด) -->
+                <div class="actions flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="hidden text-xs text-slate-500 sm:flex sm:items-center">
                         <i class="fa-solid fa-shield-halved text-violet-400 mr-1.5"></i>
                         ตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึกสินค้า
                     </p>
 
-                    <div class="flex flex-row gap-3 w-full sm:w-auto justify-end">
+                    <div class="flex flex-col-reverse gap-3 w-full sm:flex-row sm:w-auto sm:justify-end">
                         <a asp-controller="Staff"
                            asp-action="Products"
-                           class="back-btn flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm">
+                           class="back-btn flex items-center justify-center gap-2 px-5 py-3 sm:py-2 rounded-xl text-sm">
                             <i class="fa-solid fa-arrow-left"></i>
                             กลับหน้าสินค้า
                         </a>
 
                         <button type="submit"
-                                class="save-btn flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-white font-medium text-sm">
+                                class="save-btn flex items-center justify-center gap-2 px-6 py-3 sm:py-2 rounded-xl text-white font-medium text-sm">
                             <i class="fa-solid fa-floppy-disk"></i>
                             บันทึกสินค้า
                         </button>

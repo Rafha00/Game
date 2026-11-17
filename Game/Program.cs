@@ -1,12 +1,16 @@
 using Game.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = "Server=host.docker.internal;Database=csi402db;Uid=root;Pwd=67154596;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -31,6 +35,14 @@ builder.Services.AddSession(options =>
 });
 
 var app = builder.Build();
+// บังคับใช้ en-US เพื่อให้ระบบอ่านจุด (.) เป็นทศนิยมสากล
+var supportedCultures = new[] { new CultureInfo("en-US") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 if (!app.Environment.IsDevelopment())
 {

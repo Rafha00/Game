@@ -13,13 +13,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - GAMEWORLD</title>
+    <title>@ViewData["Title"] - WHATGAME</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
     <style>
         * { box-sizing: border-box; }
+        html, body { overflow-x: hidden; }
         body {
             margin: 0;
             font-family: "Segoe UI", Tahoma, sans-serif;
@@ -27,6 +28,11 @@
             color: #f8fafc;
         }
         .dashboard-layout { display: flex; min-height: 100vh; }
+
+        .sidebar-wrap { flex: 0 0 280px; width: 280px; min-width: 280px; }
+        .sidebar-backdrop { display: none; }
+        .mobile-topbar { display: none; }
+
         .dashboard-main {
             flex: 1;
             min-width: 0;
@@ -45,76 +51,173 @@
             color: #c4b5fd !important;
             font-weight: 600;
             border-bottom: 1px solid rgba(139, 92, 246, 0.2) !important;
+            white-space: nowrap;
         }
         .table-custom td {
             border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
             color: #e2e8f0 !important;
         }
+
+        /* ===== Tablet & Mobile (< 1024px) ===== */
+        @@media (max-width: 1023px) {
+            .mobile-topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: sticky;
+                top: 0;
+                z-index: 40;
+                padding: 12px 16px;
+                background: rgba(8, 11, 20, 0.92);
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid rgba(139, 92, 246, 0.25);
+            }
+            .dashboard-layout { flex-direction: column; }
+
+            .sidebar-wrap {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 280px;
+                max-width: 85vw;
+                min-width: 0;
+                z-index: 60;
+                overflow-y: auto;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar-wrap.open { transform: translateX(0); }
+
+            .sidebar-backdrop {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                background: rgba(0, 0, 0, 0.6);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+
+            .dashboard-main { padding: 20px; width: 100%; }
+        }
+
+        /* ===== Small mobile (< 640px): ตาราง -> การ์ด ===== */
+        @@media (max-width: 639px) {
+            .dashboard-main { padding: 14px; }
+            .custom-card { border-radius: 14px; }
+
+            .stack-table thead { display: none; }
+            .stack-table,
+            .stack-table tbody,
+            .stack-table tr { display: block; width: 100%; }
+            .stack-table tr {
+                padding: 14px 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .stack-table td {
+                display: block;
+                padding: 6px 0 !important;
+                border-bottom: none !important;
+                text-align: left !important;
+            }
+            .stack-table td.cell-actions { padding-top: 12px !important; }
+            .stack-table td.cell-actions .action-group { width: 100%; }
+            .stack-table td.cell-actions .action-group form { flex: 1; margin-right: 0 !important; }
+            .stack-table td.cell-actions .action-group button {
+                width: 100%;
+                justify-content: center;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+        }
+
+        /* SweetAlert2 บนจอเล็ก */
+        @@media (max-width: 480px) {
+            .swal2-popup { width: 92vw !important; padding: 1.25rem 1rem !important; }
+            .swal2-actions { flex-direction: column-reverse; gap: 8px; width: 100%; }
+            .swal2-actions button { width: 100%; margin: 0 !important; }
+        }
     </style>
 </head>
 <body>
+    @* Top bar สำหรับมือถือ/แท็บเล็ต *@
+    <div class="mobile-topbar">
+        <button id="menuToggle" type="button" aria-label="เปิดเมนู"
+                class="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 text-lg">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <span class="font-extrabold tracking-wide text-white">WHATGAME</span>
+        <span class="w-10"></span>
+    </div>
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
     <div class="dashboard-layout">
 
-        <div style="flex: 0 0 280px; min-width: 280px;">
+        <div id="sidebarWrap" class="sidebar-wrap">
             <partial name="_Sidebar" />
         </div>
 
         <main class="dashboard-main">
             <div class="dashboard-container">
 
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-900 shadow-lg shadow-purple-900/30 text-2xl text-white">
+                <div class="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                    <div class="flex shrink-0 items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-900 shadow-lg shadow-purple-900/30 text-xl sm:text-2xl text-white">
                         <i class="fa-solid fa-id-badge"></i>
                     </div>
-                    <div>
-                        <h1 class="text-2xl font-extrabold tracking-tight text-white m-0">รายชื่อพนักงาน</h1>
-                        <p class="text-sm text-slate-400 mt-1">จัดการข้อมูลพนักงาน ระงับการใช้งาน หรือลบบัญชีพนักงานในระบบ</p>
+                    <div class="min-w-0">
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white m-0">รายชื่อพนักงาน</h1>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">จัดการข้อมูลพนักงาน ระงับการใช้งาน หรือลบบัญชีพนักงานในระบบ</p>
                     </div>
                 </div>
 
                 @if (TempData["ManagerSuccess"] != null)
                 {
-                    <div class="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-3">
+                    <div class="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-3 text-sm sm:text-base">
                         <i class="fa-solid fa-circle-check text-lg"></i>
                         <span>@TempData["ManagerSuccess"]</span>
                     </div>
                 }
                 @if (TempData["ManagerError"] != null)
                 {
-                    <div class="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-3">
+                    <div class="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-3 text-sm sm:text-base">
                         <i class="fa-solid fa-circle-exclamation text-lg"></i>
                         <span>@TempData["ManagerError"]</span>
                     </div>
                 }
 
                 <div class="custom-card overflow-hidden">
-                    <div class="px-6 py-4 border-b border-purple-500/20 flex items-center justify-between bg-purple-950/20">
-                        <h3 class="font-bold text-white flex items-center gap-2 m-0 text-base">
+                    <div class="px-4 sm:px-6 py-4 border-b border-purple-500/20 flex flex-wrap items-center justify-between gap-2 bg-purple-950/20">
+                        <h3 class="font-bold text-white flex items-center gap-2 m-0 text-sm sm:text-base">
                             <i class="fa-solid fa-user-tie text-purple-400"></i> พนักงานทั้งหมด
                         </h3>
                         <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">รวม @Model.Count รายการ</span>
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse table-custom">
+                        <table class="stack-table w-full text-left border-collapse table-custom sm:min-w-[560px]">
                             <thead>
                                 <tr>
-                                    <th class="py-3 px-6">อีเมลพนักงาน</th>
-                                    <th class="py-3 px-6">สถานะบัญชี</th>
-                                    <th class="py-3 px-6 text-end">การจัดการ</th>
+                                    <th class="py-3 px-4 sm:px-6">อีเมลพนักงาน</th>
+                                    <th class="py-3 px-4 sm:px-6">สถานะบัญชี</th>
+                                    <th class="py-3 px-4 sm:px-6 text-end">การจัดการ</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var user in Model)
                                 {
                                     <tr class="hover:bg-purple-900/10 transition">
-                                        <td class="py-4 px-6 font-semibold text-white flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 text-xs font-bold">
-                                                @(string.IsNullOrEmpty(user.Email) ? "?" : user.Email.Substring(0, 1).ToUpperInvariant())
+                                        <td class="py-4 px-4 sm:px-6">
+                                            <div class="flex items-center gap-3 font-semibold text-white">
+                                                <div class="w-8 h-8 shrink-0 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 text-xs font-bold">
+                                                    @(string.IsNullOrEmpty(user.Email) ? "?" : user.Email.Substring(0, 1).ToUpperInvariant())
+                                                </div>
+                                                <span class="min-w-0 break-all">@user.Email</span>
                                             </div>
-                                            <span>@user.Email</span>
                                         </td>
-                                        <td class="py-4 px-6">
+                                        <td class="py-4 px-4 sm:px-6 whitespace-nowrap">
                                             @if (user.IsActive)
                                             {
                                                 <span class="px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
@@ -128,31 +231,28 @@
                                                 </span>
                                             }
                                         </td>
-                                        <td class="py-4 px-6 text-end">
-                                            <div class="inline-flex items-center gap-2">
-                                                
-                                                @* ปุ่มระงับ / ยกเลิกระงับ *@
-                                             
-                                            <form asp-action="ToggleStatus" method="post" style="display:inline;" class="mr-2">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="email" value="@user.Email" />
-                                                <button type="submit" 
-                                                        class="inline-flex items-center px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
-                                                        onclick="confirmAction(event, 'toggle', '@user.Email')">
-                                                    <i class="fa-solid fa-user-slash mr-1.5"></i> ระงับ
-                                                </button>
-                                            </form>
+                                        <td class="cell-actions py-4 px-4 sm:px-6 text-end">
+                                            <div class="action-group inline-flex items-center gap-2">
 
-                                          
-                                            <form asp-action="DeleteStaff" method="post" style="display:inline;">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="email" value="@user.Email" />
-                                                <button type="submit" 
-                                                        class="inline-flex items-center px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
-                                                        onclick="confirmAction(event, 'delete', '@user.Email')">
-                                                    <i class="fa-solid fa-trash mr-1.5"></i> ลบ
-                                                </button>
-                                            </form>
+                                                @* ปุ่มระงับ / ยกเลิกระงับ *@
+                                                <form asp-action="ToggleStatus" method="post" class="mr-2">
+                                                    <input type="hidden" name="email" value="@user.Email" />
+                                                    <button type="submit"
+                                                            class="inline-flex items-center px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm whitespace-nowrap"
+                                                            onclick="confirmAction(event, 'toggle', '@user.Email')">
+                                                        <i class="fa-solid fa-user-slash mr-1.5"></i> ระงับ
+                                                    </button>
+                                                </form>
+
+                                                @* ปุ่มลบ *@
+                                                <form asp-action="DeleteStaff" method="post">
+                                                    <input type="hidden" name="email" value="@user.Email" />
+                                                    <button type="submit"
+                                                            class="inline-flex items-center px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm whitespace-nowrap"
+                                                            onclick="confirmAction(event, 'delete', '@user.Email')">
+                                                        <i class="fa-solid fa-trash mr-1.5"></i> ลบ
+                                                    </button>
+                                                </form>
 
                                             </div>
                                         </td>
@@ -176,46 +276,70 @@
         </main>
     </div>
 
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    function confirmAction(event, actionType, email) {
-        event.preventDefault(); // หยุดการส่งฟอร์มชั่วคราว
-        const form = event.target.closest('form'); // ค้นหาฟอร์มปัจจุบัน
+    <script>
+        function confirmAction(event, actionType, email) {
+            event.preventDefault(); // หยุดการส่งฟอร์มชั่วคราว
+            const form = event.target.closest('form'); // ค้นหาฟอร์มปัจจุบัน
 
-        let titleText = actionType === 'toggle' ? 'ยืนยันการเปลี่ยนสถานะพนักงาน?' : 'คุณต้องการลบพนักงานนี้ใช่ไหม';
-        let descText = actionType === 'toggle' 
-            ? `ต้องการเปลี่ยนสถานะการใช้งานของบัญชี: ${email}` 
-            : `ข้อมูลของ ${email} จะถูกลบออกจากระบบอย่างถาวร!`;
-        
-        let confirmColor = actionType === 'toggle' ? '#f59e0b' : '#ef4444';
-        let confirmBtnText = actionType === 'toggle' ? 'ใช่, เปลี่ยนสถานะ' : 'ใช่, ลบข้อมูล';
+            let titleText = actionType === 'toggle' ? 'ยืนยันการเปลี่ยนสถานะพนักงาน?' : 'คุณต้องการลบพนักงานนี้ใช่ไหม';
+            let descText = actionType === 'toggle'
+                ? `ต้องการเปลี่ยนสถานะการใช้งานของบัญชี: ${email}`
+                : `ข้อมูลของ ${email} จะถูกลบออกจากระบบอย่างถาวร!`;
 
-        Swal.fire({
-            title: titleText,
-            text: descText,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: confirmColor,
-            cancelButtonColor: '#334155', // สีเทาเข้มเข้ากับธีมดาร์ก
-            confirmButtonText: confirmBtnText,
-            cancelButtonText: 'ยกเลิก',
-            background: '#0b1221', // พื้นหลัง Popup โทนดาร์กมืด
-            color: '#f8fafc',      // ตัวหนังสือสีขาวสว่าง
-            iconColor: confirmColor,
-            buttonsStyling: true,
-            customClass: {
-                popup: 'border border-slate-800 rounded-2xl shadow-2xl',
-                confirmButton: 'px-4 py-2 rounded-xl font-semibold text-white ml-2',
-                cancelButton: 'px-4 py-2 rounded-xl font-semibold text-slate-300 mr-2'
-            },
-            allowOutsideClick: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit(); // หากกดยืนยัน ให้ส่งฟอร์มทำงานต่อทันที
+            let confirmColor = actionType === 'toggle' ? '#f59e0b' : '#ef4444';
+            let confirmBtnText = actionType === 'toggle' ? 'ใช่, เปลี่ยนสถานะ' : 'ใช่, ลบข้อมูล';
+
+            Swal.fire({
+                title: titleText,
+                text: descText,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: confirmColor,
+                cancelButtonColor: '#334155',
+                confirmButtonText: confirmBtnText,
+                cancelButtonText: 'ยกเลิก',
+                background: '#0b1221',
+                color: '#f8fafc',
+                iconColor: confirmColor,
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'border border-slate-800 rounded-2xl shadow-2xl',
+                    confirmButton: 'px-4 py-2 rounded-xl font-semibold text-white ml-2',
+                    cancelButton: 'px-4 py-2 rounded-xl font-semibold text-slate-300 mr-2'
+                },
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+
+        // Sidebar toggle (มือถือ/แท็บเล็ต)
+        (function () {
+            var sidebar  = document.getElementById('sidebarWrap');
+            var backdrop = document.getElementById('sidebarBackdrop');
+            var toggle   = document.getElementById('menuToggle');
+
+            function setOpen(open) {
+                sidebar.classList.toggle('open', open);
+                backdrop.classList.toggle('show', open);
+                document.body.style.overflow = open ? 'hidden' : '';
             }
-        });
-    }
-</script>
+
+            toggle.addEventListener('click', function () {
+                setOpen(!sidebar.classList.contains('open'));
+            });
+            backdrop.addEventListener('click', function () { setOpen(false); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') setOpen(false);
+            });
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 1024) setOpen(false);
+            });
+        })();
+    </script>
 </body>
 </html>

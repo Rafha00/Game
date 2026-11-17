@@ -17,7 +17,10 @@ namespace Game.Models
         public string Description { get; set; } = "";
 
         [Column("price")]
-        public long Price { get; set; }
+           public decimal Price { get; set; } 
+
+    
+    
 
         [Column("image_url")]
             public string? ImageUrl { get; set; } = string.Empty;
