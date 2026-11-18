@@ -22,7 +22,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
-        options.AccessDeniedPath = "/Auth/Login"; // หรือสร้างหน้า AccessDenied แยก
+        options.AccessDeniedPath = "/Auth/Login"; 
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     });
 
