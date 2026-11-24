@@ -18,7 +18,7 @@ namespace Game.Controllers
             return Guid.TryParse(id, out var uid) ? uid : null;
         }
 
-        [HttpPost]   // ห้ามใส่ [Authorize] เพราะต้องตอบ 401 ให้ popup แทนการ redirect
+        [HttpPost]   
         public async Task<IActionResult> Add(Guid productId, int qty = 1)
         {
             var userId = GetUserId();
@@ -147,7 +147,7 @@ public IActionResult RemoveCoupon()
     return RedirectToAction(nameof(Index));
 }
 
-// ---------- helpers ----------
+//  helpers 
 
 private async Task<(Discount? coupon, string? error)> ValidateCouponAsync(string code, decimal subtotal)
 {

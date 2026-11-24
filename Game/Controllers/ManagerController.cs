@@ -1,3 +1,4 @@
+using System.Globalization;
 using Game.Data;
 using Game.Models;
 using Game.Models.ViewModels;
@@ -17,12 +18,7 @@ namespace Game.Controllers
             _context = context;
         }
 
-        // ==========================================================
-        // ตั้งค่าเวลา: Order.CreatedAt ถูกเก็บเป็นเวลา UTC หรือเวลาท้องถิ่น?
-        //   - ถ้าตอนสร้างออเดอร์ใช้ DateTime.UtcNow  -> ตั้งเป็น true
-        //   - ถ้าตอนสร้างออเดอร์ใช้ DateTime.Now     -> ตั้งเป็น false
-        // ถ้ายอดวันนี้ยังเป็น 0 ทั้งที่มีออเดอร์ชำระแล้วของวันนี้ ให้ลองสลับค่านี้
-        // ==========================================================
+        // ตั้งค่า: Order.CreatedAt เก็บเป็น UTC (true) หรือเวลาท้องถิ่น (false)
         private const bool CreatedAtIsUtc = false;
 
         private static TimeZoneInfo GetThaiTimeZone()
@@ -34,7 +30,6 @@ namespace Game.Controllers
             }
         }
 
-        // คืนช่วงเวลา [เริ่ม, สิ้นสุด) ของ "วันนี้" และ "เดือนนี้" ในหน่วยเดียวกับ CreatedAt
         private static (DateTime TodayStart, DateTime TodayEnd, DateTime MonthStart, DateTime MonthEnd) GetRanges()
         {
             if (CreatedAtIsUtc)
@@ -62,7 +57,6 @@ namespace Game.Controllers
         private static bool IsPaid(Order o) =>
             string.Equals(o.Status, "paid", StringComparison.OrdinalIgnoreCase);
 
-        // คำนวณยอดขายรวม / วันนี้ / เดือนนี้ จากรายการออเดอร์
         private static (decimal Total, decimal Today, decimal Month) CalculateSales(IEnumerable<Order> orders)
         {
             var r = GetRanges();
@@ -86,6 +80,8 @@ namespace Game.Controllers
         {
             var orders = await _context.Orders
                 .AsNoTracking()
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
                 .ToListAsync();
 
             var products = await _context.Products
@@ -93,6 +89,49 @@ namespace Game.Controllers
                 .ToListAsync();
 
             var sales = CalculateSales(orders);
+            var paid = orders.Where(IsPaid).ToList();
+
+            //  ยอดขายรายเดือน 12 เดือนล่าสุด 
+            var firstOfThisMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            var th = new CultureInfo("th-TH");
+
+            var labels = new List<string>();
+            var monthlySales = new List<decimal>();
+            var monthlyOrders = new List<int>();
+
+            for (int i = 11; i >= 0; i--)
+            {
+                var m = firstOfThisMonth.AddMonths(-i);
+                var inMonth = paid
+                    .Where(o => o.CreatedAt.Year == m.Year && o.CreatedAt.Month == m.Month)
+                    .ToList();
+
+                labels.Add(m.ToString("MMM yy", th));
+                monthlySales.Add(inMonth.Sum(o => o.TotalPrice));
+                monthlyOrders.Add(inMonth.Count);
+            }
+
+            //  สต็อกต่ำสุด 8 อันดับ 
+            var lowest = products.OrderBy(p => p.Stock).Take(8).ToList();
+
+            // สินค้าขายดี 5 อันดับ (นับเฉพาะออเดอร์ที่ชำระแล้ว) 
+            var topSelling = paid
+                .SelectMany(o => o.Items)
+                .GroupBy(i => new
+                {
+                    i.ProductId,
+                    Name = i.Product != null ? i.Product.Name : "ไม่ทราบสินค้า"
+                })
+                .Select(g => new TopSellingProductViewModel
+                {
+                    ProductId = g.Key.ProductId.ToString() ?? string.Empty,
+                    ProductName = g.Key.Name,
+                    QuantitySold = g.Sum(i => i.Quantity),
+                    Revenue = g.Sum(i => i.Quantity * i.Price)
+                })
+                .OrderByDescending(x => x.QuantitySold)
+                .Take(5)
+                .ToList();
 
             var model = new ManagerDashboardViewModel
             {
@@ -102,11 +141,21 @@ namespace Game.Controllers
 
                 TotalOrders = orders.Count,
                 PendingOrders = orders.Count(o => string.Equals(o.Status, "pending", StringComparison.OrdinalIgnoreCase)),
-                PaidOrders = orders.Count(IsPaid),
+                PaidOrders = paid.Count,
+                CancelledOrders = orders.Count(o => string.Equals(o.Status, "cancelled", StringComparison.OrdinalIgnoreCase)),
 
                 TotalProducts = products.Count,
                 LowStock = products.Count(p => p.Stock <= 5 && p.Stock > 0),
-                OutOfStock = products.Count(p => p.Stock <= 0)
+                OutOfStock = products.Count(p => p.Stock <= 0),
+
+                MonthLabels = labels,
+                MonthlySales = monthlySales,
+                MonthlyOrders = monthlyOrders,
+
+                StockLabels = lowest.Select(p => p.Name).ToList(),
+                StockValues = lowest.Select(p => p.Stock).ToList(),
+
+                TopSellingProducts = topSelling
             };
 
             return View(model);
@@ -133,12 +182,10 @@ namespace Game.Controllers
             ViewBag.TodaySales = sales.Today;
             ViewBag.MonthSales = sales.Month;
 
-            // ดึงข้อมูลพนักงานตามสิทธิ์ Role
             var staffList = new List<User>();
 
             if (User.IsInRole("admin"))
             {
-                // Admin: เห็นทั้ง Manager และ Staff
                 staffList = await _context.Users
                     .Where(u => u.Role != null &&
                                (u.Role.ToLower() == "manager" || u.Role.ToLower() == "staff"))
@@ -147,7 +194,6 @@ namespace Game.Controllers
             }
             else if (User.IsInRole("manager"))
             {
-                // Manager: เห็นเฉพาะ Staff
                 staffList = await _context.Users
                     .Where(u => u.Role != null && u.Role.ToLower() == "staff")
                     .AsNoTracking()
@@ -187,11 +233,8 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Staff));
         }
 
-        // ==========================================================
-        // DISCOUNTS
-        // ==========================================================
+        // ==================== DISCOUNTS ====================
 
-        // GET: /Manager/Discounts
         public async Task<IActionResult> Discounts()
         {
             var discounts = await _context.Discounts
@@ -202,7 +245,6 @@ namespace Game.Controllers
             return View(discounts);
         }
 
-        // POST: /Manager/CreateDiscount
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "admin,manager")]
@@ -232,12 +274,12 @@ namespace Game.Controllers
 
             var discount = new Discount
             {
-                Id = Guid.NewGuid().ToString(), // รองรับ varchar(36)
+                Id = Guid.NewGuid().ToString(),
                 Code = normalizedCode,
                 Type = type,
                 Value = value,
                 MinSpend = minSpend,
-                IsActive = isActive, // รับค่าจากฟอร์ม (เดิมตั้งเป็น true เสมอ)
+                IsActive = isActive,
                 ExpiresAt = expiresAt,
                 Description = description
             };
@@ -249,7 +291,6 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Discounts));
         }
 
-        // POST: /Manager/ToggleDiscount (เปิด / ปิดการใช้งานโค้ดส่วนลด)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "admin,manager")]
@@ -272,7 +313,6 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Discounts));
         }
 
-        // POST: /Manager/DeleteDiscount
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "admin,manager")]
@@ -292,24 +332,19 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Discounts));
         }
 
-        // ==========================================================
-        // STAFF
-        // ==========================================================
+        //  STAFF 
 
-        // GET: /Manager/Staff
         public async Task<IActionResult> Staff()
         {
             var query = _context.Users.AsNoTracking().AsQueryable();
 
             if (User.IsInRole("admin"))
             {
-                // Admin เห็นทั้ง manager และ staff
                 query = query.Where(u => u.Role != null &&
                                         (u.Role.ToLower() == "manager" || u.Role.ToLower() == "staff"));
             }
             else if (User.IsInRole("manager"))
             {
-                // Manager เห็นเฉพาะ staff
                 query = query.Where(u => u.Role != null && u.Role.ToLower() == "staff");
             }
 
@@ -318,7 +353,6 @@ namespace Game.Controllers
             return View(users);
         }
 
-        // POST: /Manager/ToggleStatus (ระงับ / เปิดใช้งานบัญชี)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "admin,manager")]
@@ -345,7 +379,6 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Staff));
         }
 
-        // POST: /Manager/DeleteStaff (ลบพนักงานออกจากระบบ)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "admin,manager")]
@@ -369,22 +402,19 @@ namespace Game.Controllers
 
             TempData["ManagerSuccess"] = $"ลบพนักงาน ({email}) เรียบร้อยแล้ว";
             return RedirectToAction(nameof(Staff));
-        
         }
 
+        // GET: /Manager/SalesSummaryReport
         [HttpGet]
-       
-        [Authorize(Roles = "admin,manager")]
         public async Task<IActionResult> SalesSummaryReport()
-    {
-        // ดึงข้อมูล Order และ Include ข้อมูลสินค้าที่เกี่ยวข้อง (ปรับแก้ชื่อ DbSet ตาม Model จริงของคุณ เช่น Orders, OrderItems)
-       var orders = await _context.Orders
-        .Include(o => o.Items)        // ดึงรายการสินค้าในออร์เดอร์ (เช็คชื่อ DbSet ใน Model Order ของคุณว่าชื่อ OrderItems หรือชื่ออื่นไหม)
-        .ThenInclude(i => i.Product)       // ดึงข้อมูลชื่อและราคาของสินค้า
-        .OrderByDescending(o => o.Id)
-        .ToListAsync();
+        {
+            var orders = await _context.Orders
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                .OrderByDescending(o => o.Id)
+                .ToListAsync();
 
-        return View(orders);
-    }
+            return View(orders);
+        }
     }
 }

@@ -51,9 +51,9 @@ namespace Game.Controllers
                 && AllRoles.Contains(role);
         }
 
-        // ==========================================
+        
         // รายชื่อผู้ใช้
-        // ==========================================
+       
         [HttpGet]
         public async Task<IActionResult> Index(
             string? role,
@@ -126,9 +126,9 @@ namespace Game.Controllers
             return View(vm);
         }
 
-        // ==========================================
+      
         // เพิ่มผู้ใช้ GET
-        // ==========================================
+        
         [HttpGet]
         public IActionResult Create()
         {
@@ -138,9 +138,9 @@ namespace Game.Controllers
             });
         }
 
-        // ==========================================
+     
         // เพิ่มผู้ใช้ POST
-        // ==========================================
+      
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UserFormViewModel vm)
@@ -201,9 +201,9 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ==========================================
+       
         // แก้ไขผู้ใช้ GET
-        // ==========================================
+      
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
@@ -226,9 +226,9 @@ namespace Game.Controllers
             return View(vm);
         }
 
-        // ==========================================
+       
         // แก้ไขผู้ใช้ POST
-        // ==========================================
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, UserFormViewModel vm)
@@ -307,9 +307,8 @@ namespace Game.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ==========================================
         // ลบผู้ใช้ POST
-        // ==========================================
+      
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
@@ -337,9 +336,9 @@ namespace Game.Controllers
             TempData["Success"] = "ลบผู้ใช้เรียบร้อยแล้ว";
             return RedirectToAction(nameof(Index));
         }
-                // ==========================================
+                
         // ระงับ / เปิดใช้งานบัญชี POST
-        // ==========================================
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(Guid id)

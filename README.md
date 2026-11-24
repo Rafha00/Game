@@ -212,3 +212,7 @@ Cart items
 
 UAT
 ![alt text](image-10.png)
+
+
+8. การออกแบบหน้าจอ (Wireframe) 
+![alt text](image-11.png)

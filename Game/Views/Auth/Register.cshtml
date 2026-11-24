@@ -60,6 +60,7 @@
                                    id="registerEmail"
                                    type="email"
                                    name="email"
+                                   value="@Model?.Email"
                                    placeholder="example@email.com"
                                    autocomplete="email"
                                    required />
@@ -78,6 +79,7 @@
                                    id="registerPassword"
                                    type="password"
                                    name="password"
+                                   value="@Model?.Password"
                                    placeholder="อย่างน้อย 8 ตัวอักษร"
                                    minlength="8"
                                    autocomplete="new-password"
@@ -104,6 +106,7 @@
                                    id="confirmPassword"
                                    type="password"
                                    name="confirmPassword"
+                                   value="@Model?.Password"
                                    placeholder="กรอกรหัสผ่านอีกครั้ง"
                                    minlength="8"
                                    autocomplete="new-password"

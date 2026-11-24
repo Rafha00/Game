@@ -19,7 +19,9 @@
       background: #0b0b1a;
       font-family: 'Prompt', 'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
-    html, body { overflow-x: hidden; }
+
+    /* แก้: เปลี่ยน hidden เป็น clip เพื่อให้ position: sticky ของ sidebar ทำงานได้ */
+    html, body { overflow-x: clip; }
 
     .admin-container {
       display: flex;
@@ -31,6 +33,17 @@
     /* จอใหญ่: wrapper ไม่มีผลต่อ layout เดิม */
     .sidebar-wrap { display: contents; }
     .admin-container .gw-sidebar { flex-shrink: 0; }
+
+    /* เพิ่ม: Sidebar ตรึงติดจอ สูงเต็มหน้าจอ ไม่ขาดตอนเวลาเลื่อน (เฉพาะจอใหญ่) */
+    @@media (min-width: 1024px) {
+      .admin-container .gw-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        align-self: flex-start;
+        overflow-y: auto;      /* เมนูเยอะให้เลื่อนในตัวเอง */
+      }
+    }
 
     .sidebar-backdrop { display: none; }
     .mobile-topbar { display: none; }
@@ -135,12 +148,12 @@
   <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
   <div class="admin-container">
-    <!-- 1. ดึง Sidebar มาแสดงด้านซ้าย -->
+    <!--ดึง Sidebar มาแสดงด้านซ้าย -->
     <div id="sidebarWrap" class="sidebar-wrap">
       <partial name="_Sidebar" />
     </div>
 
-    <!-- 2. พื้นที่แสดงเนื้อหาหลักของแต่ละหน้า -->
+    <!-- พื้นที่แสดงเนื้อหาหลักของแต่ละหน้า -->
     <main class="main-content">
         @RenderBody()
     </main>

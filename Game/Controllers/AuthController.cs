@@ -23,14 +23,14 @@ namespace Game.Controllers
             _logger = logger;
         }
 
-        // ================= REGISTER GET =================
+        //  REGISTER GET
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
-        // ================= REGISTER POST =================
+        //  REGISTER POST 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(User model)
@@ -41,6 +41,7 @@ namespace Game.Controllers
             }
 
             var email = model.Email?.Trim();
+           
 
             if (string.IsNullOrWhiteSpace(email))
             {
@@ -117,7 +118,7 @@ namespace Game.Controllers
             }
         }
 
-        // ================= LOGIN GET =================
+        //  LOGIN GET 
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -126,119 +127,121 @@ namespace Game.Controllers
             return View();
         }
 
-        // ================= LOGIN POST =================
-        [HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Login(
-    string? email,
-    string? password,
-    string? returnUrl = null)
-{
-    ViewBag.ReturnUrl = returnUrl;
-
-    if (string.IsNullOrWhiteSpace(email) ||
-        string.IsNullOrWhiteSpace(password))
-    {
-        ModelState.AddModelError(
-            "",
-            "กรุณากรอกอีเมลและรหัสผ่าน"
-        );
-
-        return View();
-    }
-
-    try
-    {
-        var normalizedEmail = email.Trim();
-
-        // 1. ค้นหาผู้ใช้งานจากอีเมลและรหัสผ่าน
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.Email == normalizedEmail &&
-                u.Password == password);
-
-        if (user == null)
+        //  LOGIN POST 
+                [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(
+            string? email,
+            string? password,
+            string? returnUrl = null)
         {
-            ModelState.AddModelError(
-                "",
-                "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
-            );
+            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.Email = email;
+            ViewBag.Password = password;
 
-            return View();
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                ModelState.AddModelError(
+                    "",
+                    "กรุณากรอกอีเมลและรหัสผ่าน"
+                );
+
+                return View();
+            }
+
+            try
+            {
+                var normalizedEmail = email.Trim();
+
+                //  ค้นหาผู้ใช้งานจากอีเมลและรหัสผ่าน
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u =>
+                        u.Email == normalizedEmail &&
+                        u.Password == password);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+                    );
+
+                    return View();
+                }
+
+                // ตรวจสอบว่าบัญชีถูกระงับการใช้งานหรือไม่ (IsActive == false)
+                if (!user.IsActive)
+                {
+                    // ส่งค่าผ่าน TempData เพื่อไปสั่งเปิด Popup แจ้งเตือนที่หน้าเว็บ
+                    TempData["ErrorPopupTitle"] = "บัญชีถูกระงับการใช้งาน!";
+                    TempData["ErrorPopupText"] = "บัญชีของคุณถูกระงับการใช้งานชั่วคราว กรุณาติดต่อผู้ดูแลระบบ";
+                    
+                    return View();
+                }
+
+                var claims = new List<Claim>
+                {
+                    new Claim(
+                        ClaimTypes.NameIdentifier,
+                        user.Id.ToString()
+                    ),
+                    new Claim(
+                        ClaimTypes.Name,
+                        user.Email ?? ""
+                    ),
+                    new Claim(
+                        ClaimTypes.Email,
+                        user.Email ?? ""
+                    ),
+                    new Claim(
+                        ClaimTypes.Role,
+                        user.Role ?? "user"
+                    )
+                };
+
+                var claimsIdentity = new ClaimsIdentity(
+                    claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme
+                );
+
+                var principal = new ClaimsPrincipal(claimsIdentity);
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    principal
+                );
+
+                // แจ้งเตือนเข้าสู่ระบบสำเร็จ
+                TempData["SuccessMessage"] =
+                    "เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับสู่ WHATGAME";
+
+                // Redirect กลับหน้าที่ต้องการ
+                if (!string.IsNullOrWhiteSpace(returnUrl) &&
+                    Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
+                );
+
+                ModelState.AddModelError(
+                    "",
+                    "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่"
+                );
+
+                return View();
+            }
         }
 
-        // 2. [เพิ่มใหม่] ตรวจสอบว่าบัญชีถูกระงับการใช้งานหรือไม่ (IsActive == false)
-        if (!user.IsActive)
-        {
-            // ส่งค่าผ่าน TempData เพื่อไปสั่งเปิด Popup แจ้งเตือนที่หน้าเว็บ
-            TempData["ErrorPopupTitle"] = "บัญชีถูกระงับการใช้งาน!";
-            TempData["ErrorPopupText"] = "บัญชีของคุณถูกระงับการใช้งานชั่วคราว กรุณาติดต่อผู้ดูแลระบบ";
-            
-            return View();
-        }
-
-        var claims = new List<Claim>
-        {
-            new Claim(
-                ClaimTypes.NameIdentifier,
-                user.Id.ToString()
-            ),
-            new Claim(
-                ClaimTypes.Name,
-                user.Email ?? ""
-            ),
-            new Claim(
-                ClaimTypes.Email,
-                user.Email ?? ""
-            ),
-            new Claim(
-                ClaimTypes.Role,
-                user.Role ?? "user"
-            )
-        };
-
-        var claimsIdentity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
-
-        var principal = new ClaimsPrincipal(claimsIdentity);
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principal
-        );
-
-        // แจ้งเตือนเข้าสู่ระบบสำเร็จ
-        TempData["SuccessMessage"] =
-            "เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับสู่ WHATGAME";
-
-        // Redirect กลับหน้าที่ต้องการ
-        if (!string.IsNullOrWhiteSpace(returnUrl) &&
-            Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-
-        return RedirectToAction("Index", "Home");
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(
-            ex,
-            "เกิดข้อผิดพลาดขณะเข้าสู่ระบบ"
-        );
-
-        ModelState.AddModelError(
-            "",
-            "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่"
-        );
-
-        return View();
-    }
-}
-
-        // ================= LOGOUT =================
+        //  LOGOUT
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
@@ -252,7 +255,7 @@ public async Task<IActionResult> Login(
             return RedirectToAction("Index", "Home");
         }
 
-        // ================= PROFILE =================
+        //  PROFILE 
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Profile()

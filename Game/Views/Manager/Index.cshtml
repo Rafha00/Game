@@ -1,214 +1,480 @@
 @model Game.Models.ViewModels.ManagerDashboardViewModel
+@using System.Text.Json
 
 @{
-    ViewData["Title"] = "Manager Dashboard";
-    Layout = "_Layout";
+    ViewData["Title"] = "ภาพรวมยอดขาย";
+    Layout = "_AdminLayout";
 }
 
 <style>
-    .mgr-page {
-        min-height: 100vh;
-        padding: 32px 24px;
-        color: #f3f4f6;
-        background: #090b14;
+    .dashboard {
+        color: #f1efff;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 28px 32px 48px;
+        box-sizing: border-box;
     }
+    .dashboard *, .dashboard *::before, .dashboard *::after { box-sizing: border-box; }
 
-    .mgr-wrap { max-width: 1200px; margin: auto; }
-
-    .mgr-heading {
-        margin-bottom: 26px;
+    /* ---------- Header ---------- */
+    .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 28px;
     }
-
-    .mgr-heading h1 {
-        font-size: 28px;
-        font-weight: 800;
-        margin: 0 0 8px;
-        color: #fff;
-    }
-
-    .mgr-heading p {
-        color: #9ca3af;
+    .dash-header h2 {
+        font-size: 26px;
+        font-weight: 750;
         margin: 0;
-        font-size: 14px;
+        letter-spacing: -.5px;
     }
-
-    .mgr-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-    }
-
-    .mgr-card {
-        padding: 22px;
-        border: 1px solid rgba(255,255,255,.09);
-        border-radius: 16px;
-        background: linear-gradient(145deg,#17172a,#10131f);
-        box-shadow: 0 10px 30px rgba(0,0,0,.15);
-        transition: transform 0.2s, border-color 0.2s;
-    }
-
-    .mgr-card:hover {
-        border-color: rgba(139,92,246,0.4);
-        transform: translateY(-2px);
-    }
-
-    .mgr-label {
-        color: #a1a1aa;
+    .dash-header p {
+        color: #9993b5;
+        margin: 6px 0 0;
         font-size: 13px;
-        margin-bottom: 14px;
     }
-
-    .mgr-value {
-        color: #fff;
-        font-size: clamp(20px, 2.2vw, 28px);
-        font-weight: 800;
-        overflow-wrap: anywhere;
-    }
-
-    .mgr-icon {
-        width: 42px;
-        height: 42px;
-        display: grid;
-        place-items: center;
-        margin-bottom: 18px;
+    .dash-date {
+        background: #211c36;
+        border: 1px solid #39304f;
+        padding: 10px 16px;
         border-radius: 12px;
         color: #c4b5fd;
-        background: rgba(139,92,246,.15);
+        font-size: 13px;
+        white-space: nowrap;
     }
 
-    .mgr-links {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0,1fr));
-        gap: 14px;
-        margin-top: 24px;
+    /* ---------- Grids ---------- */
+    .grid { display: grid; gap: 18px; margin-bottom: 18px; }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-8-4 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+    .grid-6-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    @@media (max-width: 1100px) {
+        .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-8-4, .grid-6-6 { grid-template-columns: minmax(0, 1fr); }
+    }
+    @@media (max-width: 700px) {
+        .dashboard { padding: 18px 14px 36px; }
+        .grid-3 { grid-template-columns: minmax(0, 1fr); }
+        .dash-header h2 { font-size: 21px; }
     }
 
-    .mgr-link {
-        display: block;
-        padding: 20px;
-        color: #fff;
-        text-decoration: none;
-        border: 1px solid rgba(255,255,255,.09);
-        border-radius: 14px;
-        background: #111522;
-        transition: .2s;
-        font-weight: 500;
+    /* ---------- Stat cards ---------- */
+    .stat-card {
+        background: linear-gradient(145deg, #211c36, #191528);
+        border: 1px solid rgba(167,139,250,.15);
+        border-radius: 16px;
+        padding: 20px 22px;
+        position: relative;
+        overflow: hidden;
+        transition: transform .2s ease, border-color .2s ease;
     }
-
-    .mgr-link:hover {
-        border-color: #8b5cf6;
+    .stat-card:hover {
         transform: translateY(-3px);
+        border-color: rgba(167,139,250,.5);
+    }
+    .stat-card::after {
+        content: "";
+        position: absolute;
+        width: 100px; height: 100px;
+        right: -35px; top: -35px;
+        border-radius: 50%;
+        background: var(--glow);
+        filter: blur(35px);
+        opacity: .2;
+        pointer-events: none;
+    }
+    .stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .stat-label { color: #aaa3c2; font-size: 13px; font-weight: 500; }
+    .stat-icon {
+        width: 40px; height: 40px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        background: var(--icon-bg);
+        color: var(--accent);
+    }
+    .stat-value {
+        font-size: 26px;
+        font-weight: 750;
+        letter-spacing: -.5px;
+        margin: 0;
+        color: #fff;
+        line-height: 1.2;
+    }
+    .stat-desc { font-size: 11px; color: #817b9d; margin-top: 6px; }
+
+    /* ---------- Section cards ---------- */
+    .section-card {
+        background: #1b172b;
+        border: 1px solid #302943;
+        border-radius: 16px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .section-title { font-size: 15px; font-weight: 700; color: #f1efff; margin: 0 0 4px; }
+    .section-subtitle { font-size: 11px; color: #8983a2; margin: 0 0 18px; }
+
+    .chart-box { position: relative; width: 100%; height: 300px; }
+
+    .empty-state {
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: #8983a2;
+        font-size: 14px;
+    }
+    .empty-state i { font-size: 36px; opacity: .6; }
+
+    /* ---------- Table ---------- */
+    .table-wrap { overflow-x: auto; }
+    .rank-table { width: 100%; border-collapse: collapse; font-size: 13px; color: #ddd8ef; }
+    .rank-table th {
+        color: #938ba9;
+        font-size: 11px;
+        font-weight: 600;
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #39304f;
+        white-space: nowrap;
+    }
+    .rank-table td { padding: 14px 12px; border-bottom: 1px solid #272036; }
+    .rank-table tr:last-child td { border-bottom: none; }
+    .rank-table tbody tr:hover { background: rgba(139,92,246,.07); }
+    .rank-table .num { text-align: right; }
+    .rank-badge {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        background: #30264b;
         color: #c4b5fd;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
     }
-
-    .mgr-link i {
-        margin-right: 9px;
-        color: #a78bfa;
-    }
-
-    @@media(max-width: 1024px) {
-        .mgr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @@media(max-width: 900px) {
-        .mgr-links { grid-template-columns: 1fr; }
-    }
-
-    @@media(max-width: 500px) {
-        .mgr-page { padding: 20px 14px; }
-        .mgr-grid { grid-template-columns: 1fr; }
-    }
+    .rank-badge.first { background: #4c3a1c; color: #fbbf24; }
+    .revenue { color: #a78bfa; font-weight: 700; }
 </style>
 
-<div class="mgr-page">
-    <div class="mgr-wrap">
-        <header class="mgr-heading">
-            <h1>Manager Dashboard</h1>
-            <p>ภาพรวมธุรกิจและสถานะร้าน WHATGAME</p>
-        </header>
+<div class="dashboard">
 
-         <div style="display: flex; justify-content: flex-end; padding: 10px;">
-                    <a href="Auth/Profile" style="
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-                        color: #4f46e5;
-                        text-decoration: none;
-                        font-family: sans-serif;
-                        font-size: 14px;
-                        font-weight: 500;
-                        padding: 8px 16px;
-                        border: 1px solid #e0e7ff;
-                        border-radius: 8px;
-                        background-color: #f5f7ff;
-                        transition: all 0.2s ease;
-                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-                    " onmouseover="this.style.backgroundColor='#e0e7ff'; this.style.color='#4338ca';" onmouseout="this.style.backgroundColor='#f5f7ff'; this.style.color='#4f46e5';">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                        ย้อนกลับ
-                    </a>
-                </div>
-
-        <div class="mgr-grid">
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-sack-dollar"></i></div>
-                <div class="mgr-label">ยอดขายรวม</div>
-                <div class="mgr-value">฿@(Model.TotalSales.ToString("N2"))</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-calendar-day"></i></div>
-                <div class="mgr-label">ยอดขายวันนี้</div>
-                <div class="mgr-value">฿@(Model.TodaySales.ToString("N2"))</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-calendar-check"></i></div>
-                <div class="mgr-label">ยอดขายเดือนนี้</div>
-                <div class="mgr-value">฿@(Model.MonthSales.ToString("N2"))</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-receipt"></i></div>
-                <div class="mgr-label">คำสั่งซื้อทั้งหมด</div>
-                <div class="mgr-value">@Model.TotalOrders</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-clock"></i></div>
-                <div class="mgr-label">รอดำเนินการ</div>
-                <div class="mgr-value">@Model.PendingOrders</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-circle-check"></i></div>
-                <div class="mgr-label">คำสั่งซื้อชำระแล้ว</div>
-                <div class="mgr-value">@Model.PaidOrders</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
-                <div class="mgr-label">สินค้าทั้งหมด</div>
-                <div class="mgr-value">@Model.TotalProducts</div>
-            </div>
-
-            <div class="mgr-card">
-                <div class="mgr-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="mgr-label">สินค้าใกล้หมด / หมด</div>
-                <div class="mgr-value">@Model.LowStock / @Model.OutOfStock</div>
-            </div>
+    <!-- Header -->
+    <div class="dash-header">
+        <div>
+            <h2>Dashboard Overview</h2>
+            <p>ภาพรวมผลประกอบการและสถานะร้านค้าของคุณ</p>
         </div>
-
-        <div class="mgr-links">
-            <a class="mgr-link" asp-controller="Manager" asp-action="Reports">
-                <i class="fa-solid fa-chart-column"></i> รายงานยอดขายและสต็อก
-            </a>
-            <a class="mgr-link" asp-controller="Manager" asp-action="Staff">
-                <i class="fa-solid fa-users-gear"></i> จัดการพนักงาน
-            </a>
-            <a class="mgr-link" asp-controller="Manager" asp-action="Discounts">
-                <i class="fa-solid fa-tags"></i> จัดการโค้ดส่วนลด
-            </a>
+        <div class="dash-date">
+            <i class="fa-regular fa-calendar" style="margin-right:8px;"></i>@DateTime.Now.ToString("dd MMMM yyyy")
         </div>
     </div>
+
+    <!-- ยอดขาย 3 ใบ -->
+    <div class="grid grid-3">
+        <div class="stat-card" style="--accent:#a78bfa;--icon-bg:#392b59;--glow:#8b5cf6;">
+            <div class="stat-top">
+                <span class="stat-label">ยอดขายรวมทั้งหมด</span>
+                <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+            </div>
+            <h3 class="stat-value">฿@Model.TotalSales.ToString("N2")</h3>
+            <div class="stat-desc">รายได้สะสมทั้งหมด</div>
+        </div>
+
+        <div class="stat-card" style="--accent:#34d399;--icon-bg:#173f37;--glow:#10b981;">
+            <div class="stat-top">
+                <span class="stat-label">ยอดขายวันนี้</span>
+                <div class="stat-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            </div>
+            <h3 class="stat-value">฿@Model.TodaySales.ToString("N2")</h3>
+            <div class="stat-desc">รายได้ประจำวัน</div>
+        </div>
+
+        <div class="stat-card" style="--accent:#38bdf8;--icon-bg:#193a51;--glow:#0ea5e9;">
+            <div class="stat-top">
+                <span class="stat-label">ยอดขายเดือนนี้</span>
+                <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+            </div>
+            <h3 class="stat-value">฿@Model.MonthSales.ToString("N2")</h3>
+            <div class="stat-desc">รายได้ประจำเดือน</div>
+        </div>
+    </div>
+
+    <!-- สินค้า / ออเดอร์ 4 ใบ -->
+    <div class="grid grid-4">
+        <div class="stat-card" style="--accent:#a78bfa;--icon-bg:#392b59;--glow:#8b5cf6;">
+            <div class="stat-top">
+                <span class="stat-label">สินค้าทั้งหมด</span>
+                <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
+            </div>
+            <h3 class="stat-value">@Model.TotalProducts</h3>
+            <div class="stat-desc">จำนวนสินค้าในระบบ</div>
+        </div>
+
+        <div class="stat-card" style="--accent:#fbbf24;--icon-bg:#49391b;--glow:#f59e0b;">
+            <div class="stat-top">
+                <span class="stat-label">สต็อกใกล้หมด</span>
+                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            </div>
+            <h3 class="stat-value">@Model.LowStock</h3>
+            <div class="stat-desc">สินค้าที่ควรเติมสต็อก</div>
+        </div>
+
+        <div class="stat-card" style="--accent:#fb7185;--icon-bg:#4a2737;--glow:#f43f5e;">
+            <div class="stat-top">
+                <span class="stat-label">สินค้าหมด</span>
+                <div class="stat-icon"><i class="fa-solid fa-ban"></i></div>
+            </div>
+            <h3 class="stat-value">@Model.OutOfStock</h3>
+            <div class="stat-desc">สินค้าที่ไม่มีในสต็อก</div>
+        </div>
+
+        <div class="stat-card" style="--accent:#38bdf8;--icon-bg:#193a51;--glow:#0ea5e9;">
+            <div class="stat-top">
+                <span class="stat-label">ออเดอร์ทั้งหมด</span>
+                <div class="stat-icon"><i class="fa-solid fa-receipt"></i></div>
+            </div>
+            <h3 class="stat-value">@Model.TotalOrders</h3>
+            <div class="stat-desc">รายการสั่งซื้อทั้งหมด</div>
+        </div>
+    </div>
+
+    <!-- กราฟแถวที่ 1 -->
+    <div class="grid grid-8-4">
+        <div class="section-card">
+            <h5 class="section-title">ยอดขายรายเดือน</h5>
+            <p class="section-subtitle">Monthly Sales Performance (฿)</p>
+            <div class="chart-box"><canvas id="salesChart"></canvas></div>
+        </div>
+
+        <div class="section-card">
+            <h5 class="section-title">สถานะออเดอร์</h5>
+            <p class="section-subtitle">Order Status Overview</p>
+            <div class="chart-box"><canvas id="orderChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- กราฟแถวที่ 2 -->
+    <div class="grid grid-6-6">
+        <div class="section-card">
+            <h5 class="section-title">ปริมาณสต็อกสินค้า</h5>
+            <p class="section-subtitle">Lowest Stock Items</p>
+            <div class="chart-box"><canvas id="stockChart"></canvas></div>
+        </div>
+
+        <div class="section-card">
+            <h5 class="section-title">สินค้าขายดี</h5>
+            <p class="section-subtitle">Top Selling Products</p>
+            @if (Model.TopSellingProducts.Any())
+            {
+                <div class="chart-box"><canvas id="topChart"></canvas></div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-chart-column"></i>
+                    ยังไม่มีข้อมูลการขาย
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ตารางอันดับ -->
+    <div class="section-card">
+        <h5 class="section-title">อันดับสินค้าขายดี</h5>
+        <p class="section-subtitle">Best Selling Products Ranking</p>
+
+        @if (Model.TopSellingProducts.Any())
+        {
+            <div class="table-wrap">
+                <table class="rank-table">
+                    <thead>
+                        <tr>
+                            <th style="width:80px;">อันดับ</th>
+                            <th>สินค้า</th>
+                            <th class="num">จำนวนที่ขายได้</th>
+                            <th class="num">รายได้</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ var rank = 1; }
+                        @foreach (var p in Model.TopSellingProducts)
+                        {
+                            <tr>
+                                <td><span class="rank-badge @(rank == 1 ? "first" : "")">@rank</span></td>
+                                <td>@p.ProductName</td>
+                                <td class="num">@p.QuantitySold ชิ้น</td>
+                                <td class="num revenue">฿@p.Revenue.ToString("N2")</td>
+                            </tr>
+                            rank++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state" style="height:160px;">
+                <i class="fa-solid fa-inbox"></i>
+                ยังไม่มีข้อมูลสินค้าขายดี
+            </div>
+        }
+    </div>
+
 </div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    Chart.defaults.color = '#aaa3c2';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = 'inherit';
+
+    function shortTick(value) {
+        const label = this.getLabelForValue(value);
+        return label.length > 16 ? label.slice(0, 16) + '…' : label;
+    }
+
+    // ---------- ยอดขายรายเดือน ----------
+    const salesCtx = document.getElementById('salesChart');
+    const grad = salesCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+    grad.addColorStop(0, 'rgba(139,92,246,0.35)');
+    grad.addColorStop(1, 'rgba(139,92,246,0)');
+
+    new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.MonthLabels)),
+            datasets: [{
+                label: 'ยอดขาย (฿)',
+                data: @Html.Raw(JsonSerializer.Serialize(Model.MonthlySales)),
+                borderColor: '#a78bfa',
+                backgroundColor: grad,
+                fill: true,
+                tension: 0.4,
+                borderWidth: 3,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#c4b5fd',
+                pointBorderColor: '#211c36',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { callback: v => '฿' + Number(v).toLocaleString() }
+                }
+            }
+        }
+    });
+
+    // ---------- สถานะออเดอร์ ----------
+    new Chart(document.getElementById('orderChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['ชำระเงินแล้ว', 'รอดำเนินการ', 'ยกเลิก'],
+            datasets: [{
+                data: [@Model.PaidOrders, @Model.PendingOrders, @Model.CancelledOrders],
+                backgroundColor: ['#34d399', '#fbbf24', '#fb7185'],
+                borderColor: '#1b172b',
+                borderWidth: 5,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    // ---------- สต็อกสินค้า ----------
+    const stockValues = @Html.Raw(JsonSerializer.Serialize(Model.StockValues));
+    const stockColors = stockValues.map(v => v <= 0 ? '#fb7185' : (v <= 5 ? '#fbbf24' : '#818cf8'));
+
+    new Chart(document.getElementById('stockChart'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.StockLabels)),
+            datasets: [{
+                label: 'คงเหลือ (ชิ้น)',
+                data: stockValues,
+                backgroundColor: stockColors,
+                borderRadius: 7,
+                maxBarThickness: 22
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { grid: { display: false }, ticks: { callback: shortTick } }
+            }
+        }
+    });
+
+    // ---------- สินค้าขายดี ----------
+    const topEl = document.getElementById('topChart');
+    if (topEl) {
+        new Chart(topEl, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(JsonSerializer.Serialize(Model.TopSellingProducts.Select(x => x.ProductName))),
+                datasets: [{
+                    label: 'จำนวนที่ขายได้',
+                    data: @Html.Raw(JsonSerializer.Serialize(Model.TopSellingProducts.Select(x => x.QuantitySold))),
+                    backgroundColor: '#a78bfa',
+                    hoverBackgroundColor: '#c4b5fd',
+                    borderRadius: 7,
+                    maxBarThickness: 22
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { grid: { display: false }, ticks: { callback: shortTick } }
+                }
+            }
+        });
+    }
+</script>
+}
